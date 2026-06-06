@@ -34,6 +34,8 @@ class LocationEmbedded(BaseModel):
     name: str
     slug: str
     level: str
+    center_lat: float | None = None
+    center_lng: float | None = None
 
     model_config = {"from_attributes": True}
 
@@ -168,6 +170,9 @@ class PropertyResponse(BaseModel):
     favorites_count: int = 0
     created_at: datetime
     updated_at: datetime
+    contact_phone: str | None = None
+    contact_email: str | None = None
+    contact_whatsapp: str | None = None
     images: list[PropertyImageResponse] = []
     location: LocationEmbedded | None = None
     owner: OwnerEmbedded | None = None
