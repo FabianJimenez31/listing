@@ -14,7 +14,7 @@
 | 2.1 — Backend extras    | ✅ ENTREGADA | Alembic + seeds + image upload + SEO + rate limit |
 | 3 — Frontend React SPA | ✅ ENTREGADA | Vite + React 18 + SPA completa (108 módulos) |
 | 3.1 — Frontend extras  | ✅ ENTREGADA | FavoritesPage + FeaturedPage admin + botón fav en detalle |
-| 4 — Safeguards & Quality | 🔄 Parcial | 429 tests verdes; migraciones OK; Sonar pendiente |
+| 4 — Safeguards & Quality | ✅ ENTREGADA | Sonar QG PASSED (reliability/security/maintainability OK) |
 | 5 — Verification & Tests | ✅ ENTREGADA | 429 tests (dominio + API + migraciones) |
 
 ---
@@ -210,8 +210,8 @@ Pendiente:
 - [x] Branch convention gate
 - [x] Spec gate (spec/plan/tasks >50B)
 - [x] Docker Compose deploy (db + redis + backend + frontend nginx)
-- [ ] SonarQube Quality Gate sobre código backend real (`make sonar-check`)
-- [ ] CI apuntando a SonarQube hosteado
+- [x] SonarQube Quality Gate PASSED — `make sonar-check` → OK (reliability A, security A, maintainability A)
+- [ ] CI apuntando a SonarQube hosteado (requiere SonarCloud o servidor externo)
 - [ ] Gate validate-enums reactivado (cuando exista schema DB real)
 
 ---
