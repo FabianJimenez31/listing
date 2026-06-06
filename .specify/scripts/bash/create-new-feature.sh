@@ -19,7 +19,7 @@ if [ -z "$SLUG" ]; then
 fi
 
 # Normalize slug
-SLUG=$(echo "$SLUG" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | sed 's/[^a-z0-9-//]//g')
+SLUG=$(echo "$SLUG" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | sed 's/[^a-z0-9-]//g')
 
 # Ensure prefix is at least 3 digits
 if [[ ! "$SLUG" =~ ^[0-9]{3,}- ]]; then
