@@ -17,3 +17,7 @@ htmlcov/
 
 # Sonar scanner working dir
 .scannerwork/
+dev.db
+
+# Local file uploads (use S3 in production)
+temp/uploads/

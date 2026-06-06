@@ -15,13 +15,16 @@ from src.api.routers import (
     auth,
     banners,
     favorites,
+    images,
     leads,
     locations,
     metrics,
     properties,
     search,
+    seo,
     users,
 )
+from src.middleware.rate_limit import RateLimitMiddleware
 
 _API_PREFIX = "/api/v1"
 
@@ -43,6 +46,7 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    app.add_middleware(RateLimitMiddleware)
 
     register_error_handlers(app)
 
@@ -66,9 +70,15 @@ def create_app() -> FastAPI:
     # Promotions
     app.include_router(banners.router, prefix=_API_PREFIX)
 
+    # Images
+    app.include_router(images.router, prefix=_API_PREFIX)
+
     # Admin & metrics
     app.include_router(admin.router, prefix=_API_PREFIX)
     app.include_router(metrics.router, prefix=_API_PREFIX)
+
+    # SEO (no prefix — served at root: /sitemap.xml, /robots.txt)
+    app.include_router(seo.router)
 
     @app.get("/health")
     def health():
