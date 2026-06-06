@@ -10,8 +10,9 @@
 | Fase | Estado | Última parada |
 |------|--------|---------------|
 | 1 — Foundation & Setup | ✅ ENTREGADA | Dominio + specs + 335 tests verdes |
-| 2 — Core Backend Logic | ✅ ENTREGADA | FastAPI 48 rutas + SQLAlchemy ORM + 376 tests |
-| 3 — Frontend React SPA | ⏳ Pendiente | — |
+| 2 — Core Backend Logic | ✅ ENTREGADA | FastAPI 48 rutas + SQLAlchemy ORM + 395 tests |
+| 2.1 — Backend extras    | ✅ ENTREGADA | Alembic + seeds + image upload + SEO + rate limit |
+| 3 — Frontend React SPA | ✅ ENTREGADA | Vite + React 18 + SPA completa |
 | 4 — Safeguards & Quality | 🔄 Parcial | Harness activo; Sonar pendiente sobre código real |
 | 5 — Verification & Tests | 🔄 Parcial | Solo dominio; integración API pendiente |
 
@@ -156,11 +157,38 @@ Siguiente gran etapa: Phase 3 — Frontend React SPA (Vite, CSR).
 
 ---
 
-## FASE 3 — Frontend React SPA ⏳
+## FASE 3 — Frontend React SPA ✅
 
-Pendiente. Ver [tasks.md](tasks.md) § Phase 3 para backlog.
+**Commit**: `837183c feat(001-listing-catalog): Phase 3 — Frontend React SPA`
 
-Stack: Vite + React 18 + react-helmet-async + react-router-dom + axios.
+**Stack**: Vite 8 + React 18 + react-router-dom + react-helmet-async + axios
+
+**Entregables:**
+- `frontend/src/api/` — client.js (axios + auto-refresh interceptor), auth.js, properties.js, leads.js, admin.js
+- `frontend/src/contexts/AuthContext.jsx` — sesión en localStorage, hasPermission/isAdmin
+- `frontend/src/components/` — Header, Layout, PropertyCard, PropertyFilters, LeadForm, Spinner, Pagination
+- Páginas públicas: HomePage (hero + búsqueda + destacados), SearchPage (filtros + grid + paginación), PropertyDetailPage (galería + specs + LeadForm + JSON-LD + OG), LoginPage, RegisterPage
+- Panel agente: AgentDashboard (tabla con lifecycle), PropertyFormPage (CRUD + image upload), LeadsPage
+- Panel admin: AdminDashboard (stats), ModerationPage (aprobar/rechazar)
+- Vite proxy al backend + Build limpio (103 módulos, 337 KB JS)
+
+### Última parada Phase 3
+
+```
+2026-06-06 — Phase 3 ENTREGADA y commiteada.
+Commit: feat(001-listing-catalog): Phase 3 — Frontend React SPA (Vite + react-helmet-async)
+
+Pendiente para Phase 4:
+  - SonarQube Quality Gate verde sobre backend real (make sonar-check)
+  - CI apuntando a SonarQube hosteado (ci-quality-gate.yml)
+  - Gate validate-enums reactivado (cuando exista schema DB real en producción)
+
+Pendiente para Phase 5 / mejoras:
+  - Admin: páginas de banners, destacados, usuarios (banners.jsx, featured.jsx, users.jsx)
+  - Frontend: página de favorites, compartir propiedad, reportar propiedad
+  - Tests e2e frontend (Playwright o Cypress)
+  - Deploy: Dockerfile + docker-compose (PostgreSQL + Redis + backend + frontend nginx)
+```
 
 ---
 
