@@ -1,0 +1,9 @@
+#!/bin/bash
+# Git pre-push hook wrapper. Invokes the main pre-push check script.
+SCRIPT_DIR="$(git rev-parse --show-toplevel)/.claude/hooks"
+if [ -f "$SCRIPT_DIR/pre-push.sh" ]; then
+    bash "$SCRIPT_DIR/pre-push.sh"
+else
+    echo "⚠️ Warning: .claude/hooks/pre-push.sh not found."
+    exit 0
+fi

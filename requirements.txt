@@ -1,0 +1,3 @@
+# Runtime dependencies for the application.
+# Add production libraries here (e.g. fastapi, sqlalchemy, pydantic).
+# Kept empty for the initial harness scaffold.

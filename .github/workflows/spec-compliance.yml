@@ -1,0 +1,23 @@
+name: Spec-Kit Compliance Check
+
+on:
+  pull_request:
+    branches: [ main, master, staging, develop ]
+
+jobs:
+  spec-compliance:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: Run Specification Verification
+      run: |
+        chmod +x .specify/scripts/bash/check-prerequisites.sh
+        chmod +x .specify/scripts/bash/common.sh
+        
+        # Verify spec prerequisites on active branch
+        bash .specify/scripts/bash/check-prerequisites.sh --require-tasks

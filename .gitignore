@@ -1,0 +1,19 @@
+temp/debug/
+temp/patches/
+temp/testing/
+*.log
+__pycache__/
+node_modules/
+
+# Secrets & local config
+.env
+.env.local
+
+# Test & coverage artifacts
+.pytest_cache/
+coverage.xml
+.coverage
+htmlcov/
+
+# Sonar scanner working dir
+.scannerwork/

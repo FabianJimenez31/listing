@@ -1,0 +1,55 @@
+# IA-Framework: Python Pre-Commit Configuration
+#
+# To install pre-commit:
+#   pip install pre-commit
+#   pre-commit install
+#
+# To run checks on all files:
+#   pre-commit run --all-files
+
+repos:
+  # 1. Global standard Git hygiene checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+        args: ['--maxkb=1024'] # Warns on files > 1MB
+
+  # 2. Local project-specific custom validation gates
+  - repo: local
+    hooks:
+      # Block temporary files in the root folder
+      - id: block-root-temp-scripts
+        name: Block Temporary root scripts
+        entry: bash -c "files=\$(git diff --cached --name-only --diff-filter=ACM | grep -E '^[^/]+\\.(py|sh)\$' | grep -vE '^(setup\\.py|Makefile|requirements.*\\.txt|install\\.sh|sonar_local\\.sh)\$' || true); if [ -n \"\$files\" ]; then echo '❌ ERROR: Temporary scripts found in root directory:' && echo \"\$files\" && echo '💡 Please move scripts into temp/ directories.' && exit 1; fi"
+        language: system
+        stages: [commit]
+
+      # Enforce branching conventions
+      - id: enforce-git-branch-naming
+        name: Enforce branch naming conventions
+        entry: bash -c "branch=\$(git rev-parse --abbrev-ref HEAD); if [[ ! \"\$branch\" =~ ^(feature|fix|hotfix|chore|claude|codex|test)/[a-z0-9._/-]+\$ ]] && [[ ! \"\$branch\" =~ ^(main|master|prod|staging|develop)\$ ]]; then echo \"❌ ERROR: Branch name '\$branch' violates convention (feature|fix|hotfix|chore|claude|test)/slug.\" && exit 1; fi"
+        language: system
+        stages: [commit]
+
+      # Run automated Architecture Anti-pattern validator
+      - id: local-architecture-validator
+        name: Custom local architecture validator
+        entry: python3 scripts/validation/validate_structure.py
+        language: system
+        files: \.py$
+        stages: [commit]
+
+      # Run local Enum integrity validator
+      # DISABLED until the database schema and domain Enums are defined.
+      # Re-enable by un-commenting once scripts/validation/validate_enums.py
+      # is wired to the real DB connection and code Enums.
+      # - id: local-enum-validator
+      #   name: Custom database vs code enum validator
+      #   entry: python3 scripts/validation/validate_enums.py
+      #   language: system
+      #   files: \.py$
+      #   stages: [commit]
