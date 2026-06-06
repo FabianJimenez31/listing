@@ -1,16 +1,16 @@
 # IA-Framework: Python Pre-Commit Configuration
 #
-# To install pre-commit:
-#   pip install pre-commit
-#   pre-commit install
-#
+# NOTE: The primary local gate is bound via git `core.hooksPath=.claude/hooks/git`
+# (installed by install.sh). This pre-commit-framework config is an OPTIONAL,
+# equivalent path. If you use it, run:
+#   pip install pre-commit && pre-commit install
 # To run checks on all files:
 #   pre-commit run --all-files
 
 repos:
   # 1. Global standard Git hygiene checks
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v5.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -18,38 +18,28 @@ repos:
       - id: check-added-large-files
         args: ['--maxkb=1024'] # Warns on files > 1MB
 
-  # 2. Local project-specific custom validation gates
+  # 2. Local project-specific validation gates.
+  #    These delegate to the canonical scripts (the same ones bound via
+  #    core.hooksPath) — a single source of truth, with no fragile shell
+  #    embedded inside YAML.
   - repo: local
     hooks:
-      # Block temporary files in the root folder
-      - id: block-root-temp-scripts
-        name: Block Temporary root scripts
-        entry: bash -c "files=\$(git diff --cached --name-only --diff-filter=ACM | grep -E '^[^/]+\\.(py|sh)\$' | grep -vE '^(setup\\.py|Makefile|requirements.*\\.txt|install\\.sh|sonar_local\\.sh)\$' || true); if [ -n \"\$files\" ]; then echo '❌ ERROR: Temporary scripts found in root directory:' && echo \"\$files\" && echo '💡 Please move scripts into temp/ directories.' && exit 1; fi"
+      # Full local quality gate: protected-branch + branch naming + spec presence
+      # + hardcoded-secret scan + root temp-file block + architecture validation.
+      - id: ia-framework-quality-gate
+        name: IA-Framework local quality gate
+        entry: bash .claude/hooks/pre-commit.sh
         language: system
-        stages: [commit]
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
 
-      # Enforce branching conventions
-      - id: enforce-git-branch-naming
-        name: Enforce branch naming conventions
-        entry: bash -c "branch=\$(git rev-parse --abbrev-ref HEAD); if [[ ! \"\$branch\" =~ ^(feature|fix|hotfix|chore|claude|codex|test)/[a-z0-9._/-]+\$ ]] && [[ ! \"\$branch\" =~ ^(main|master|prod|staging|develop)\$ ]]; then echo \"❌ ERROR: Branch name '\$branch' violates convention (feature|fix|hotfix|chore|claude|test)/slug.\" && exit 1; fi"
-        language: system
-        stages: [commit]
-
-      # Run automated Architecture Anti-pattern validator
-      - id: local-architecture-validator
-        name: Custom local architecture validator
-        entry: python3 scripts/validation/validate_structure.py
-        language: system
-        files: \.py$
-        stages: [commit]
-
-      # Run local Enum integrity validator
-      # DISABLED until the database schema and domain Enums are defined.
-      # Re-enable by un-commenting once scripts/validation/validate_enums.py
-      # is wired to the real DB connection and code Enums.
-      # - id: local-enum-validator
-      #   name: Custom database vs code enum validator
+      # Enum integrity validator — DISABLED until the database schema and domain
+      # Enums are defined. Re-enable once scripts/validation/validate_enums.py is
+      # wired to the real DB connection and code Enums.
+      # - id: ia-framework-enum-validator
+      #   name: Database vs code enum validator
       #   entry: python3 scripts/validation/validate_enums.py
       #   language: system
-      #   files: \.py$
-      #   stages: [commit]
+      #   pass_filenames: false
+      #   stages: [pre-commit]

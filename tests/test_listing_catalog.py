@@ -56,6 +56,7 @@ def test_catalog_aggregations() -> None:
     a.publish()
 
     assert len(cat) == 2
+    assert cat.get("A") is a
     assert cat.total_value_cents() == 3500
     assert cat.published() == [a]
     with pytest.raises(KeyError):

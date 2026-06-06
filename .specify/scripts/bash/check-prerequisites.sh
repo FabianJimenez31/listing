@@ -90,7 +90,7 @@ if [[ "$CURRENT_BRANCH" =~ ^feature/(.+)$ ]]; then
             log_error "Prerequisite check FAILED for branch '$CURRENT_BRANCH'. Missing or unedited spec documents:"
             for item in "${MISSING_FILES[@]}"; do
                 echo -e "   ${RED}✗ specs/$SLUG/$item${NC}"
-            fi
+            done
             log_warning "💡 Please complete specifications and plans before proceeding."
         fi
         exit 1
