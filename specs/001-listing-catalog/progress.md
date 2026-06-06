@@ -10,7 +10,7 @@
 | Fase | Estado | Última parada |
 |------|--------|---------------|
 | 1 — Foundation & Setup | ✅ ENTREGADA | Dominio + specs + 335 tests verdes |
-| 2 — Core Backend Logic | 🔄 EN CURSO | ORM models + FastAPI skeleton |
+| 2 — Core Backend Logic | ✅ ENTREGADA | FastAPI 48 rutas + SQLAlchemy ORM + 376 tests |
 | 3 — Frontend React SPA | ⏳ Pendiente | — |
 | 4 — Safeguards & Quality | 🔄 Parcial | Harness activo; Sonar pendiente sobre código real |
 | 5 — Verification & Tests | 🔄 Parcial | Solo dominio; integración API pendiente |
@@ -134,8 +134,24 @@ src/
 ### Última parada Phase 2
 
 ```
-2026-06-06 — Implementación backend en curso.
-Siguiente: Alembic migrations + seeds + tests de integración.
+2026-06-06 — Phase 2 ENTREGADA y commiteada.
+Commit: feat(001-listing-catalog): Phase 2 — backend FastAPI + SQLAlchemy + 41 API tests
+
+Entregado:
+  - 18 tablas ORM (SQLAlchemy 2.x sync)
+  - 48 rutas /api/v1 operativas
+  - JWT auth + bcrypt + RBAC dependency injection
+  - 376 tests verdes (335 dominio + 41 API integración)
+
+Pendiente para Phase 2.1 (próxima sesión):
+  - Alembic: migraciones con up/down + seeds (roles, permisos, property_types, amenities)
+  - Redis rate limiting middleware (SEC-R13)
+  - Cola async workers (resize imágenes, notif leads)
+  - Upload de imágenes a S3-compatible (endpoint POST /properties/:id/images)
+  - Endpoint SEO: sitemap.xml, robots.txt, redirect_from[] → 301
+  - Tests de migraciones Alembic (up/down)
+
+Siguiente gran etapa: Phase 3 — Frontend React SPA (Vite, CSR).
 ```
 
 ---
