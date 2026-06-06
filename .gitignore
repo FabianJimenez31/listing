@@ -4,6 +4,7 @@ temp/testing/
 *.log
 __pycache__/
 node_modules/
+frontend/dist/
 
 # Secrets & local config
 .env
