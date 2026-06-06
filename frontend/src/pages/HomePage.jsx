@@ -14,11 +14,11 @@ export default function HomePage() {
 
   useEffect(() => {
     Promise.all([
-      getFeatured('home').catch(() => ({ data: [] })),
-      getBanners('HOME_HERO').catch(() => ({ data: [] })),
+      getFeatured('home').catch(() => []),
+      getBanners('HOME_HERO').catch(() => []),
     ]).then(([feat, ban]) => {
-      setFeatured(feat.data || [])
-      setBanners(ban.data || [])
+      setFeatured(Array.isArray(feat) ? feat : (feat.data || []))
+      setBanners(Array.isArray(ban) ? ban : (ban.data || []))
     }).finally(() => setLoading(false))
   }, [])
 

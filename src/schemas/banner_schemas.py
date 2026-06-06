@@ -4,6 +4,7 @@ from __future__ import annotations
 from datetime import datetime
 
 from pydantic import BaseModel
+from src.schemas.property_schemas import PropertyListItem
 
 
 class BannerResponse(BaseModel):
@@ -48,6 +49,7 @@ class FeaturedPropertyResponse(BaseModel):
     priority: int
     starts_at: datetime
     ends_at: datetime
+    property: PropertyListItem | None = None
 
     model_config = {"from_attributes": True}
 

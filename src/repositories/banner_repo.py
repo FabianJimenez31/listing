@@ -4,7 +4,7 @@ from __future__ import annotations
 from datetime import datetime
 
 from sqlalchemy import and_, or_, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from src.db.models.promotion_models import BannerORM, FeaturedPropertyORM
 from src.repositories.base import BaseRepository
@@ -73,6 +73,7 @@ class FeaturedPropertyRepository(BaseRepository[FeaturedPropertyORM]):
 
         stmt = (
             select(FeaturedPropertyORM)
+            .options(joinedload(FeaturedPropertyORM.property))
             .where(and_(*filters))
             .order_by(FeaturedPropertyORM.priority.desc())
             .limit(limit)

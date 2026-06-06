@@ -33,11 +33,14 @@ class PropertyRepository(BaseRepository[PropertyORM]):
         )
         return self.db.scalar(stmt)
 
-    def get_with_images(self, id: str) -> PropertyORM | None:
+    def get_with_images(self, id_or_slug: str) -> PropertyORM | None:
         stmt = (
             select(PropertyORM)
-            .where(PropertyORM.id == id, PropertyORM.deleted_at.is_(None))
-            .options(joinedload(PropertyORM.images), joinedload(PropertyORM.location))
+            .where(
+                or_(PropertyORM.id == id_or_slug, PropertyORM.slug == id_or_slug),
+                PropertyORM.deleted_at.is_(None),
+            )
+            .options(joinedload(PropertyORM.images), joinedload(PropertyORM.location), joinedload(PropertyORM.owner))
         )
         return self.db.scalar(stmt)
 
