@@ -15,8 +15,15 @@ from src.db.engine import Base
 
 config = context.config
 
-_db_url = os.getenv("DATABASE_URL", "sqlite:///./dev.db")
-config.set_main_option("sqlalchemy.url", _db_url)
+# Only override sqlalchemy.url when DATABASE_URL env var is explicitly set.
+# This preserves any URL set programmatically (e.g. by test fixtures).
+_db_url = os.getenv("DATABASE_URL")
+if _db_url:
+    config.set_main_option("sqlalchemy.url", _db_url)
+else:
+    _ini_url = config.get_main_option("sqlalchemy.url", None)
+    if not _ini_url or _ini_url.startswith("//"):
+        config.set_main_option("sqlalchemy.url", "sqlite:///./dev.db")
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
