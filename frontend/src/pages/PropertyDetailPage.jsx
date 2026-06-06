@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { getProperty } from '../api/properties'
+import { addFavorite, removeFavorite } from '../api/favorites'
+import { useAuth } from '../contexts/AuthContext'
 import LeadForm from '../components/property/LeadForm'
 import Spinner from '../components/ui/Spinner'
 import { trackEvent } from '../api/admin'
@@ -17,9 +19,12 @@ function formatPrice(amount, currency) {
 export default function PropertyDetailPage() {
   const { slug } = useParams()
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [property, setProperty] = useState(null)
   const [loading, setLoading] = useState(true)
   const [activeImg, setActiveImg] = useState(0)
+  const [isFav, setIsFav] = useState(false)
+  const [favLoading, setFavLoading] = useState(false)
 
   useEffect(() => {
     setLoading(true)
@@ -113,6 +118,22 @@ export default function PropertyDetailPage() {
         </div>
 
         <aside style={styles.aside}>
+          {user && (
+            <button
+              style={{ ...styles.favBtn, background: isFav ? '#e94560' : '#fff', color: isFav ? '#fff' : '#e94560' }}
+              disabled={favLoading}
+              onClick={() => {
+                setFavLoading(true)
+                const action = isFav ? removeFavorite(property.id) : addFavorite(property.id)
+                action
+                  .then(() => setIsFav((v) => !v))
+                  .catch(() => null)
+                  .finally(() => setFavLoading(false))
+              }}
+            >
+              {isFav ? '♥ En favoritos' : '♡ Guardar en favoritos'}
+            </button>
+          )}
           <LeadForm propertyId={property.id} />
         </aside>
       </div>
@@ -141,4 +162,5 @@ const styles = {
   desc: { margin: '0 0 1.5rem' },
   descH: { fontSize: 16, color: '#1a1a2e', marginBottom: '.5rem' },
   descText: { color: '#444', lineHeight: 1.7 },
+  favBtn: { display: 'block', width: '100%', border: '2px solid #e94560', borderRadius: 8, padding: '10px', fontSize: 14, fontWeight: 600, cursor: 'pointer', marginBottom: '1rem', transition: 'all 0.2s' },
 }

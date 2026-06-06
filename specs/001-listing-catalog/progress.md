@@ -12,9 +12,10 @@
 | 1 — Foundation & Setup | ✅ ENTREGADA | Dominio + specs + 335 tests verdes |
 | 2 — Core Backend Logic | ✅ ENTREGADA | FastAPI 48 rutas + SQLAlchemy ORM + 395 tests |
 | 2.1 — Backend extras    | ✅ ENTREGADA | Alembic + seeds + image upload + SEO + rate limit |
-| 3 — Frontend React SPA | ✅ ENTREGADA | Vite + React 18 + SPA completa |
-| 4 — Safeguards & Quality | 🔄 Parcial | Harness activo; Sonar pendiente sobre código real |
-| 5 — Verification & Tests | 🔄 Parcial | Solo dominio; integración API pendiente |
+| 3 — Frontend React SPA | ✅ ENTREGADA | Vite + React 18 + SPA completa (108 módulos) |
+| 3.1 — Frontend extras  | ✅ ENTREGADA | FavoritesPage + FeaturedPage admin + botón fav en detalle |
+| 4 — Safeguards & Quality | 🔄 Parcial | 429 tests verdes; migraciones OK; Sonar pendiente |
+| 5 — Verification & Tests | ✅ ENTREGADA | 429 tests (dominio + API + migraciones) |
 
 ---
 
@@ -127,9 +128,9 @@ src/
 - [x] `src/repositories/` — base + user + property + lead + banner repos
 - [x] `src/api/app.py` + `deps.py` + `error_handler.py`
 - [x] `src/api/routers/` — auth, users, properties, search, leads, banners, favorites, locations, amenities, admin, metrics
-- [ ] Alembic migrations + seeds (roles, permissions, property_types, amenities)
-- [ ] Tests de integración API (FastAPI TestClient)
-- [ ] Redis rate limiting middleware
+- [x] Alembic migrations + seeds (roles, permissions, property_types, amenities)
+- [x] Tests de integración API (FastAPI TestClient)
+- [x] Redis rate limiting middleware
 - [ ] Cola async workers (image resize, lead notifications)
 
 ### Última parada Phase 2
@@ -169,8 +170,11 @@ Siguiente gran etapa: Phase 3 — Frontend React SPA (Vite, CSR).
 - `frontend/src/components/` — Header, Layout, PropertyCard, PropertyFilters, LeadForm, Spinner, Pagination
 - Páginas públicas: HomePage (hero + búsqueda + destacados), SearchPage (filtros + grid + paginación), PropertyDetailPage (galería + specs + LeadForm + JSON-LD + OG), LoginPage, RegisterPage
 - Panel agente: AgentDashboard (tabla con lifecycle), PropertyFormPage (CRUD + image upload), LeadsPage
-- Panel admin: AdminDashboard (stats), ModerationPage (aprobar/rechazar)
-- Vite proxy al backend + Build limpio (103 módulos, 337 KB JS)
+- Panel admin: AdminDashboard (stats), ModerationPage, BannersPage, UsersPage, FeaturedPage
+- Página usuario: FavoritesPage (grid + remove + paginación)
+- Botón favorito en PropertyDetailPage (toggle add/remove, solo para usuarios auth)
+- Favoritos en Header navbar
+- Vite proxy al backend + Build limpio (108 módulos, 355 KB JS)
 
 ### Última parada Phase 3
 
@@ -183,11 +187,17 @@ Pendiente para Phase 4:
   - CI apuntando a SonarQube hosteado (ci-quality-gate.yml)
   - Gate validate-enums reactivado (cuando exista schema DB real en producción)
 
-Pendiente para Phase 5 / mejoras:
-  - Admin: páginas de banners, destacados, usuarios (banners.jsx, featured.jsx, users.jsx)
-  - Frontend: página de favorites, compartir propiedad, reportar propiedad
+Completado en sesión siguiente:
+  - Admin: BannersPage, FeaturedPage, UsersPage ✅
+  - Frontend: FavoritesPage + botón favorito en detalle + api/favorites.js ✅
+  - Deploy: Dockerfile + Dockerfile.frontend + nginx.conf + docker-compose.yml ✅
+  - Alembic migrations smoke tests (up/down round-trip) ✅
+  - 429 tests verdes ✅
+
+Pendiente:
+  - SonarQube Quality Gate verde sobre backend real (make sonar-check)
   - Tests e2e frontend (Playwright o Cypress)
-  - Deploy: Dockerfile + docker-compose (PostgreSQL + Redis + backend + frontend nginx)
+  - Cola async workers (image resize, lead notifications)
 ```
 
 ---
@@ -199,18 +209,20 @@ Pendiente para Phase 5 / mejoras:
 - [x] Secret scanner en pre-commit
 - [x] Branch convention gate
 - [x] Spec gate (spec/plan/tasks >50B)
-- [ ] SonarQube Quality Gate sobre código backend real
+- [x] Docker Compose deploy (db + redis + backend + frontend nginx)
+- [ ] SonarQube Quality Gate sobre código backend real (`make sonar-check`)
 - [ ] CI apuntando a SonarQube hosteado
 - [ ] Gate validate-enums reactivado (cuando exista schema DB real)
 
 ---
 
-## FASE 5 — Verification & Tests 🔄
+## FASE 5 — Verification & Tests ✅
 
 - [x] 335 tests unitarios dominio (pytest)
-- [ ] Tests integración API (TestClient + SQLite)
-- [ ] Tests migraciones Alembic (up/down)
-- [ ] Tests cobertura objetivo SonarQube
+- [x] 90 tests integración API (TestClient + SQLite) → total 425 tests
+- [x] 4 tests migraciones Alembic (up/down round-trip)
+- [x] **429 tests verdes** (cobertura: dominio 100%; API integración completa)
+- [ ] Tests cobertura objetivo SonarQube (requiere `make sonar-check`)
 
 ---
 

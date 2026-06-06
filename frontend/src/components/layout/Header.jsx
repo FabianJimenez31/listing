@@ -19,6 +19,7 @@ export default function Header() {
           <Link to="/propiedades" style={styles.link}>Propiedades</Link>
           {user ? (
             <>
+              <Link to="/favoritos" style={styles.link}>♥ Favoritos</Link>
               <Link to="/agente" style={styles.link}>Mi panel</Link>
               {user.permissions?.includes('property:moderate') && (
                 <Link to="/admin" style={styles.link}>Admin</Link>

@@ -15,9 +15,15 @@ import AgentDashboard from './pages/agent/AgentDashboard'
 import PropertyFormPage from './pages/agent/PropertyFormPage'
 import LeadsPage from './pages/agent/LeadsPage'
 
+// Pages — user
+import FavoritesPage from './pages/FavoritesPage'
+
 // Pages — admin panel
 import AdminDashboard from './pages/admin/AdminDashboard'
 import ModerationPage from './pages/admin/ModerationPage'
+import BannersPage from './pages/admin/BannersPage'
+import UsersPage from './pages/admin/UsersPage'
+import FeaturedPage from './pages/admin/FeaturedPage'
 
 function NotFound() {
   return (
@@ -42,6 +48,9 @@ export default function App() {
               <Route path="/login" element={<LoginPage />} />
               <Route path="/registro" element={<RegisterPage />} />
 
+              {/* User */}
+              <Route path="/favoritos" element={<FavoritesPage />} />
+
               {/* Agent panel */}
               <Route path="/agente" element={<AgentDashboard />} />
               <Route path="/agente/nueva" element={<PropertyFormPage />} />
@@ -51,6 +60,9 @@ export default function App() {
               {/* Admin panel */}
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/admin/moderacion" element={<ModerationPage />} />
+              <Route path="/admin/banners" element={<BannersPage />} />
+              <Route path="/admin/usuarios" element={<UsersPage />} />
+              <Route path="/admin/destacados" element={<FeaturedPage />} />
 
               {/* Fallback */}
               <Route path="*" element={<NotFound />} />
