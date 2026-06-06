@@ -45,7 +45,7 @@ export default function PropertyFilters() {
     <form onSubmit={apply} style={styles.form}>
       <h3 style={styles.heading}>Filtros</h3>
       {field('Buscar', 'q')}
-      {field('Operación', 'operation_type', 'text', [['sale', 'Venta'], ['rent', 'Renta'], ['temporary', 'Temporal']])}
+      {field('Operación', 'operation_type', 'text', [['sale', 'Venta'], ['rent', 'Arriendo'], ['temporary', 'Temporal']])}
       {field('Tipo', 'property_kind', 'text', [['house', 'Casa'], ['apartment', 'Apartamento'], ['lot', 'Terreno'], ['office', 'Oficina']])}
       {field('Precio mín. (centavos)', 'min_price', 'number')}
       {field('Precio máx. (centavos)', 'max_price', 'number')}

@@ -10,13 +10,13 @@ import { trackEvent } from '../api/admin'
 
 const PropertyMap = lazy(() => import('../components/property/PropertyMap'))
 
-const STATUS_LABEL = { published: 'Publicado', paused: 'Pausado', sold: 'Vendido', rented: 'Rentado' }
-const OP_LABEL = { sale: 'Venta', rent: 'Renta', temporary: 'Temporal' }
+const STATUS_LABEL = { published: 'Publicado', paused: 'Pausado', sold: 'Vendido', rented: 'Arrendado' }
+const OP_LABEL = { sale: 'Venta', rent: 'Arriendo', temporary: 'Temporal' }
 
 function formatPrice(amount, currency) {
   if (!amount) return 'Precio a consultar'
-  return new Intl.NumberFormat('es-MX', {
-    style: 'currency', currency: currency || 'MXN', maximumFractionDigits: 0,
+  return new Intl.NumberFormat('es-CO', {
+    style: 'currency', currency: currency || 'COP', maximumFractionDigits: 0,
   }).format(amount / 100)
 }
 

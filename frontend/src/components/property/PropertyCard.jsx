@@ -1,11 +1,11 @@
 import { Link } from 'react-router-dom'
 
-const OPERATION_LABEL = { sale: 'Venta', rent: 'Renta', temporary: 'Temporal' }
+const OPERATION_LABEL = { sale: 'Venta', rent: 'Arriendo', temporary: 'Temporal' }
 const KIND_LABEL = { house: 'Casa', apartment: 'Apartamento', lot: 'Terreno', office: 'Oficina' }
 
-function formatPrice(amount, currency = 'MXN') {
+function formatPrice(amount, currency = 'COP') {
   if (!amount) return 'Precio a consultar'
-  return new Intl.NumberFormat('es-MX', { style: 'currency', currency, maximumFractionDigits: 0 }).format(amount / 100)
+  return new Intl.NumberFormat('es-CO', { style: 'currency', currency, maximumFractionDigits: 0 }).format(amount / 100)
 }
 
 export default function PropertyCard({ property }) {

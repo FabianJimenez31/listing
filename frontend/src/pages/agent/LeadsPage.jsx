@@ -64,7 +64,7 @@ export default function LeadsPage() {
               >
                 {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
-              <span style={{ fontSize: 12, color: '#aaa' }}>{new Date(lead.created_at).toLocaleDateString('es-MX')}</span>
+              <span style={{ fontSize: 12, color: '#aaa' }}>{new Date(lead.created_at).toLocaleDateString('es-CO')}</span>
             </div>
           ))}
         </div>

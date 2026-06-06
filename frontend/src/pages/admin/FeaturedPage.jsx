@@ -184,7 +184,7 @@ export default function FeaturedPage() {
               <span style={s.c2}>{item.scope}</span>
               <span style={s.c1}>{item.priority}</span>
               <span style={{ ...s.c2, color: '#888', fontSize: 12 }}>
-                {item.expires_at ? new Date(item.expires_at).toLocaleDateString('es-MX') : '—'}
+                {item.expires_at ? new Date(item.expires_at).toLocaleDateString('es-CO') : '—'}
               </span>
               <span style={s.c1}>
                 <button onClick={() => handleDelete(item.id)} style={s.del}>Eliminar</button>

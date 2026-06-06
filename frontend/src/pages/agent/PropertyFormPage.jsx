@@ -7,7 +7,7 @@ import Spinner from '../../components/ui/Spinner'
 
 const EMPTY = {
   title: '', description: '', operation_type: 'sale', property_kind: 'house',
-  price_amount: '', currency: 'MXN', bedrooms: '', bathrooms: '',
+  price_amount: '', currency: 'COP', bedrooms: '', bathrooms: '',
   total_area_m2: '', built_area_m2: '', parking_spots: '',
   address_street: '', contact_phone: '', contact_whatsapp: '',
 }
@@ -31,7 +31,7 @@ export default function PropertyFormPage() {
         setForm({
           title: data.title || '', description: data.description || '',
           operation_type: data.operation_type || 'sale', property_kind: data.property_kind || 'house',
-          price_amount: data.price_amount || '', currency: data.currency || 'MXN',
+          price_amount: data.price_amount || '', currency: data.currency || 'COP',
           bedrooms: data.bedrooms ?? '', bathrooms: data.bathrooms ?? '',
           total_area_m2: data.total_area_m2 ?? '', built_area_m2: data.built_area_m2 ?? '',
           parking_spots: data.parking_spots ?? '', address_street: data.address_street || '',
@@ -115,7 +115,7 @@ export default function PropertyFormPage() {
           </div>
           <div style={styles.row2}>
             <F label="Precio (centavos) *" k="price_amount" type="number" />
-            <F label="Moneda" k="currency" options={[['MXN','MXN'],['USD','USD']]} />
+            <F label="Moneda" k="currency" options={[['COP','COP'],['USD','USD'],['EUR','EUR']]} />
           </div>
           <div style={styles.row3}>
             <F label="Recámaras" k="bedrooms" type="number" />

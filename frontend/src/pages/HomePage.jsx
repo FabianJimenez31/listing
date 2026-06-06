@@ -30,8 +30,8 @@ export default function HomePage() {
   return (
     <>
       <Helmet>
-        <title>Listing — Propiedades en venta y renta</title>
-        <meta name="description" content="Encuentra tu propiedad ideal. Miles de inmuebles en venta y renta." />
+        <title>Listing Colombia — Propiedades en venta y arriendo</title>
+        <meta name="description" content="Encuentra tu propiedad ideal en Colombia. Apartamentos, casas y locales en venta y arriendo en Bogotá y más ciudades." />
       </Helmet>
 
       {/* Hero */}
@@ -42,11 +42,11 @@ export default function HomePage() {
           </a>
         )}
         <div style={styles.heroContent}>
-          <h1 style={styles.heroTitle}>Encuentra tu propiedad ideal</h1>
+          <h1 style={styles.heroTitle}>Encuentra tu propiedad ideal en Colombia</h1>
           <form onSubmit={search} style={styles.searchBar}>
             <input
               style={styles.searchInput}
-              placeholder="Ciudad, colonia, tipo de propiedad…"
+              placeholder="Barrio, ciudad, tipo de inmueble…"
               value={q}
               onChange={(e) => setQ(e.target.value)}
             />
