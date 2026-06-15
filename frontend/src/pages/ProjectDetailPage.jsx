@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet-async'
 import { getProject } from '../api/projects'
 import Spinner from '../components/ui/Spinner'
 import { formatPrice } from '../components/property/PropertyCard'
+import ImageCarousel from '../components/ui/ImageCarousel'
 import { IconPin } from '../components/ui/icons'
 
 const STAGE = { preventa: 'Preventa', construccion: 'En construcción', entrega_inmediata: 'Entrega inmediata' }
@@ -37,8 +38,6 @@ export default function ProjectDetailPage() {
     : project.cover_image_url
       ? [{ id: 'cover', cdn_url: project.cover_image_url }]
       : []
-  const main = images[0]
-  const sides = images.slice(1, 3)
   const from = formatPrice(project.price_from, project.currency)
   const to = formatPrice(project.price_to, project.currency)
   const phone = project.contact_phone || project.agency?.phone
@@ -59,11 +58,12 @@ export default function ProjectDetailPage() {
         <Link to="/proyectos">Proyectos</Link>{project.location?.name ? ` · ${project.location.name}` : ''}
       </div>
 
-      <div className="detail-gallery">
-        <div className="main">{main && <img src={main.cdn_url} alt={project.title} />}</div>
-        {sides.length > 0 && (
-          <div className="side">{sides.map((s) => <img key={s.id} src={s.cdn_url} alt={project.title} />)}</div>
-        )}
+      <div className="pdp-hero">
+        <div className="badges">
+          {project.currency === 'USD' && <span className="badge usa">USA</span>}
+          <span className="badge proyecto">{STAGE[project.stage] || 'Proyecto'}</span>
+        </div>
+        <ImageCarousel images={images} alt={project.title} />
       </div>
 
       <div className="detail-cols">

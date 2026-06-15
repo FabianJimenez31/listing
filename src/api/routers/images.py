@@ -142,6 +142,20 @@ def delete_image(property_id: str, image_id: str, current_user: CurrentUser, db:
     return None
 
 
+@router.patch("/{property_id}/images/{image_id}/main", response_model=ImageResponse)
+def set_main_image(property_id: str, image_id: str, current_user: CurrentUser, db: DB):
+    """Promote an existing image to the cover (role=main), demoting the rest."""
+    prop = _get_property_owned(property_id, current_user, db)
+    target = db.query(PropertyImageORM).filter_by(id=image_id, property_id=property_id).first()
+    if not target:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Image not found")
+    for img in prop.images:
+        img.role = "main" if img.id == image_id else "gallery"
+    db.commit()
+    db.refresh(target)
+    return target
+
+
 @router.patch("/{property_id}/images/reorder", response_model=list[ImageResponse])
 def reorder_images(property_id: str, body: ReorderRequest, current_user: CurrentUser, db: DB):
     """Reorder images by providing an ordered list of image IDs."""

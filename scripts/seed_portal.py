@@ -308,14 +308,30 @@ def _get_or_create_agent(db) -> UserORM:
     return agent
 
 
-def _attach_main_image(db, owner_type: str, owner_id: str, url: str, alt: str) -> None:
-    if owner_type == "property":
-        has = db.query(PropertyImageORM).filter_by(property_id=owner_id, role="main").first()
-        if has:
-            return
+# Generic interior photos used to give every demo property a real gallery
+INTERIOR_POOL = [
+    "photo-1505691938895-1758d7feb511",
+    "photo-1522708323590-d24dbb6b0267",
+    "photo-1560448204-e02f11c3d0e2",
+    "photo-1493809842364-78817add7ffb",
+    "photo-1502672260266-1c1ef2d93688",
+]
+
+
+def _attach_images(db, property_id: str, photo_ids: list[str], alt: str) -> None:
+    """Attach a multi-photo gallery (idempotent: skips if a gallery already exists)."""
+    existing = db.query(PropertyImageORM).filter_by(property_id=property_id).all()
+    if len(existing) >= 2:
+        return
+    has_main = any(i.role == "main" for i in existing)
+    start = len(existing)
+    seq = photo_ids if not has_main else photo_ids[1:]  # don't duplicate an existing cover
+    for idx, photo in enumerate(seq):
+        role = "main" if (idx == 0 and not has_main) else "gallery"
         db.add(PropertyImageORM(
-            id=str(uuid.uuid4()), property_id=owner_id, role="main", media_kind="image",
-            position=0, storage_key=f"seed/{owner_id}", cdn_url=url, thumb_url=url, alt_text=alt,
+            id=str(uuid.uuid4()), property_id=property_id, role=role, media_kind="image",
+            position=start + idx, storage_key=f"seed/{property_id}/{start + idx}",
+            cdn_url=_img(photo, 1200), thumb_url=_img(photo, 400), alt_text=alt,
         ))
 
 
@@ -362,37 +378,37 @@ def _upsert_projects(db, agencies: dict[str, AgencyORM], loc_ids: dict[str, str]
 
 
 def _upsert_extra_properties(db, agent: UserORM, agencies: dict[str, AgencyORM], loc_ids: dict[str, str], type_ids: dict[str, str], now) -> None:
-    existing = {p.slug for p in db.query(PropertyORM.slug).all()}
     for spec in EXTRA_PROPERTIES:
-        if spec["slug"] in existing:
-            continue
-        agency = agencies.get(spec.get("agency_slug"))
-        prop_id = str(uuid.uuid4())
-        db.add(PropertyORM(
-            id=prop_id,
-            owner_id=agent.id,
-            agency_id=agency.id if agency else None,
-            location_id=loc_ids.get(spec["location_slug"]),
-            property_type_id=type_ids.get(spec["type_code"]),
-            title=spec["title"],
-            slug=spec["slug"],
-            description=spec.get("description"),
-            operation_type=spec["operation_type"],
-            property_kind=spec["property_kind"],
-            condition=spec.get("condition"),
-            price_amount=spec["price_amount"],
-            currency=spec["currency"],
-            bedrooms=spec.get("bedrooms"),
-            bathrooms=spec.get("bathrooms"),
-            parking_spots=spec.get("parking_spots"),
-            total_area_m2=spec.get("total_area_m2"),
-            status="published",
-            published_at=now,
-        ))
-        db.flush()
+        prop = db.query(PropertyORM).filter_by(slug=spec["slug"]).first()
+        if not prop:
+            agency = agencies.get(spec.get("agency_slug"))
+            prop = PropertyORM(
+                id=str(uuid.uuid4()),
+                owner_id=agent.id,
+                agency_id=agency.id if agency else None,
+                location_id=loc_ids.get(spec["location_slug"]),
+                property_type_id=type_ids.get(spec["type_code"]),
+                title=spec["title"],
+                slug=spec["slug"],
+                description=spec.get("description"),
+                operation_type=spec["operation_type"],
+                property_kind=spec["property_kind"],
+                condition=spec.get("condition"),
+                price_amount=spec["price_amount"],
+                currency=spec["currency"],
+                bedrooms=spec.get("bedrooms"),
+                bathrooms=spec.get("bathrooms"),
+                parking_spots=spec.get("parking_spots"),
+                total_area_m2=spec.get("total_area_m2"),
+                status="published",
+                published_at=now,
+            )
+            db.add(prop)
+            db.flush()
+            print(f"  + propiedad: {spec['title']}")
+        # Always ensure the photo gallery (idempotent), new or existing
         if spec.get("image"):
-            _attach_main_image(db, "property", prop_id, _img(spec["image"]), spec["title"])
-        print(f"  + propiedad: {spec['title']}")
+            _attach_images(db, prop.id, [spec["image"], *INTERIOR_POOL[:3]], spec["title"])
 
 
 def _link_existing_properties(db, agencies: dict[str, AgencyORM]) -> None:
@@ -415,7 +431,7 @@ def _link_existing_properties(db, agencies: dict[str, AgencyORM]) -> None:
             agency = agencies.get(agency_by_slug.get(slug))
             if agency:
                 prop.agency_id = agency.id
-        _attach_main_image(db, "property", prop.id, _img(photo), prop.title)
+        _attach_images(db, prop.id, [photo, *INTERIOR_POOL[:3]], prop.title)
 
 
 def _upsert_posts(db, author_id: str | None, now) -> None:

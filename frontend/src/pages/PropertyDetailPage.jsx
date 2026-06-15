@@ -7,6 +7,7 @@ import { trackEvent } from '../api/admin'
 import { useAuth } from '../contexts/AuthContext'
 import LeadForm from '../components/property/LeadForm'
 import { formatPrice } from '../components/property/PropertyCard'
+import ImageCarousel from '../components/ui/ImageCarousel'
 import Spinner from '../components/ui/Spinner'
 import {
   IconArea, IconBath, IconBed, IconCar, IconHeart, IconPhone, IconPin, IconShare, IconWhatsapp,
@@ -42,14 +43,12 @@ export default function PropertyDetailPage() {
   const { user } = useAuth()
   const [property, setProperty] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [activeImg, setActiveImg] = useState(0)
   const [isFav, setIsFav] = useState(false)
   const [favLoading, setFavLoading] = useState(false)
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     setLoading(true)
-    setActiveImg(0)
     getProperty(slug)
       .then((data) => {
         setProperty(data)
@@ -63,10 +62,7 @@ export default function PropertyDetailPage() {
   if (!property) return null
 
   const images = property.images || []
-  const single = images.length <= 1
-  const main = images[activeImg] || images[0]
-  const sideImgs = images.map((img, i) => ({ img, i })).filter((x) => x.i !== activeImg).slice(0, 4)
-  const extra = images.length - 1 - sideImgs.length
+  const main = images[0]
 
   const pageUrl = window.location.href
   const [opLabel, opClass] = OP[property.operation_type] || ['Venta', 'venta']
@@ -123,36 +119,24 @@ export default function PropertyDetailPage() {
         {property.location?.name ? ` · ${property.location.name}` : ''}
       </div>
 
-      {/* Gallery */}
-      <div className={`pdp-gallery ${single ? 'single' : ''}`}>
-        <div className="main">
-          <div className="badges">
-            {isUSA && <span className="badge usa">USA</span>}
-            <span className={`badge ${opClass}`}>{opLabel}</span>
-            {STATUS_LABEL[property.status] && <span className="badge proyecto">{STATUS_LABEL[property.status]}</span>}
-          </div>
-          <div className="pdp-gtools">
-            {user && (
-              <button className={`pdp-gtool fav ${isFav ? 'on' : ''}`} disabled={favLoading} onClick={toggleFav} aria-label="Guardar en favoritos">
-                <IconHeart />
-              </button>
-            )}
-            <button className="pdp-gtool" onClick={handleShare} aria-label="Compartir">
-              <IconShare />
-            </button>
-          </div>
-          {main ? <img src={main.cdn_url} alt={main.alt_text || property.title} /> : <div className="noimg">P</div>}
+      {/* Gallery carousel */}
+      <div className="pdp-hero">
+        <div className="badges">
+          {isUSA && <span className="badge usa">USA</span>}
+          <span className={`badge ${opClass}`}>{opLabel}</span>
+          {STATUS_LABEL[property.status] && <span className="badge proyecto">{STATUS_LABEL[property.status]}</span>}
         </div>
-        {!single && (
-          <div className="pdp-side">
-            {sideImgs.map(({ img, i }, idx) => (
-              <div className="pdp-cell" key={img.id} onClick={() => setActiveImg(i)}>
-                <img src={img.thumb_url || img.cdn_url} alt="" />
-                {idx === sideImgs.length - 1 && extra > 0 && <div className="more">+{extra}</div>}
-              </div>
-            ))}
-          </div>
-        )}
+        <div className="pdp-gtools">
+          {user && (
+            <button className={`pdp-gtool fav ${isFav ? 'on' : ''}`} disabled={favLoading} onClick={toggleFav} aria-label="Guardar en favoritos">
+              <IconHeart />
+            </button>
+          )}
+          <button className="pdp-gtool" onClick={handleShare} aria-label="Compartir">
+            <IconShare />
+          </button>
+        </div>
+        <ImageCarousel images={images} alt={property.title} />
       </div>
 
       <div className="detail-cols">

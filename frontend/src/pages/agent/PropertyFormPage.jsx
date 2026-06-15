@@ -4,10 +4,12 @@ import { Helmet } from 'react-helmet-async'
 import {
   approveProperty,
   createProperty,
+  deleteImage,
   getProperty,
   pauseProperty,
   reactivateProperty,
   rejectProperty,
+  setMainImage,
   setShowOnHome,
   submitProperty,
   updateProperty,
@@ -70,6 +72,7 @@ export default function PropertyFormPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
   const [uploadProgress, setUploadProgress] = useState(null)
+  const [images, setImages] = useState([])
   const fileRef = useRef()
 
   const loadProperty = () => {
@@ -87,9 +90,13 @@ export default function PropertyFormPage() {
       })
       setStatus(data.status)
       setRejectionReason(data.rejection_reason)
+      setImages(data.images || [])
     }).catch(() => navigate('/agente'))
       .finally(() => setLoading(false))
   }
+
+  const reloadImages = () =>
+    getProperty(id).then((d) => setImages(d.images || [])).catch(() => null)
 
   useEffect(() => {
     if (!authLoading && !user) { navigate('/login'); return }
@@ -120,13 +127,20 @@ export default function PropertyFormPage() {
     const files = Array.from(e.target.files || [])
     if (!files.length || !id) return
     setUploadProgress(0)
+    const hadNone = images.length === 0
     for (let i = 0; i < files.length; i++) {
-      await uploadImage(id, files[i], i === 0 ? 'main' : 'gallery').catch(() => null)
+      // first ever image becomes the cover; the rest are gallery
+      const role = hadNone && i === 0 ? 'main' : 'gallery'
+      await uploadImage(id, files[i], role).catch(() => null)
       setUploadProgress(Math.round(((i + 1) / files.length) * 100))
     }
+    if (fileRef.current) fileRef.current.value = ''
     setUploadProgress(null)
-    alert('Imágenes subidas correctamente')
+    reloadImages()
   }
+
+  const removeImg = (imageId) => deleteImage(id, imageId).then(reloadImages).catch(() => null)
+  const makeMain = (imageId) => setMainImage(id, imageId).then(reloadImages).catch(() => null)
 
   const submit = async (e) => {
     e.preventDefault()
@@ -274,10 +288,10 @@ export default function PropertyFormPage() {
 
         {isEdit && (
           <aside style={s.aside}>
-            <h3 style={s.asideH}>Imágenes</h3>
+            <h3 style={s.asideH}>Fotos ({images.length})</h3>
             <input type="file" ref={fileRef} multiple accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
-            <button onClick={() => fileRef.current?.click()} style={s.uploadBtn}>
-              Subir imágenes
+            <button type="button" onClick={() => fileRef.current?.click()} style={s.uploadBtn}>
+              + Subir fotos
             </button>
             {uploadProgress !== null && (
               <div style={s.progress}>
@@ -285,6 +299,22 @@ export default function PropertyFormPage() {
                 <span style={s.progressLabel}>{uploadProgress}%</span>
               </div>
             )}
+            {images.length > 0 && (
+              <div className="img-manager">
+                {images.map((img) => (
+                  <div key={img.id} className={`img-tile ${img.role === 'main' ? 'main' : ''}`}>
+                    <img src={img.thumb_url || img.cdn_url} alt={img.alt_text || ''} />
+                    <button type="button" className="x" onClick={() => removeImg(img.id)} aria-label="Quitar">✕</button>
+                    {img.role === 'main'
+                      ? <span className="mainbadge">PORTADA</span>
+                      : <button type="button" className="setmain" onClick={() => makeMain(img.id)}>Hacer portada</button>}
+                  </div>
+                ))}
+              </div>
+            )}
+            <p style={{ fontSize: 12, color: '#4A5680', marginTop: 10, lineHeight: 1.5 }}>
+              Sube varias fotos a la vez. La marcada como <b>portada</b> se usa en la tarjeta y como primera del carrusel.
+            </p>
           </aside>
         )}
       </div>

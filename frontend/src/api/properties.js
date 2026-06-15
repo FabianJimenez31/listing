@@ -53,6 +53,9 @@ export const uploadImage = (propertyId, file, role = 'gallery') => {
 export const deleteImage = (propertyId, imageId) =>
   api.delete(`/properties/${propertyId}/images/${imageId}`)
 
+export const setMainImage = (propertyId, imageId) =>
+  api.patch(`/properties/${propertyId}/images/${imageId}/main`).then((r) => r.data)
+
 export const reorderImages = (propertyId, orderedIds) =>
   api.patch(`/properties/${propertyId}/images/reorder`, { ordered_ids: orderedIds }).then((r) => r.data)
 
