@@ -271,6 +271,74 @@
 .thumb .x { position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; border-radius: 50%; border: none; background: rgba(16,26,44,.75); color: #fff; cursor: pointer; font-size: 12px; line-height: 1; }
 @media (max-width: 640px) { .form-grid { grid-template-columns: 1fr; } }
 
+/* ── Property detail page (PDP) ───────────────────────────────── */
+.pdp-crumbs { font-size: 13.5px; color: var(--muted); margin-bottom: 16px; }
+.pdp-crumbs a:hover { color: var(--blue); }
+
+.pdp-gallery { display: grid; grid-template-columns: 1.7fr 1fr; gap: 10px; border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 24px; }
+.pdp-gallery.single { grid-template-columns: 1fr; }
+.pdp-gallery .main { position: relative; height: 470px; background: var(--bg-soft); }
+.pdp-gallery .main > img { width: 100%; height: 100%; object-fit: cover; }
+.pdp-gallery .main .noimg { width: 100%; height: 100%; display: grid; place-items: center; background: linear-gradient(135deg, var(--blue) 0%, var(--blue-100) 100%); color: rgba(255,255,255,.6); font-size: 72px; font-weight: 800; }
+.pdp-side { display: grid; grid-template-rows: 1fr 1fr; gap: 10px; }
+.pdp-cell { position: relative; height: 230px; overflow: hidden; cursor: pointer; background: var(--bg-soft); }
+.pdp-cell img { width: 100%; height: 100%; object-fit: cover; transition: transform .45s var(--ease); }
+.pdp-cell:hover img { transform: scale(1.06); }
+.pdp-cell .more { position: absolute; inset: 0; background: rgba(16,26,44,.55); color: #fff; display: grid; place-items: center; font-size: 22px; font-weight: 800; }
+.pdp-gallery .badges { position: absolute; top: 16px; left: 16px; z-index: 2; }
+.pdp-gtools { position: absolute; top: 14px; right: 14px; display: flex; gap: 8px; z-index: 3; }
+.pdp-gtool { width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,.92); border: none; display: grid; place-items: center; cursor: pointer; color: var(--ink); box-shadow: var(--shadow-sm); transition: color .2s var(--ease), transform .2s var(--ease); }
+.pdp-gtool:hover { transform: scale(1.06); color: var(--blue); }
+.pdp-gtool.fav.on { color: #e23b5a; }
+
+.pdp-head h1 { font-size: clamp(24px, 3.2vw, 34px); font-weight: 800; color: var(--ink); letter-spacing: -.02em; line-height: 1.15; margin: 10px 0 6px; }
+.pdp-loc { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 15px; }
+.pdp-price { font-size: 30px; font-weight: 800; color: var(--ink); letter-spacing: -.02em; margin-top: 14px; }
+.pdp-price small { font-size: 15px; font-weight: 600; color: var(--muted); }
+
+.pdp-specs { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin: 22px 0; }
+.pdp-spec { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 15px; display: flex; flex-direction: column; gap: 8px; }
+.pdp-spec .ic { width: 34px; height: 34px; border-radius: 9px; background: var(--blue-50); color: var(--blue); display: grid; place-items: center; }
+.pdp-spec .v { font-size: 19px; font-weight: 800; color: var(--ink); }
+.pdp-spec .k { font-size: 12.5px; color: var(--muted); }
+
+.pdp-section { margin: 30px 0; }
+.pdp-section h2 { font-size: 20px; font-weight: 800; color: var(--ink); margin-bottom: 12px; }
+.pdp-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 0 28px; }
+.pdp-fact { display: flex; justify-content: space-between; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--line); font-size: 14.5px; }
+.pdp-fact .k { color: var(--muted); }
+.pdp-fact .v { color: var(--ink); font-weight: 600; }
+.pdp-map { border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--line); }
+
+.pdp-aside { position: sticky; top: 90px; display: flex; flex-direction: column; gap: 14px; }
+.pdp-contact { background: #fff; border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 20px; box-shadow: var(--shadow-sm); }
+.pdp-contact .op { font-size: 12px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--blue); }
+.pdp-contact .price { font-size: 26px; font-weight: 800; color: var(--ink); letter-spacing: -.02em; margin-top: 2px; }
+.pdp-contact .price small { font-size: 14px; font-weight: 600; color: var(--muted); }
+.pdp-agent { display: flex; align-items: center; gap: 12px; margin: 16px 0; padding: 14px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.pdp-agent .av { width: 46px; height: 46px; border-radius: 12px; background: var(--blue-50); color: var(--blue); display: grid; place-items: center; font-weight: 800; font-size: 15px; flex: none; }
+.pdp-agent .nm { font-weight: 800; color: var(--ink); font-size: 15px; }
+.pdp-agent .ro { font-size: 12.5px; color: var(--muted); }
+.pdp-actions { display: flex; flex-direction: column; gap: 10px; }
+.pdp-actions .btn { width: 100%; justify-content: center; }
+.btn-wa { background: #25D366; color: #fff; }
+.btn-wa:hover { background: #1ebe5b; transform: translateY(-1px); box-shadow: 0 12px 26px -12px rgba(37,211,102,.6); }
+
+/* lead form (shares the design system) */
+.lead-form h3 { font-size: 16px; font-weight: 800; color: var(--ink); margin-bottom: 12px; }
+.lead-form input, .lead-form textarea { width: 100%; padding: 11px 13px; border: 1.5px solid var(--line); border-radius: 10px; font-size: 14px; color: var(--text); outline: none; margin-bottom: 10px; font-family: inherit; background: #fff; }
+.lead-form input:focus, .lead-form textarea:focus { border-color: var(--blue); }
+.lead-form .consent { display: flex; gap: 8px; align-items: flex-start; font-size: 12.5px; color: var(--muted); margin-bottom: 12px; }
+.lead-ok { background: #DCFCE7; color: #15803d; border-radius: 12px; padding: 18px; text-align: center; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; }
+
+@media (max-width: 980px) {
+  .pdp-gallery, .pdp-gallery.single { grid-template-columns: 1fr; }
+  .pdp-gallery .main { height: 320px; }
+  .pdp-side { grid-template-rows: none; grid-template-columns: 1fr 1fr; }
+  .pdp-cell { height: 150px; }
+  .pdp-facts { grid-template-columns: 1fr; }
+}
+
 /* ── Responsive ───────────────────────────────────────────────── */
 @media (max-width: 980px) {
   .nav-links, .nav-right .publish { display: none; }
