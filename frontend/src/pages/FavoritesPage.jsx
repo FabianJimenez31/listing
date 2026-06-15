@@ -35,14 +35,14 @@ export default function FavoritesPage() {
       .catch(() => null)
   }
 
-  if (authLoading || loading) return <Spinner />
+  if (authLoading || loading) return <div className="page-wrap"><Spinner /></div>
 
   const properties = result?.data || []
 
   return (
-    <>
+    <div className="page-wrap">
       <Helmet>
-        <title>Mis Favoritos | Listing</title>
+        <title>Mis Favoritos | Proppietario</title>
         <meta name="robots" content="noindex" />
       </Helmet>
 
@@ -53,17 +53,15 @@ export default function FavoritesPage() {
 
       {properties.length === 0 ? (
         <div style={s.empty}>
-          <p style={{ fontSize: 18, color: '#555', marginBottom: '1rem' }}>
-            Aún no tienes propiedades favoritas.
-          </p>
+          <p style={s.emptyText}>Aún no tienes propiedades favoritas.</p>
           <button onClick={() => navigate('/propiedades')} style={s.cta}>
             Explorar propiedades
           </button>
         </div>
       ) : (
         <>
-          <div style={s.grid}>
-            {properties.map((fav) => {
+          <div className="prop-grid">
+            {properties.map(fav => {
               const prop = fav.property || fav
               return (
                 <div key={fav.id || prop.id} style={{ position: 'relative' }}>
@@ -79,24 +77,55 @@ export default function FavoritesPage() {
               )
             })}
           </div>
-          <Pagination meta={result?.meta} onPage={(p) => setPage(p)} />
+          <Pagination meta={result?.meta} onPage={p => setPage(p)} />
         </>
       )}
-    </>
+    </div>
   )
 }
 
 const s = {
-  header: { display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' },
-  h1: { fontSize: 24, color: '#1a1a2e', margin: 0 },
-  count: { fontSize: 14, color: '#888', background: '#f5f5f5', padding: '4px 10px', borderRadius: 20 },
-  grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '2rem' },
-  removeBtn: {
-    position: 'absolute', top: 10, right: 10,
-    background: 'rgba(255,255,255,0.9)', border: '1px solid #e94560',
-    color: '#e94560', borderRadius: 20, padding: '4px 10px',
-    fontSize: 12, fontWeight: 600, cursor: 'pointer',
+  header: { display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.75rem', flexWrap: 'wrap' },
+  h1: {
+    fontFamily: "'Montserrat', sans-serif",
+    fontWeight: 800,
+    fontSize: 26,
+    color: '#081D67',
+    margin: 0,
+  },
+  count: {
+    fontSize: 14,
+    color: '#4A5680',
+    background: '#F4F6FB',
+    padding: '4px 12px',
+    borderRadius: 999,
+    border: '1px solid #DDE8FF',
   },
   empty: { textAlign: 'center', padding: '4rem 1rem' },
-  cta: { background: '#e94560', color: '#fff', border: 'none', borderRadius: 8, padding: '12px 24px', fontSize: 16, fontWeight: 600, cursor: 'pointer' },
+  emptyText: { fontSize: 18, color: '#4A5680', marginBottom: '1.5rem' },
+  cta: {
+    background: '#0251FD',
+    color: '#fff',
+    border: 'none',
+    borderRadius: 12,
+    padding: '13px 28px',
+    fontSize: 15,
+    fontWeight: 700,
+    cursor: 'pointer',
+    fontFamily: "'Montserrat', sans-serif",
+  },
+  removeBtn: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    background: 'rgba(255,255,255,0.92)',
+    border: '1px solid #DDE8FF',
+    color: '#4A5680',
+    borderRadius: 999,
+    padding: '4px 12px',
+    fontSize: 12,
+    fontWeight: 600,
+    cursor: 'pointer',
+    zIndex: 5,
+  },
 }

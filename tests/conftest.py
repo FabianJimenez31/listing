@@ -100,7 +100,9 @@ def _make_user(db, email: str, password: str = "Password123", roles: list[RoleOR
 
 @pytest.fixture
 def agent_user(db_session):
-    role = _make_role(db_session, "AGENT", ["property:create", "property:update_own", "lead:read"])
+    role = _make_role(db_session, "AGENT", [
+        "property:create", "property:update_own", "lead:read", "project:create",
+    ])
     return _make_user(db_session, "agent@test.com", roles=[role])
 
 
@@ -110,6 +112,10 @@ def admin_user(db_session):
         "property:moderate", "property:read_all", "lead:read", "lead:read_all",
         "lead:update_all", "user:read", "role:assign", "banner:create", "banner:delete",
         "featured:create", "featured:delete", "location:create", "metrics:read",
+        "project:create", "project:moderate",
+        "agency:create", "agency:update", "agency:delete",
+        "partner:create", "partner:delete",
+        "post:create", "post:update", "post:delete",
     ])
     return _make_user(db_session, "admin@test.com", roles=[role])
 

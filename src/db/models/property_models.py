@@ -29,6 +29,7 @@ class PropertyORM(Base):
 
     id = Column(String(36), primary_key=True)
     owner_id = Column(String(36), ForeignKey("users.id"), nullable=False, index=True)
+    agency_id = Column(String(36), ForeignKey("agencies.id"), nullable=True, index=True)
     location_id = Column(String(36), ForeignKey("locations.id"), nullable=True, index=True)
     property_type_id = Column(String(36), ForeignKey("property_types.id"), nullable=True, index=True)
 
@@ -69,6 +70,9 @@ class PropertyORM(Base):
     contact_email = Column(String(255), nullable=True)
     contact_whatsapp = Column(String(50), nullable=True)
 
+    # Show this listing in the home "Propiedades destacadas" grid
+    show_on_home = Column(Boolean, default=False, nullable=False, index=True)
+
     # Denormalized metrics (updated by async workers)
     views_count = Column(Integer, default=0, nullable=False)
     leads_count = Column(Integer, default=0, nullable=False)
@@ -80,6 +84,7 @@ class PropertyORM(Base):
 
     # Relationships
     owner = relationship("UserORM", back_populates="properties", foreign_keys=[owner_id])
+    agency = relationship("AgencyORM", back_populates="properties", foreign_keys=[agency_id])
     location = relationship("LocationORM", back_populates="properties")
     property_type = relationship("PropertyTypeORM", back_populates="properties")
     images = relationship("PropertyImageORM", back_populates="property", cascade="all, delete-orphan", order_by="PropertyImageORM.position")
@@ -90,6 +95,16 @@ class PropertyORM(Base):
     featured_entries = relationship("FeaturedPropertyORM", back_populates="property")
     views = relationship("PropertyViewORM", back_populates="property")
     audit_logs = relationship("AuditLogORM", primaryjoin="and_(AuditLogORM.entity_type=='property', foreign(AuditLogORM.entity_id)==PropertyORM.id)", viewonly=True)
+
+    @property
+    def main_image(self) -> "PropertyImageORM | None":
+        """The cover image (role='main', else first) — read by PropertyListItem."""
+        if not self.images:
+            return None
+        for image in self.images:
+            if image.role == "main":
+                return image
+        return self.images[0]
 
 
 class PropertyImageORM(Base):

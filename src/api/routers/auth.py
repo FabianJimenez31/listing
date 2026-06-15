@@ -38,7 +38,7 @@ def register(body: RegisterRequest, db: DB):
     repo.add(user)
     db.commit()
     db.refresh(user)
-    return user
+    return UserResponse.from_orm_with_permissions(user)
 
 
 @router.post("/login", response_model=TokenResponse)
@@ -89,4 +89,4 @@ def logout(current_user: CurrentUser):
 
 @router.get("/me", response_model=UserResponse)
 def me(current_user: CurrentUser):
-    return current_user
+    return UserResponse.from_orm_with_permissions(current_user)

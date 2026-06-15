@@ -54,6 +54,20 @@ class OwnerEmbedded(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Agency sub-schema (embedded on cards + detail)
+# ---------------------------------------------------------------------------
+
+class AgencyEmbedded(BaseModel):
+    id: str
+    name: str
+    slug: str
+    initials: str | None = None
+    logo_url: str | None = None
+
+    model_config = {"from_attributes": True}
+
+
+# ---------------------------------------------------------------------------
 # Create / Update
 # ---------------------------------------------------------------------------
 
@@ -80,6 +94,7 @@ class PropertyCreateRequest(BaseModel):
     contact_email: str | None = None
     contact_whatsapp: str | None = None
     expires_at: date | None = None
+    show_on_home: bool = False
 
     @field_validator("price_amount")
     @classmethod
@@ -126,6 +141,11 @@ class PropertyUpdateRequest(BaseModel):
     contact_email: str | None = None
     contact_whatsapp: str | None = None
     expires_at: date | None = None
+    show_on_home: bool | None = None
+
+
+class ShowOnHomeRequest(BaseModel):
+    show_on_home: bool
 
 
 class PropertyRejectRequest(BaseModel):
@@ -168,14 +188,17 @@ class PropertyResponse(BaseModel):
     views_count: int = 0
     leads_count: int = 0
     favorites_count: int = 0
+    show_on_home: bool = False
     created_at: datetime
     updated_at: datetime
     contact_phone: str | None = None
     contact_email: str | None = None
     contact_whatsapp: str | None = None
+    agency_id: str | None = None
     images: list[PropertyImageResponse] = []
     location: LocationEmbedded | None = None
     owner: OwnerEmbedded | None = None
+    agency: AgencyEmbedded | None = None
 
     model_config = {"from_attributes": True}
 
@@ -193,8 +216,10 @@ class PropertyListItem(BaseModel):
     bathrooms: int | None = None
     status: str
     views_count: int = 0
+    show_on_home: bool = False
     created_at: datetime
     main_image: PropertyImageResponse | None = None
     location: LocationEmbedded | None = None
+    agency: AgencyEmbedded | None = None
 
     model_config = {"from_attributes": True}

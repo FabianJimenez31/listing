@@ -11,14 +11,19 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.api.error_handler import register_error_handlers
 from src.api.routers import (
     admin,
+    agencies,
     amenities,
     auth,
     banners,
+    blog,
+    catalog,
     favorites,
     images,
     leads,
     locations,
     metrics,
+    partners,
+    projects,
     properties,
     search,
     seo,
@@ -59,9 +64,20 @@ def create_app() -> FastAPI:
     app.include_router(search.router, prefix=_API_PREFIX)
     app.include_router(properties.router, prefix=_API_PREFIX)
 
+    # Projects (developments / preventa)
+    app.include_router(projects.router, prefix=_API_PREFIX)
+
     # Catalog
     app.include_router(locations.router, prefix=_API_PREFIX)
     app.include_router(amenities.router, prefix=_API_PREFIX)
+    app.include_router(catalog.router, prefix=_API_PREFIX)
+
+    # Directory
+    app.include_router(agencies.router, prefix=_API_PREFIX)
+    app.include_router(partners.router, prefix=_API_PREFIX)
+
+    # Content
+    app.include_router(blog.router, prefix=_API_PREFIX)
 
     # Engagement
     app.include_router(leads.router, prefix=_API_PREFIX)

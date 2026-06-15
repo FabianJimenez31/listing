@@ -6,6 +6,13 @@ from datetime import datetime
 from pydantic import BaseModel, EmailStr
 
 
+class PermissionResponse(BaseModel):
+    id: str
+    code: str
+
+    model_config = {"from_attributes": True}
+
+
 class RoleResponse(BaseModel):
     id: str
     name: str
@@ -23,8 +30,16 @@ class UserResponse(BaseModel):
     email_verified: bool
     created_at: datetime
     roles: list[RoleResponse] = []
+    permissions: list[str] = []
 
     model_config = {"from_attributes": True}
+
+    @classmethod
+    def from_orm_with_permissions(cls, user) -> "UserResponse":
+        perm_codes = {p.code for role in user.roles for p in role.permissions}
+        data = cls.model_validate(user)
+        data.permissions = sorted(perm_codes)
+        return data
 
 
 class UserUpdateRequest(BaseModel):

@@ -19,6 +19,7 @@ from src.schemas.property_schemas import (
     PropertyRejectRequest,
     PropertyResponse,
     PropertyUpdateRequest,
+    ShowOnHomeRequest,
 )
 
 router = APIRouter(prefix="/properties", tags=["properties"])
@@ -94,6 +95,7 @@ def create_property(body: PropertyCreateRequest, current_user: CurrentUser, db: 
         contact_email=body.contact_email,
         contact_whatsapp=body.contact_whatsapp,
         expires_at=body.expires_at,
+        show_on_home=body.show_on_home,
         status="draft",
     )
     repo.add(prop)
@@ -151,6 +153,21 @@ def delete_property(property_id: str, current_user: CurrentUser, db: DB):
     prop.status = "deleted"
     db.commit()
     return None
+
+
+@router.patch("/{property_id}/home", response_model=PropertyResponse)
+def set_show_on_home(property_id: str, body: ShowOnHomeRequest, current_user: CurrentUser, db: DB):
+    """Toggle home-page visibility. Independent of the publication status guard
+    (a published property can be added/removed from the home without pausing it)."""
+    repo = PropertyRepository(db)
+    prop = repo.get_by_id(property_id)
+    if not prop or prop.deleted_at:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Property not found")
+    _require_owner_or_admin(prop, current_user)
+    prop.show_on_home = body.show_on_home
+    db.commit()
+    db.refresh(prop)
+    return prop
 
 
 # ---------------------------------------------------------------------------

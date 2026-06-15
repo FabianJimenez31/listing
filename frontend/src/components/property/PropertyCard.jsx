@@ -1,55 +1,71 @@
 import { Link } from 'react-router-dom'
+import { IconArea, IconBath, IconBed, IconHeart, IconPhotos, IconPin } from '../ui/icons'
 
-const OPERATION_LABEL = { sale: 'Venta', rent: 'Arriendo', temporary: 'Temporal' }
-const KIND_LABEL = { house: 'Casa', apartment: 'Apartamento', lot: 'Terreno', office: 'Oficina' }
+const OPERATION = {
+  sale: ['Venta', 'venta'],
+  rent: ['Arriendo', 'arriendo'],
+  temporary: ['Temporal', 'arriendo'],
+}
 
-function formatPrice(amount, currency = 'COP') {
-  if (!amount) return 'Precio a consultar'
-  return new Intl.NumberFormat('es-CO', { style: 'currency', currency, maximumFractionDigits: 0 }).format(amount / 100)
+export function formatPrice(amount, currency = 'COP') {
+  if (amount == null) return null
+  const locale = currency === 'USD' ? 'en-US' : 'es-CO'
+  const formatted = new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency,
+    maximumFractionDigits: 0,
+  }).format(amount / 100)
+  // USD already prefixes "$"; keep COP as plain "$" too (Intl gives "US$"/"$")
+  return formatted
 }
 
 export default function PropertyCard({ property }) {
-  const mainImage = property.images?.find((i) => i.role === 'main') || property.images?.[0]
+  const mainImage =
+    property.main_image || property.images?.find((i) => i.role === 'main') || property.images?.[0]
+  const [opLabel, opClass] = OPERATION[property.operation_type] || ['Venta', 'venta']
+  const isUSA = property.currency === 'USD'
+  const perMonth = property.operation_type === 'rent' || property.operation_type === 'temporary'
+  const price = formatPrice(property.price_amount, property.currency)
+  const city = property.location?.name
+  const agency = property.agency
+  const photoCount = property.images?.length
 
   return (
-    <Link to={`/propiedades/${property.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-      <div style={styles.card}>
-        <div style={styles.imgWrapper}>
-          {mainImage ? (
-            <img src={mainImage.cdn_url} alt={mainImage.alt_text || property.title} style={styles.img} loading="lazy" />
-          ) : (
-            <div style={styles.noImg}>Sin foto</div>
-          )}
-          <span style={styles.opBadge}>{OPERATION_LABEL[property.operation_type] || property.operation_type}</span>
+    <Link to={`/propiedades/${property.slug}`} className="listing" aria-label={property.title}>
+      <div className="photo">
+        <div className="badges">
+          {isUSA && <span className="badge usa">USA</span>}
+          <span className={`badge ${opClass}`}>{opLabel}</span>
         </div>
-        <div style={styles.body}>
-          <p style={styles.kind}>{KIND_LABEL[property.property_kind] || property.property_kind}</p>
-          <h3 style={styles.title}>{property.title}</h3>
-          {property.location && (
-            <p style={styles.location}>{property.location.name}</p>
-          )}
-          <p style={styles.price}>{formatPrice(property.price_amount, property.currency)}</p>
-          <div style={styles.stats}>
-            {property.bedrooms != null && <span>{property.bedrooms} rec.</span>}
-            {property.bathrooms != null && <span>{property.bathrooms} baños</span>}
-            {property.total_area_m2 != null && <span>{property.total_area_m2} m²</span>}
+        <span className="fav" aria-hidden="true"><IconHeart /></span>
+        {photoCount ? (
+          <span className="count"><IconPhotos /> {photoCount}</span>
+        ) : null}
+        {mainImage ? (
+          <img src={mainImage.cdn_url} alt={mainImage.alt_text || property.title} loading="lazy" />
+        ) : (
+          <div className="noimg" aria-hidden="true">P</div>
+        )}
+      </div>
+      <div className="body">
+        <div className="price">
+          {price}
+          {perMonth && <small> / mes</small>}
+        </div>
+        <div className="title">{property.title}</div>
+        {city && <div className="loc"><IconPin /> {city}</div>}
+        <div className="specs">
+          {property.bedrooms != null && <span><IconBed /> {property.bedrooms} hab</span>}
+          {property.bathrooms != null && <span><IconBath /> {property.bathrooms} baños</span>}
+          {property.total_area_m2 != null && <span><IconArea /> {property.total_area_m2} m²</span>}
+        </div>
+        {agency && (
+          <div className="agency">
+            <span className="av">{agency.initials || agency.name?.slice(0, 2).toUpperCase()}</span>
+            <span className="an">{agency.name}</span>
           </div>
-        </div>
+        )}
       </div>
     </Link>
   )
-}
-
-const styles = {
-  card: { background: '#fff', borderRadius: 10, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,.07)', transition: 'transform .2s', cursor: 'pointer' },
-  imgWrapper: { position: 'relative', height: 200 },
-  img: { width: '100%', height: '100%', objectFit: 'cover' },
-  noImg: { width: '100%', height: '100%', background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#aaa' },
-  opBadge: { position: 'absolute', top: 10, left: 10, background: '#e94560', color: '#fff', borderRadius: 4, padding: '2px 8px', fontSize: 12, fontWeight: 600 },
-  body: { padding: '1rem' },
-  kind: { color: '#888', fontSize: 12, margin: '0 0 4px' },
-  title: { fontSize: 16, fontWeight: 600, margin: '0 0 4px', color: '#1a1a2e' },
-  location: { color: '#666', fontSize: 13, margin: '0 0 8px' },
-  price: { color: '#e94560', fontWeight: 700, fontSize: 18, margin: '0 0 8px' },
-  stats: { display: 'flex', gap: 12, fontSize: 13, color: '#555' },
 }

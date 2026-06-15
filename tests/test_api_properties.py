@@ -188,3 +188,53 @@ class TestSearch:
         assert data["meta"]["total"] == 5
         assert data["meta"]["total_pages"] == 3
         assert len(data["data"]) == 2
+
+    def test_include_own_returns_drafts_to_owner(self, client, agent_user, agent_token):
+        # a freshly created (draft) property must be visible to its owner in the panel
+        client.post("/api/v1/properties", json=_BASE_PAYLOAD, headers=_auth(agent_token))
+        assert client.get("/api/v1/properties").json()["meta"]["total"] == 0  # public: hidden
+        own = client.get("/api/v1/properties?include_own=true", headers=_auth(agent_token))
+        assert own.status_code == 200
+        body = own.json()
+        assert body["meta"]["total"] == 1
+        assert body["data"][0]["status"] == "draft"
+
+    def test_include_own_ignored_without_auth(self, client, agent_user, agent_token):
+        client.post("/api/v1/properties", json=_BASE_PAYLOAD, headers=_auth(agent_token))
+        assert client.get("/api/v1/properties?include_own=true").json()["meta"]["total"] == 0
+
+
+class TestShowOnHome:
+    def _publish(self, client, agent_token, admin_token, **extra):
+        payload = {**_BASE_PAYLOAD, **extra}
+        cid = client.post("/api/v1/properties", json=payload, headers=_auth(agent_token)).json()["id"]
+        client.post(f"/api/v1/properties/{cid}/submit", headers=_auth(agent_token))
+        client.post(f"/api/v1/properties/{cid}/approve", headers=_auth(admin_token))
+        return cid
+
+    def test_on_home_lists_only_flagged_published(self, client, agent_user, agent_token, admin_user, admin_token):
+        flagged = self._publish(client, agent_token, admin_token, show_on_home=True, title="EnPortada")
+        plain = self._publish(client, agent_token, admin_token, title="NoPortada")
+        ids = [i["id"] for i in client.get("/api/v1/properties?on_home=true").json()["data"]]
+        assert flagged in ids
+        assert plain not in ids
+
+    def test_draft_flagged_not_on_home(self, client, agent_user, agent_token):
+        # a flagged but unpublished property must NOT leak to the home
+        client.post("/api/v1/properties", json={**_BASE_PAYLOAD, "show_on_home": True}, headers=_auth(agent_token))
+        assert client.get("/api/v1/properties?on_home=true").json()["meta"]["total"] == 0
+
+    def test_toggle_home_on_published_property(self, client, agent_user, agent_token, admin_user, admin_token):
+        cid = self._publish(client, agent_token, admin_token, title="Toggle")
+        assert client.get("/api/v1/properties?on_home=true").json()["meta"]["total"] == 0
+        # PATCH /home works on a PUBLISHED property (no 409 from the edit guard)
+        r = client.patch(f"/api/v1/properties/{cid}/home", json={"show_on_home": True}, headers=_auth(agent_token))
+        assert r.status_code == 200
+        assert r.json()["show_on_home"] is True
+        assert cid in [i["id"] for i in client.get("/api/v1/properties?on_home=true").json()["data"]]
+        client.patch(f"/api/v1/properties/{cid}/home", json={"show_on_home": False}, headers=_auth(agent_token))
+        assert client.get("/api/v1/properties?on_home=true").json()["meta"]["total"] == 0
+
+    def test_toggle_home_requires_auth(self, client, agent_user, agent_token, admin_user, admin_token):
+        cid = self._publish(client, agent_token, admin_token, title="Owned")
+        assert client.patch(f"/api/v1/properties/{cid}/home", json={"show_on_home": True}).status_code == 401

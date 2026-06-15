@@ -41,6 +41,20 @@ PERMISSIONS: list[str] = [
     "banner:delete",
     "featured:create",
     "featured:delete",
+    # Projects (developments)
+    "project:create",
+    "project:moderate",
+    # Agencies (inmobiliarias)
+    "agency:create",
+    "agency:update",
+    "agency:delete",
+    # Partners (allies)
+    "partner:create",
+    "partner:delete",
+    # Blog
+    "post:create",
+    "post:update",
+    "post:delete",
     # Locations & amenities
     "location:create",
     "amenity:create",
@@ -56,6 +70,7 @@ ROLES: dict[str, list[str]] = {
         "property:create",
         "property:update_own",
         "property:delete_own",
+        "project:create",
         "lead:read",
     ],
     "ADMIN": [
@@ -73,6 +88,16 @@ ROLES: dict[str, list[str]] = {
         "banner:delete",
         "featured:create",
         "featured:delete",
+        "project:create",
+        "project:moderate",
+        "agency:create",
+        "agency:update",
+        "agency:delete",
+        "partner:create",
+        "partner:delete",
+        "post:create",
+        "post:update",
+        "post:delete",
         "location:create",
         "amenity:create",
         "metrics:read",

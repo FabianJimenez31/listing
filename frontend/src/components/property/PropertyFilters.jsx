@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { majorToMinor, minorToMajor } from '../../lib/money'
 
-export default function PropertyFilters() {
+export default function PropertyFilters({ basePath = '/propiedades' }) {
   const [params] = useSearchParams()
   const navigate = useNavigate()
 
@@ -9,59 +10,62 @@ export default function PropertyFilters() {
     q: params.get('q') || '',
     operation_type: params.get('operation_type') || '',
     property_kind: params.get('property_kind') || '',
-    min_price: params.get('min_price') || '',
-    max_price: params.get('max_price') || '',
+    // shown to the user in pesos/dollars; the URL/API keeps minor units
+    min_price: minorToMajor(params.get('min_price')),
+    max_price: minorToMajor(params.get('max_price')),
     min_bedrooms: params.get('min_bedrooms') || '',
   })
 
   const apply = (e) => {
     e.preventDefault()
     const p = new URLSearchParams()
-    Object.entries(filters).forEach(([k, v]) => { if (v) p.set(k, v) })
+    // preserve a country/market preset already in the URL
+    if (params.get('country')) p.set('country', params.get('country'))
+    Object.entries(filters).forEach(([k, v]) => {
+      if (!v) return
+      if (k === 'min_price' || k === 'max_price') {
+        const minor = majorToMinor(v)
+        if (minor != null) p.set(k, String(minor))
+      } else {
+        p.set(k, v)
+      }
+    })
     p.set('page', '1')
-    navigate(`/propiedades?${p.toString()}`)
+    navigate(`${basePath}?${p.toString()}`)
   }
 
   const reset = () => {
     setFilters({ q: '', operation_type: '', property_kind: '', min_price: '', max_price: '', min_bedrooms: '' })
-    navigate('/propiedades')
+    const p = new URLSearchParams()
+    if (params.get('country')) p.set('country', params.get('country'))
+    navigate(p.toString() ? `${basePath}?${p}` : basePath)
   }
 
   const field = (label, key, type = 'text', options = null) => (
-    <div style={styles.field}>
-      <label style={styles.label}>{label}</label>
+    <div className="fld">
+      <label>{label}</label>
       {options ? (
-        <select value={filters[key]} onChange={(e) => setFilters({ ...filters, [key]: e.target.value })} style={styles.input}>
+        <select value={filters[key]} onChange={(e) => setFilters({ ...filters, [key]: e.target.value })}>
           <option value="">Todos</option>
           {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </select>
       ) : (
-        <input type={type} value={filters[key]} onChange={(e) => setFilters({ ...filters, [key]: e.target.value })} style={styles.input} />
+        <input type={type} value={filters[key]} onChange={(e) => setFilters({ ...filters, [key]: e.target.value })} />
       )}
     </div>
   )
 
   return (
-    <form onSubmit={apply} style={styles.form}>
-      <h3 style={styles.heading}>Filtros</h3>
+    <form onSubmit={apply} className="filters-card">
+      <h3>Filtros</h3>
       {field('Buscar', 'q')}
       {field('Operación', 'operation_type', 'text', [['sale', 'Venta'], ['rent', 'Arriendo'], ['temporary', 'Temporal']])}
-      {field('Tipo', 'property_kind', 'text', [['house', 'Casa'], ['apartment', 'Apartamento'], ['lot', 'Terreno'], ['office', 'Oficina']])}
-      {field('Precio mín. (centavos)', 'min_price', 'number')}
-      {field('Precio máx. (centavos)', 'max_price', 'number')}
-      {field('Recámaras mín.', 'min_bedrooms', 'number')}
-      <button type="submit" style={styles.btnApply}>Aplicar</button>
-      <button type="button" onClick={reset} style={styles.btnReset}>Limpiar</button>
+      {field('Tipo', 'property_kind', 'text', [['house', 'Casa'], ['apartment', 'Apartamento'], ['lot', 'Lote'], ['office', 'Oficina'], ['commercial', 'Local comercial']])}
+      {field('Precio mín.', 'min_price', 'number')}
+      {field('Precio máx.', 'max_price', 'number')}
+      {field('Habitaciones mín.', 'min_bedrooms', 'number')}
+      <button type="submit" className="btn btn-blue" style={{ width: '100%', justifyContent: 'center', marginBottom: 8 }}>Aplicar filtros</button>
+      <button type="button" onClick={reset} className="btn btn-outline" style={{ width: '100%', justifyContent: 'center' }}>Limpiar</button>
     </form>
   )
-}
-
-const styles = {
-  form: { background: '#fff', borderRadius: 10, padding: '1.5rem', boxShadow: '0 2px 8px rgba(0,0,0,.07)', minWidth: 220 },
-  heading: { margin: '0 0 1rem', fontSize: 16, color: '#1a1a2e' },
-  field: { marginBottom: '1rem' },
-  label: { display: 'block', fontSize: 13, color: '#555', marginBottom: 4 },
-  input: { width: '100%', padding: '6px 10px', border: '1px solid #ddd', borderRadius: 6, fontSize: 14, boxSizing: 'border-box' },
-  btnApply: { width: '100%', background: '#e94560', color: '#fff', border: 'none', borderRadius: 6, padding: '8px', cursor: 'pointer', fontWeight: 600, marginBottom: 8 },
-  btnReset: { width: '100%', background: '#eee', color: '#333', border: 'none', borderRadius: 6, padding: '8px', cursor: 'pointer' },
 }

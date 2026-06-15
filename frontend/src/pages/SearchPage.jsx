@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { searchProperties } from '../api/properties'
 import PropertyCard from '../components/property/PropertyCard'
@@ -7,13 +7,17 @@ import PropertyFilters from '../components/property/PropertyFilters'
 import Pagination from '../components/ui/Pagination'
 import Spinner from '../components/ui/Spinner'
 
-export default function SearchPage() {
+export default function SearchPage({ forced = {}, title, subtitle }) {
   const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
+  const location = useLocation()
   const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  const params = Object.fromEntries(searchParams.entries())
+  const urlParams = Object.fromEntries(searchParams.entries())
+  const params = { ...urlParams, ...forced }
+  const key = JSON.stringify(params)
 
   useEffect(() => {
     setLoading(true)
@@ -22,46 +26,48 @@ export default function SearchPage() {
       .then(setResult)
       .catch((e) => setError(e.message || 'Error al buscar propiedades'))
       .finally(() => setLoading(false))
-  }, [searchParams.toString()])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key])
 
   const handlePage = (page) => {
     const next = new URLSearchParams(searchParams)
     next.set('page', page)
-    window.location.search = next.toString()
+    navigate(`${location.pathname}?${next}`)
   }
 
-  const q = params.q || ''
   const total = result?.meta?.total ?? 0
+  const heading = title || (urlParams.q ? `Resultados para "${urlParams.q}"` : 'Propiedades')
 
   return (
-    <>
+    <div className="page-wrap">
       <Helmet>
-        <title>{q ? `"${q}" — Propiedades` : 'Propiedades'} | Listing</title>
-        <meta name="description" content={`Resultados de búsqueda de propiedades. ${total} resultados encontrados.`} />
+        <title>{heading} | Proppietario</title>
+        <meta name="description" content={`${total} propiedades encontradas en Proppietario.`} />
       </Helmet>
 
-      <h1 style={styles.heading}>
-        {q ? `Resultados para "${q}"` : 'Propiedades'}
-        {result && <span style={styles.count}> — {total} resultado{total !== 1 ? 's' : ''}</span>}
-      </h1>
+      <div className="sec-head" style={{ marginBottom: 24 }}>
+        <div>
+          <h2 style={{ fontSize: 28 }}>{heading}</h2>
+          <p>{subtitle || (result ? `${total} resultado${total !== 1 ? 's' : ''}` : 'Cargando…')}</p>
+        </div>
+      </div>
 
-      <div style={styles.layout}>
-        <aside style={styles.sidebar}>
-          <PropertyFilters />
+      <div className="search-layout">
+        <aside>
+          <PropertyFilters basePath={location.pathname} />
         </aside>
-
-        <div style={styles.main}>
+        <div>
           {loading ? (
             <Spinner />
           ) : error ? (
-            <p style={styles.error}>{error}</p>
+            <p style={{ color: '#D7263D' }}>{error}</p>
           ) : result?.data?.length === 0 ? (
-            <div style={styles.empty}>
-              <p>No se encontraron propiedades con los filtros seleccionados.</p>
+            <div style={{ background: 'var(--bg-soft)', borderRadius: 16, padding: '3rem', textAlign: 'center', color: 'var(--muted)', border: '1px solid var(--line)' }}>
+              No se encontraron propiedades con los filtros seleccionados.
             </div>
           ) : (
             <>
-              <div style={styles.grid}>
+              <div className="prop-grid">
                 {result.data.map((p) => <PropertyCard key={p.id} property={p} />)}
               </div>
               <Pagination meta={result.meta} onPage={handlePage} />
@@ -69,17 +75,6 @@ export default function SearchPage() {
           )}
         </div>
       </div>
-    </>
+    </div>
   )
-}
-
-const styles = {
-  heading: { fontSize: 22, color: '#1a1a2e', marginBottom: '1.5rem' },
-  count: { fontSize: 16, color: '#888', fontWeight: 400 },
-  layout: { display: 'grid', gridTemplateColumns: '240px 1fr', gap: '1.5rem', alignItems: 'start' },
-  sidebar: {},
-  main: {},
-  grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(270px,1fr))', gap: '1.25rem' },
-  empty: { background: '#fff', borderRadius: 10, padding: '3rem', textAlign: 'center', color: '#888' },
-  error: { color: '#e94560', background: '#fff', borderRadius: 10, padding: '1.5rem', textAlign: 'center' },
 }

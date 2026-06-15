@@ -39,6 +39,9 @@ export const markRented = (id) =>
 export const duplicateProperty = (id) =>
   api.post(`/properties/${id}/duplicate`).then((r) => r.data)
 
+export const setShowOnHome = (id, value) =>
+  api.patch(`/properties/${id}/home`, { show_on_home: value }).then((r) => r.data)
+
 export const uploadImage = (propertyId, file, role = 'gallery') => {
   const form = new FormData()
   form.append('file', file)

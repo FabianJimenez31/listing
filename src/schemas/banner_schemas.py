@@ -59,5 +59,5 @@ class FeaturedPropertyCreateRequest(BaseModel):
     scope: str
     locality_id: str | None = None
     priority: int = 0
-    starts_at: datetime
-    ends_at: datetime
+    starts_at: datetime | None = None  # defaults to now if omitted
+    ends_at: datetime | None = None    # defaults to 2099-12-31 if omitted

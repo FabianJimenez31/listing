@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
@@ -105,9 +105,15 @@ def create_featured(body: FeaturedPropertyCreateRequest, db: DB):
     if body.scope == "locality" and not body.locality_id:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "locality_id required for locality scope")
 
+    now = datetime.now(timezone.utc)
     featured = FeaturedPropertyORM(
         id=str(uuid.uuid4()),
-        **body.model_dump(),
+        property_id=body.property_id,
+        scope=body.scope,
+        locality_id=body.locality_id,
+        priority=body.priority,
+        starts_at=body.starts_at or now,
+        ends_at=body.ends_at or (now + timedelta(days=365 * 10)),
     )
     FeaturedPropertyRepository(db).add(featured)
     db.commit()

@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from src.db.models.property_models import PropertyImageORM, PropertyORM
 from src.repositories.base import BaseRepository
+from src.repositories.location_repo import LocationRepository
 
 
 class PropertyRepository(BaseRepository[PropertyORM]):
@@ -30,6 +31,7 @@ class PropertyRepository(BaseRepository[PropertyORM]):
             joinedload(PropertyORM.images),
             joinedload(PropertyORM.location),
             joinedload(PropertyORM.owner),
+            joinedload(PropertyORM.agency),
         )
         return self.db.scalar(stmt)
 
@@ -40,7 +42,12 @@ class PropertyRepository(BaseRepository[PropertyORM]):
                 or_(PropertyORM.id == id_or_slug, PropertyORM.slug == id_or_slug),
                 PropertyORM.deleted_at.is_(None),
             )
-            .options(joinedload(PropertyORM.images), joinedload(PropertyORM.location), joinedload(PropertyORM.owner))
+            .options(
+                joinedload(PropertyORM.images),
+                joinedload(PropertyORM.location),
+                joinedload(PropertyORM.owner),
+                joinedload(PropertyORM.agency),
+            )
         )
         return self.db.scalar(stmt)
 
@@ -57,6 +64,9 @@ class PropertyRepository(BaseRepository[PropertyORM]):
         operation_type: str | None = None,
         property_kind: str | None = None,
         location_id: str | None = None,
+        country: str | None = None,
+        agency_id: str | None = None,
+        on_home: bool = False,
         min_price: int | None = None,
         max_price: int | None = None,
         min_bedrooms: int | None = None,
@@ -78,6 +88,14 @@ class PropertyRepository(BaseRepository[PropertyORM]):
             filters.append(PropertyORM.property_kind == property_kind)
         if location_id:
             filters.append(PropertyORM.location_id == location_id)
+        if country:
+            subtree = LocationRepository(self.db).subtree_ids(country)
+            # No matching country → impossible filter so the result is empty
+            filters.append(PropertyORM.location_id.in_(subtree or ["__none__"]))
+        if agency_id:
+            filters.append(PropertyORM.agency_id == agency_id)
+        if on_home:
+            filters.append(PropertyORM.show_on_home.is_(True))
         if min_price is not None:
             filters.append(PropertyORM.price_amount >= min_price)
         if max_price is not None:
@@ -104,7 +122,11 @@ class PropertyRepository(BaseRepository[PropertyORM]):
 
         stmt = (
             base_stmt
-            .options(joinedload(PropertyORM.images), joinedload(PropertyORM.location))
+            .options(
+                joinedload(PropertyORM.images),
+                joinedload(PropertyORM.location),
+                joinedload(PropertyORM.agency),
+            )
             .order_by(PropertyORM.created_at.desc())
             .offset((page - 1) * page_size)
             .limit(page_size)

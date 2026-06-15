@@ -12,6 +12,7 @@ class LocationResponse(BaseModel):
     parent_id: str | None = None
     center_lat: float | None = None
     center_lng: float | None = None
+    image_url: str | None = None
     is_active: bool
 
     model_config = {"from_attributes": True}

@@ -1,15 +1,93 @@
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+/* ── Design Tokens (Proppietario portal) ─────────────────────── */
+:root {
+  --blue: #2A63E8;
+  --blue-dark: #1B47B0;
+  --blue-50: #EEF3FF;
+  --blue-100: #DCE6FF;
+  --ink: #16202E;
+  --text: #28323F;
+  --muted: #6B7686;
+  --muted-2: #8A94A3;
+  --line: #E7EBF1;
+  --bg: #FFFFFF;
+  --bg-soft: #F6F8FB;
+  --green: #15A86B;
+  --amber: #F0A33C;
+  --radius: 14px;
+  --radius-lg: 20px;
+  --shadow-sm: 0 2px 10px rgba(22, 32, 46, .06);
+  --shadow: 0 14px 40px -18px rgba(22, 32, 46, .28);
+  --maxw: 1200px;
+  --ease: cubic-bezier(.2, .7, .2, 1);
+  --header-h: 72px;
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  font-size: 16px;
-  color: #222;
-  background: #f5f5f5;
-  line-height: 1.5;
+  /* Legacy aliases — keep older inline-styled pages on-palette */
+  --color-primary: #2A63E8;
+  --color-primary-deep: #16202E;
+  --color-accent-light: #7CA9FF;
+  --color-ice: #DCE6FF;
+  --color-pearl: #F6F8FB;
+  --color-white: #FFFFFF;
+  --color-text: #28323F;
+  --color-text-muted: #6B7686;
+  --shadow-soft: var(--shadow-sm);
+  --shadow-hover: var(--shadow);
+  --radius-button: 999px;
+  --radius-card: 20px;
+  --radius-pill: 999px;
 }
 
+/* ── Reset ────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 16px;
+  color: var(--text);
+  background: var(--bg);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
 #root { width: 100%; min-height: 100vh; }
-
-a { color: inherit; }
+a { color: inherit; text-decoration: none; }
 button, input, select, textarea { font-family: inherit; }
 img { max-width: 100%; display: block; }
+
+/* ── Inner-page container (search, detail, dashboards) ───────── */
+/* Header is sticky (in normal flow), so no header-height offset is needed. */
+.page-wrap {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 2.5rem 24px 4rem;
+}
+@media (max-width: 768px) {
+  .page-wrap { padding: 1.5rem 16px 2.5rem; }
+}
+
+/* ── Generic card grid (reused by search & favorites) ────────── */
+.prop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+/* ── Skeleton shimmer ─────────────────────────────────────────── */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--bg-soft) 25%, #e9eef6 50%, var(--bg-soft) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.2s linear infinite;
+  border-radius: var(--radius-lg);
+}
+
+/* ── Reduced motion ───────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+  html { scroll-behavior: auto; }
+}

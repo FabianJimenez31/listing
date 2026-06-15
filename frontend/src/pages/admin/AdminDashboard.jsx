@@ -52,6 +52,10 @@ export default function AdminDashboard() {
         <h2 style={styles.h2}>Acciones rápidas</h2>
         <div style={styles.linksGrid}>
           <Link to="/admin/moderacion" style={styles.qlink}>Moderación</Link>
+          <Link to="/agente/proyectos" style={styles.qlink}>Proyectos</Link>
+          <Link to="/admin/inmobiliarias" style={styles.qlink}>Inmobiliarias</Link>
+          <Link to="/admin/aliados" style={styles.qlink}>Aliados</Link>
+          <Link to="/admin/blog" style={styles.qlink}>Blog</Link>
           <Link to="/admin/banners" style={styles.qlink}>Banners</Link>
           <Link to="/admin/destacados" style={styles.qlink}>Destacados</Link>
           <Link to="/admin/usuarios" style={styles.qlink}>Usuarios</Link>

@@ -25,6 +25,8 @@ class LocationORM(Base):
     # Coordinates (lat/lng stored as floats; PostGIS GEOGRAPHY added via Alembic for production)
     center_lat = Column(Float, nullable=True)
     center_lng = Column(Float, nullable=True)
+    # Cover photo for "Explora por ciudad" cards
+    image_url = Column(String(1000), nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
     updated_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow, onupdate=_utcnow)

@@ -29,7 +29,7 @@ export default function FeaturedPage() {
   const load = () => {
     setLoading(true)
     getFeatured()
-      .then((r) => setItems(r.data || []))
+      .then((r) => setItems(Array.isArray(r) ? r : (r.data || [])))
       .catch(() => null)
       .finally(() => setLoading(false))
   }

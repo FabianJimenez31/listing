@@ -49,6 +49,8 @@ services:
       METRICS_HMAC_KEY: ${METRICS_HMAC_KEY:-changeme-metrics-key}
       SITE_URL: ${SITE_URL:-http://localhost}
       CDN_BASE_URL: ${CDN_BASE_URL:-http://localhost/static}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@proppietario.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-Admin1234!}
     volumes:
       - uploads:/app/temp/uploads
     ports:
