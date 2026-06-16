@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { useAuth } from '../../contexts/AuthContext'
 import { createPartner, deletePartner, getPartners } from '../../api/partners'
+import AdminPageHeader from '../../components/admin/AdminPageHeader'
+import { IconUsers } from '../../components/admin/adminIcons'
 import Spinner from '../../components/ui/Spinner'
 
 const EMPTY = { name: '', kind: 'inmobiliaria', logo_url: '', website: '', priority: 0, is_active: true }
 
 export default function AdminPartnersPage() {
-  const { user, loading: authLoading, isAdmin } = useAuth()
-  const navigate = useNavigate()
+  const { user } = useAuth()
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [form, setForm] = useState(EMPTY)
@@ -22,14 +22,7 @@ export default function AdminPartnersPage() {
     getPartners().then(setItems).catch(() => setItems([])).finally(() => setLoading(false))
   }
 
-  useEffect(() => {
-    if (!authLoading) {
-      if (!user) { navigate('/login'); return }
-      if (!isAdmin()) { navigate('/agente'); return }
-    }
-    if (user) load()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, authLoading])
+  useEffect(() => { if (user) load() }, [user])
 
   const upd = (k) => (e) =>
     setForm((f) => ({ ...f, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }))
@@ -54,21 +47,26 @@ export default function AdminPartnersPage() {
     load()
   }
 
-  if (authLoading || loading) return <div className="page-wrap"><Spinner /></div>
+  if (loading) return <Spinner />
 
   return (
-    <div className="page-wrap">
-      <Helmet><title>Aliados | Admin</title></Helmet>
-      <div className="admin-head">
-        <button className="admin-back" onClick={() => navigate('/admin')}>← Admin</button>
-        <h1>Aliados ({items.length})</h1>
-        <button className="btn btn-blue" onClick={() => setShowForm((v) => !v)}>{showForm ? 'Cancelar' : '+ Nuevo'}</button>
-      </div>
+    <>
+      <Helmet><title>Aliados | Listing Admin</title></Helmet>
+      <AdminPageHeader
+        title="Aliados"
+        subtitle="Constructoras e inmobiliarias asociadas"
+        count={items.length}
+        actions={(
+          <button className="btn btn-blue" onClick={() => setShowForm((v) => !v)}>
+            {showForm ? 'Cancelar' : '+ Nuevo'}
+          </button>
+        )}
+      />
 
       {showForm && (
-        <form className="admin-card" onSubmit={submit}>
-          <h3 style={{ fontWeight: 800, color: 'var(--ink)', marginBottom: 14 }}>Nuevo aliado</h3>
-          {error && <p style={{ color: '#b91c1c', marginBottom: 10 }}>{error}</p>}
+        <form className="admin-card admin-card-form" onSubmit={submit}>
+          <h3 className="admin-card-title">Nuevo aliado</h3>
+          {error && <p className="admin-error">{error}</p>}
           <div className="form-grid">
             <div className="fg"><label>Nombre *</label><input required value={form.name} onChange={upd('name')} /></div>
             <div className="fg"><label>Tipo</label>
@@ -87,7 +85,11 @@ export default function AdminPartnersPage() {
       )}
 
       {items.length === 0 ? (
-        <p style={{ color: 'var(--muted)' }}>No hay aliados.</p>
+        <div className="adm-empty">
+          <span className="ico"><IconUsers size={26} /></span>
+          <b>Sin aliados</b>
+          No hay aliados registrados todavía.
+        </div>
       ) : (
         <div className="adm-table">
           {items.map((p) => (
@@ -101,6 +103,6 @@ export default function AdminPartnersPage() {
           ))}
         </div>
       )}
-    </div>
+    </>
   )
 }

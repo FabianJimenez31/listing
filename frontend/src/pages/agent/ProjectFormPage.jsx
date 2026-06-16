@@ -13,6 +13,7 @@ import {
 } from '../../api/projects'
 import { getAgencies } from '../../api/agencies'
 import { getLocations, getPropertyTypes } from '../../api/catalog'
+import AdminPageHeader from '../../components/admin/AdminPageHeader'
 import Spinner from '../../components/ui/Spinner'
 import { digitsOnly, groupThousands, majorToMinor, minorToMajor } from '../../lib/money'
 
@@ -154,15 +155,12 @@ export default function ProjectFormPage() {
     reloadImages()
   }
 
-  if (authLoading || loading) return <div className="page-wrap"><Spinner /></div>
+  if (authLoading || loading) return <Spinner />
 
   return (
-    <div className="page-wrap">
-      <Helmet><title>{editing ? 'Editar' : 'Nuevo'} proyecto | Panel</title></Helmet>
-      <div className="admin-head">
-        <button className="admin-back" onClick={() => navigate('/agente/proyectos')}>← Proyectos</button>
-        <h1>{editing ? 'Editar proyecto' : 'Nuevo proyecto'}</h1>
-      </div>
+    <>
+      <Helmet><title>{`${editing ? 'Editar' : 'Nuevo'} proyecto | Proppietario`}</title></Helmet>
+      <AdminPageHeader title={editing ? 'Editar proyecto' : 'Nuevo proyecto'} subtitle="Datos del desarrollo inmobiliario" />
 
       <form className="admin-card" onSubmit={submit}>
         {error && <p style={{ color: '#b91c1c', marginBottom: 10 }}>{error}</p>}
@@ -249,6 +247,6 @@ export default function ProjectFormPage() {
           )}
         </div>
       )}
-    </div>
+    </>
   )
 }

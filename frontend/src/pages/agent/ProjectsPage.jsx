@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { useAuth } from '../../contexts/AuthContext'
 import { approveProject, deleteProject, searchProjects, submitProject } from '../../api/projects'
 import { formatPrice } from '../../components/property/PropertyCard'
+import AdminPageHeader from '../../components/admin/AdminPageHeader'
+import { IconBuilding } from '../../components/admin/adminIcons'
 import Spinner from '../../components/ui/Spinner'
 
 const STATUS_TAG = {
@@ -15,8 +17,7 @@ const STATUS_TAG = {
 }
 
 export default function AgentProjectsPage() {
-  const { user, loading: authLoading, isAdmin } = useAuth()
-  const navigate = useNavigate()
+  const { user, isAdmin } = useAuth()
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -28,31 +29,30 @@ export default function AgentProjectsPage() {
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => {
-    if (!authLoading) {
-      if (!user) { navigate('/login'); return }
-      if (!user.permissions?.includes('project:create')) { navigate('/agente'); return }
-    }
-    if (user) load()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, authLoading])
+  useEffect(() => { if (user) load() }, [user])
 
   const act = async (fn, id) => { await fn(id).catch(() => null); load() }
   const remove = async (id) => { if (!confirm('¿Eliminar proyecto?')) return; await deleteProject(id).catch(() => null); load() }
 
-  if (authLoading || loading) return <div className="page-wrap"><Spinner /></div>
+  if (loading) return <Spinner />
 
   return (
-    <div className="page-wrap">
-      <Helmet><title>Proyectos | Panel</title></Helmet>
-      <div className="admin-head">
-        <button className="admin-back" onClick={() => navigate('/agente')}>← Panel</button>
-        <h1>Proyectos ({items.length})</h1>
-        <Link className="btn btn-blue" to="/agente/proyectos/nuevo">+ Nuevo proyecto</Link>
-      </div>
+    <>
+      <Helmet><title>Proyectos | Proppietario</title></Helmet>
+
+      <AdminPageHeader
+        title="Proyectos"
+        subtitle="Desarrollos y proyectos inmobiliarios"
+        count={items.length}
+        actions={<Link className="btn btn-blue" to="/agente/proyectos/nuevo">+ Nuevo proyecto</Link>}
+      />
 
       {items.length === 0 ? (
-        <p style={{ color: 'var(--muted)' }}>No hay proyectos. Crea el primero.</p>
+        <div className="adm-empty">
+          <span className="ico"><IconBuilding size={26} /></span>
+          <b>Sin proyectos</b>
+          Crea el primero con "+ Nuevo proyecto".
+        </div>
       ) : (
         <div className="adm-table">
           {items.map((p) => {
@@ -74,6 +74,6 @@ export default function AgentProjectsPage() {
           })}
         </div>
       )}
-    </div>
+    </>
   )
 }

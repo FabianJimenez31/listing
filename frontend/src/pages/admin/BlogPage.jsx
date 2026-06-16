@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { useAuth } from '../../contexts/AuthContext'
 import { createPost, deletePost, getPosts, updatePost } from '../../api/blog'
+import AdminPageHeader from '../../components/admin/AdminPageHeader'
+import { IconFile } from '../../components/admin/adminIcons'
 import Spinner from '../../components/ui/Spinner'
 
 const EMPTY = { title: '', category: '', excerpt: '', cover_image_url: '', content: '', status: 'draft' }
 
 export default function AdminBlogPage() {
-  const { user, loading: authLoading, isAdmin } = useAuth()
-  const navigate = useNavigate()
+  const { user } = useAuth()
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [form, setForm] = useState(EMPTY)
@@ -26,14 +26,7 @@ export default function AdminBlogPage() {
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => {
-    if (!authLoading) {
-      if (!user) { navigate('/login'); return }
-      if (!isAdmin()) { navigate('/agente'); return }
-    }
-    if (user) load()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, authLoading])
+  useEffect(() => { if (user) load() }, [user])
 
   const upd = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
   const startNew = () => { setForm(EMPTY); setEditId(null); setShowForm(true) }
@@ -63,23 +56,26 @@ export default function AdminBlogPage() {
     load()
   }
 
-  if (authLoading || loading) return <div className="page-wrap"><Spinner /></div>
+  if (loading) return <Spinner />
 
   return (
-    <div className="page-wrap">
-      <Helmet><title>Blog | Admin</title></Helmet>
-      <div className="admin-head">
-        <button className="admin-back" onClick={() => navigate('/admin')}>← Admin</button>
-        <h1>Blog ({items.length})</h1>
-        <button className="btn btn-blue" onClick={showForm ? () => setShowForm(false) : startNew}>
-          {showForm ? 'Cancelar' : '+ Nuevo artículo'}
-        </button>
-      </div>
+    <>
+      <Helmet><title>Blog | Listing Admin</title></Helmet>
+      <AdminPageHeader
+        title="Blog"
+        subtitle="Artículos y noticias del portal"
+        count={items.length}
+        actions={(
+          <button className="btn btn-blue" onClick={showForm ? () => setShowForm(false) : startNew}>
+            {showForm ? 'Cancelar' : '+ Nuevo artículo'}
+          </button>
+        )}
+      />
 
       {showForm && (
-        <form className="admin-card" onSubmit={submit}>
-          <h3 style={{ fontWeight: 800, color: 'var(--ink)', marginBottom: 14 }}>{editId ? 'Editar' : 'Nuevo'} artículo</h3>
-          {error && <p style={{ color: '#b91c1c', marginBottom: 10 }}>{error}</p>}
+        <form className="admin-card admin-card-form" onSubmit={submit}>
+          <h3 className="admin-card-title">{editId ? 'Editar' : 'Nuevo'} artículo</h3>
+          {error && <p className="admin-error">{error}</p>}
           <div className="form-grid">
             <div className="fg full"><label>Título *</label><input required value={form.title} onChange={upd('title')} /></div>
             <div className="fg"><label>Categoría</label><input value={form.category} onChange={upd('category')} /></div>
@@ -100,7 +96,11 @@ export default function AdminBlogPage() {
       )}
 
       {items.length === 0 ? (
-        <p style={{ color: 'var(--muted)' }}>No hay artículos.</p>
+        <div className="adm-empty">
+          <span className="ico"><IconFile size={26} /></span>
+          <b>Sin artículos</b>
+          No hay artículos publicados todavía.
+        </div>
       ) : (
         <div className="adm-table">
           {items.map((p) => (
@@ -118,6 +118,6 @@ export default function AdminBlogPage() {
           ))}
         </div>
       )}
-    </div>
+    </>
   )
 }

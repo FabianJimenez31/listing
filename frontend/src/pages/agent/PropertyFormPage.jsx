@@ -16,6 +16,7 @@ import {
   uploadImage,
 } from '../../api/properties'
 import { useAuth } from '../../contexts/AuthContext'
+import AdminPageHeader from '../../components/admin/AdminPageHeader'
 import Spinner from '../../components/ui/Spinner'
 import { digitsOnly, groupThousands, majorToMinor, minorToMajor } from '../../lib/money'
 
@@ -43,18 +44,20 @@ const EMPTY = {
 // Defined at module scope (NOT inside the page component) so its identity is
 // stable across renders — otherwise React remounts the input on every keystroke
 // and the field loses focus.
-function Field({ label, k, form, upd, type = 'text', as = 'input', options = null }) {
+function Field({ label, k, form, upd, type = 'text', as = 'input', options = null, required = false }) {
+  // Counts and areas can never be negative; step="any" keeps decimals (m²) valid.
+  const numberProps = type === 'number' ? { min: 0, step: 'any' } : {}
   return (
     <div style={s.field}>
       <label style={s.label}>{label}</label>
       {as === 'textarea' ? (
-        <textarea value={form[k]} onChange={upd(k)} style={{ ...s.input, height: 90, resize: 'vertical' }} />
+        <textarea value={form[k]} onChange={upd(k)} required={required} style={{ ...s.input, height: 90, resize: 'vertical' }} />
       ) : options ? (
-        <select value={form[k]} onChange={upd(k)} style={s.input}>
+        <select value={form[k]} onChange={upd(k)} required={required} style={s.input}>
           {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </select>
       ) : (
-        <input type={type} value={form[k]} onChange={upd(k)} style={s.input} />
+        <input type={type} value={form[k]} onChange={upd(k)} required={required} {...numberProps} style={s.input} />
       )}
     </div>
   )
@@ -150,11 +153,12 @@ export default function PropertyFormPage() {
     const minorPrice = majorToMinor(form.price_amount)
     if (minorPrice == null) { setError('Ingresa el precio'); setSaving(false); return }
     payload.price_amount = minorPrice
-    if (payload.bedrooms !== '') payload.bedrooms = parseInt(payload.bedrooms, 10)
-    if (payload.bathrooms !== '') payload.bathrooms = parseInt(payload.bathrooms, 10)
-    if (payload.total_area_m2 !== '') payload.total_area_m2 = parseFloat(payload.total_area_m2)
-    if (payload.built_area_m2 !== '') payload.built_area_m2 = parseFloat(payload.built_area_m2)
-    if (payload.parking_spots !== '') payload.parking_spots = parseInt(payload.parking_spots, 10)
+    // Counts/areas are never negative — clamp defensively in case the field is bypassed.
+    if (payload.bedrooms !== '') payload.bedrooms = Math.max(0, parseInt(payload.bedrooms, 10) || 0)
+    if (payload.bathrooms !== '') payload.bathrooms = Math.max(0, parseInt(payload.bathrooms, 10) || 0)
+    if (payload.total_area_m2 !== '') payload.total_area_m2 = Math.max(0, parseFloat(payload.total_area_m2) || 0)
+    if (payload.built_area_m2 !== '') payload.built_area_m2 = Math.max(0, parseFloat(payload.built_area_m2) || 0)
+    if (payload.parking_spots !== '') payload.parking_spots = Math.max(0, parseInt(payload.parking_spots, 10) || 0)
     // Drop empty optional fields so the API doesn't reject "" for int/None columns
     Object.keys(payload).forEach((k) => { if (payload[k] === '') delete payload[k] })
     try {
@@ -167,16 +171,13 @@ export default function PropertyFormPage() {
     }
   }
 
-  if (loading || authLoading) return <div className="page-wrap"><Spinner /></div>
+  if (loading || authLoading) return <Spinner />
 
   return (
-    <div className="page-wrap">
-      <Helmet><title>{isEdit ? 'Editar propiedad' : 'Nueva propiedad'} | Proppietario</title></Helmet>
+    <>
+      <Helmet><title>{`${isEdit ? 'Editar propiedad' : 'Nueva propiedad'} | Proppietario`}</title></Helmet>
 
-      <div style={s.header}>
-        <button onClick={() => navigate('/agente')} style={s.back}>← Volver</button>
-        <h1 style={s.h1}>{isEdit ? 'Editar propiedad' : 'Nueva propiedad'}</h1>
-      </div>
+      <AdminPageHeader title={isEdit ? 'Editar propiedad' : 'Nueva propiedad'} subtitle="Completa los datos de la publicación" />
 
       {isEdit && status && (
         <div style={s.statusPanel}>
@@ -221,7 +222,8 @@ export default function PropertyFormPage() {
 
       <div style={s.layout}>
         <form onSubmit={submit} style={s.form}>
-          <Field label="Título *" k="title" form={form} upd={upd} />
+          <fieldset disabled={!editable} style={{ ...s.fieldset, ...(editable ? null : s.fieldsetOff) }}>
+          <Field label="Título *" k="title" form={form} upd={upd} required />
           <Field label="Descripción" k="description" as="textarea" form={form} upd={upd} />
           <div style={s.row2}>
             <Field label="Operación" k="operation_type" form={form} upd={upd} options={[['sale', 'Venta'], ['rent', 'Renta'], ['temporary', 'Temporal']]} />
@@ -236,6 +238,7 @@ export default function PropertyFormPage() {
                   type="text"
                   inputMode="numeric"
                   placeholder="0"
+                  required
                   value={groupThousands(form.price_amount)}
                   onChange={(e) => setForm((f) => ({ ...f, price_amount: digitsOnly(e.target.value) }))}
                   style={{ ...s.input, paddingLeft: 36 }}
@@ -256,6 +259,7 @@ export default function PropertyFormPage() {
           <Field label="Dirección" k="address_street" form={form} upd={upd} />
           <Field label="Teléfono de contacto" k="contact_phone" form={form} upd={upd} />
           <Field label="WhatsApp de contacto" k="contact_whatsapp" form={form} upd={upd} />
+          </fieldset>
 
           <label style={s.homeToggle}>
             <input
@@ -318,7 +322,7 @@ export default function PropertyFormPage() {
           </aside>
         )}
       </div>
-    </div>
+    </>
   )
 }
 
@@ -329,6 +333,8 @@ const s = {
   error: { background: '#fef2f2', color: '#D7263D', borderRadius: 10, padding: '10px 14px', fontSize: 14, marginBottom: 16 },
   layout: { display: 'grid', gridTemplateColumns: '1fr 280px', gap: '2rem', alignItems: 'start' },
   form: { background: '#fff', borderRadius: 16, padding: '1.75rem', border: '1px solid #DDE8FF', boxShadow: '0 8px 24px rgba(8,29,103,0.06)' },
+  fieldset: { border: 'none', padding: 0, margin: 0, minInlineSize: 0 },
+  fieldsetOff: { opacity: 0.55 },
   field: { marginBottom: '1rem' },
   label: { display: 'block', fontSize: 12, fontWeight: 700, color: '#4A5680', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.04em' },
   input: { display: 'block', width: '100%', padding: '9px 12px', border: '1px solid #DDE8FF', borderRadius: 8, fontSize: 14, boxSizing: 'border-box', color: '#081D67', outline: 'none' },

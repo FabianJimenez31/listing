@@ -1,7 +1,8 @@
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Outlet, Route, Routes } from 'react-router-dom'
 import { HelmetProvider } from 'react-helmet-async'
 import { AuthProvider } from './contexts/AuthContext'
 import Layout from './components/layout/Layout'
+import PanelLayout from './components/panel/PanelLayout'
 
 // Pages — public
 import HomePage from './pages/HomePage'
@@ -45,13 +46,46 @@ function NotFound() {
   )
 }
 
+// Public shell (header + footer) shared by every non-admin route.
+function PublicShell() {
+  return (
+    <Layout>
+      <Outlet />
+    </Layout>
+  )
+}
+
 export default function App() {
   return (
     <HelmetProvider>
       <AuthProvider>
         <BrowserRouter>
-          <Layout>
-            <Routes>
+          <Routes>
+            {/* Back-office — single sidebar shell for agents & admins.
+                Sections inside the sidebar are gated by permission. */}
+            <Route element={<PanelLayout />}>
+              {/* Agent workspace */}
+              <Route path="/agente" element={<AgentDashboard />} />
+              <Route path="/agente/nueva" element={<PropertyFormPage />} />
+              <Route path="/agente/editar/:id" element={<PropertyFormPage />} />
+              <Route path="/agente/leads" element={<LeadsPage />} />
+              <Route path="/agente/proyectos" element={<AgentProjectsPage />} />
+              <Route path="/agente/proyectos/nuevo" element={<ProjectFormPage />} />
+              <Route path="/agente/proyectos/editar/:slug" element={<ProjectFormPage />} />
+
+              {/* Admin area (guarded by role inside PanelLayout) */}
+              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/admin/moderacion" element={<ModerationPage />} />
+              <Route path="/admin/banners" element={<BannersPage />} />
+              <Route path="/admin/usuarios" element={<UsersPage />} />
+              <Route path="/admin/destacados" element={<FeaturedPage />} />
+              <Route path="/admin/inmobiliarias" element={<AdminAgenciesPage />} />
+              <Route path="/admin/aliados" element={<AdminPartnersPage />} />
+              <Route path="/admin/blog" element={<AdminBlogPage />} />
+            </Route>
+
+            {/* Public / user — header + footer shell */}
+            <Route element={<PublicShell />}>
               {/* Public */}
               <Route path="/" element={<HomePage />} />
               <Route path="/propiedades" element={<SearchPage />} />
@@ -72,29 +106,10 @@ export default function App() {
               {/* User */}
               <Route path="/favoritos" element={<FavoritesPage />} />
 
-              {/* Agent panel */}
-              <Route path="/agente" element={<AgentDashboard />} />
-              <Route path="/agente/nueva" element={<PropertyFormPage />} />
-              <Route path="/agente/editar/:id" element={<PropertyFormPage />} />
-              <Route path="/agente/leads" element={<LeadsPage />} />
-              <Route path="/agente/proyectos" element={<AgentProjectsPage />} />
-              <Route path="/agente/proyectos/nuevo" element={<ProjectFormPage />} />
-              <Route path="/agente/proyectos/editar/:slug" element={<ProjectFormPage />} />
-
-              {/* Admin panel */}
-              <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/admin/moderacion" element={<ModerationPage />} />
-              <Route path="/admin/banners" element={<BannersPage />} />
-              <Route path="/admin/usuarios" element={<UsersPage />} />
-              <Route path="/admin/destacados" element={<FeaturedPage />} />
-              <Route path="/admin/inmobiliarias" element={<AdminAgenciesPage />} />
-              <Route path="/admin/aliados" element={<AdminPartnersPage />} />
-              <Route path="/admin/blog" element={<AdminBlogPage />} />
-
               {/* Fallback */}
               <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Layout>
+            </Route>
+          </Routes>
         </BrowserRouter>
       </AuthProvider>
     </HelmetProvider>
