@@ -50,3 +50,41 @@ Current layout (kept flat and focused — grow by **domain capability**, not by 
 - **Frontend SPA Smoke Tester:** `make smoke-test` — only relevant once a deployed SPA frontend exists.
 - **Incident & Emergency Hotfixes:** `make hotfix` generates docs in `temp/emergency_logs/`, snapshots state in `temp/backup/`, and uses the `HARNESS_EMERGENCY=1` bypass.
 - **Atomic Rollback & Recovery:** `make rollback` lists git safety tags and patches; `scripts/deployment/rollback.sh apply <target>` restores state.
+
+## 🚀 Deployment (Docker Compose)
+
+The live stack runs on this host via `docker-compose.yml` — **the server _is_ `158.69.204.107`**. Four services:
+
+| Service    | Image / build                              | Port (host→container) | Notes |
+|------------|--------------------------------------------|-----------------------|-------|
+| `frontend` | `Dockerfile.frontend` (Node build → nginx) | `8090 → 80`           | React SPA served by nginx; proxies `/api/`, `/sitemap.xml`, `/robots.txt` to `backend`; serves `/static/` from the `uploads` volume; SPA fallback to `index.html` (see `nginx.conf`). |
+| `backend`  | `Dockerfile` (FastAPI + uvicorn)           | `8010 → 8000`         | |
+| `db`       | `postgis/postgis:16-3.4`                   | internal `5432`       | volume `pgdata` |
+| `redis`    | `redis:7-alpine`                           | internal `6379`       | volume `redisdata` |
+
+> ⚠️ **The frontend `dist/` is baked into the image at build time.** `Dockerfile.frontend` runs `npm run build` and `COPY`s `dist/` into the nginx image. Editing `frontend/src/**` (or the backend code) does **nothing** to the live site until you **rebuild the image and recreate the container** — a browser hard-refresh (`Cmd+Shift+R`) will not help, because the served bundle hasn't changed.
+
+### Deploy a frontend change
+
+```bash
+docker compose build frontend     # recompile React + bake dist/ into the nginx image
+docker compose up -d frontend     # recreate the container with the new image
+```
+
+### Deploy a backend change
+
+```bash
+docker compose build backend
+docker compose up -d backend
+```
+
+### Verify what is actually being served
+
+```bash
+# Show the served bundle hashes, then confirm a known-new class is in the served CSS
+curl -s http://localhost:8090/ | grep -oE '/assets/index-[^"]+\.(js|css)'
+css=$(curl -s http://localhost:8090/ | grep -oE '/assets/index-[^"]+\.css' | head -1)
+curl -s "http://localhost:8090$css" | grep -o admin-sidebar   # → match means the new build is live
+```
+
+**Config:** runtime env comes from `.env` (git-ignored) — `DB_PASSWORD`, `JWT_SECRET_KEY` (**required**), `ADMIN_EMAIL` / `ADMIN_PASSWORD`, `SITE_URL`, etc. See `.env.example`. A local `npm run build` inside `frontend/` is useful to catch compile/lint errors fast before paying for the full Docker rebuild.
