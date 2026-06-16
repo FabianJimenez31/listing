@@ -41,7 +41,7 @@ export default function SearchPage({ forced = {}, title, subtitle }) {
   return (
     <div className="page-wrap">
       <Helmet>
-        <title>{heading} | Proppietario</title>
+        <title>{`${heading} | Proppietario`}</title>
         <meta name="description" content={`${total} propiedades encontradas en Proppietario.`} />
       </Helmet>
 

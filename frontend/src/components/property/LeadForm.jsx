@@ -36,7 +36,7 @@ export default function LeadForm({ propertyId }) {
       <input placeholder="Teléfono / WhatsApp" value={form.phone} onChange={(e) => update('phone', e.target.value)} />
       <textarea style={{ height: 84, resize: 'vertical' }} placeholder="Mensaje (opcional)" value={form.message} onChange={(e) => update('message', e.target.value)} />
       <label className="consent">
-        <input type="checkbox" style={{ width: 'auto', margin: 0 }} checked={form.consent_given} onChange={(e) => update('consent_given', e.target.checked)} />
+        <input type="checkbox" required style={{ width: 'auto', margin: 0 }} checked={form.consent_given} onChange={(e) => update('consent_given', e.target.checked)} />
         Acepto el aviso de privacidad *
       </label>
       {status === 'error' && <p style={{ color: '#D7263D', fontSize: 13, marginBottom: 8 }}>Error al enviar. Intenta de nuevo.</p>}

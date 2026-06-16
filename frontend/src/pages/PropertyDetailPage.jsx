@@ -107,7 +107,7 @@ export default function PropertyDetailPage() {
   return (
     <div className="page-wrap">
       <Helmet>
-        <title>{property.title} | Proppietario</title>
+        <title>{`${property.title} | Proppietario`}</title>
         <meta name="description" content={property.description?.slice(0, 155) || property.title} />
         <meta property="og:title" content={property.title} />
         {main && <meta property="og:image" content={main.cdn_url} />}

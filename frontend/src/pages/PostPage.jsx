@@ -28,7 +28,7 @@ export default function PostPage() {
 
   return (
     <article className="page-wrap" style={{ maxWidth: 820 }}>
-      <Helmet><title>{post.title} | Proppietario</title></Helmet>
+      <Helmet><title>{`${post.title} | Proppietario`}</title></Helmet>
       <div className="crumbs"><Link to="/blog">Blog</Link>{post.category ? ` · ${post.category}` : ''}</div>
       <h1 style={{ fontSize: 'clamp(26px,4vw,40px)', fontWeight: 800, color: 'var(--ink)', margin: '8px 0 18px', lineHeight: 1.15 }}>
         {post.title}

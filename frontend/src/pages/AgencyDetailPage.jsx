@@ -38,7 +38,7 @@ export default function AgencyDetailPage() {
 
   return (
     <div className="page-wrap">
-      <Helmet><title>{agency.name} | Proppietario</title></Helmet>
+      <Helmet><title>{`${agency.name} | Proppietario`}</title></Helmet>
       <div className="crumbs"><Link to="/inmobiliarias">Inmobiliarias</Link> · {agency.name}</div>
 
       <div className="agency-card" style={{ marginBottom: 28 }}>
