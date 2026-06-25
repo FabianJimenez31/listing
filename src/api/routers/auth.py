@@ -48,13 +48,13 @@ def register(body: RegisterRequest, db: DB):
 def login(body: LoginRequest, db: DB):
     repo = UserRepository(db)
     user = repo.get_by_email(body.email.lower())
-    if not user or not verify_password(body.password, user.hashed_password):
+    if not user:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid email or password")
     if not user.is_active:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Account is disabled")
 
-    # Staff (admin/agent) get an email OTP step when 2FA is enabled; everyone
-    # else (and all logins when 2FA is off) receives tokens directly.
+    # Staff (admin/agent) log in passwordless when 2FA is on: just the email →
+    # an emailed code, no password needed.
     if user_requires_otp(user):
         try:
             challenge_id = issue_challenge(db, user)
@@ -65,6 +65,12 @@ def login(body: LoginRequest, db: DB):
                 "No se pudo enviar el código de verificación. Intenta de nuevo.",
             )
         return LoginResponse(otp_required=True, challenge_id=challenge_id)
+
+    # Password path: everyone else, and the fallback for staff when 2FA is off.
+    if not body.password:
+        return LoginResponse(password_required=True)
+    if not verify_password(body.password, user.hashed_password):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid email or password")
 
     return LoginResponse(
         access_token=create_access_token(user.id, user.email),

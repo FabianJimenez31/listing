@@ -28,10 +28,12 @@ export function AuthProvider({ children }) {
     return me
   }, [])
 
-  // Returns { otpRequired, challengeId } when staff 2FA kicks in, else { user }.
+  // Returns { otpRequired, challengeId } for staff (passwordless code step),
+  // { passwordRequired } when a password is still needed, else { user }.
   const login = useCallback(async (email, password) => {
     const data = await apiLogin(email, password)
     if (data.otp_required) return { otpRequired: true, challengeId: data.challenge_id }
+    if (data.password_required) return { passwordRequired: true }
     return { user: await storeSession(data) }
   }, [storeSession])
 

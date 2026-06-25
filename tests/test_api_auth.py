@@ -73,6 +73,16 @@ class TestLogin:
         })
         assert resp.status_code == 401
 
+    def test_login_no_password_asks_for_password(self, client):
+        # Non-staff account, email only → backend asks for the password.
+        client.post("/api/v1/auth/register", json={
+            "email": "nopw@example.com", "password": "SecurePass1", "full_name": "N",
+        })
+        resp = client.post("/api/v1/auth/login", json={"email": "nopw@example.com"})
+        assert resp.status_code == 200
+        assert resp.json()["password_required"] is True
+        assert resp.json().get("access_token") is None
+
 
 class TestRefresh:
     def test_refresh_success(self, client):
@@ -142,6 +152,11 @@ class TestLoginOtp:
         client.post("/api/v1/auth/login/verify", json={"challenge_id": challenge, "code": self.FIXED_CODE})
         again = client.post("/api/v1/auth/login/verify", json={"challenge_id": challenge, "code": self.FIXED_CODE})
         assert again.status_code == 401
+
+    def test_staff_login_passwordless_no_password(self, client, admin_user, otp_on):
+        # No password sent — staff still get the OTP step (passwordless).
+        resp = client.post("/api/v1/auth/login", json={"email": "admin@test.com"})
+        assert resp.json()["otp_required"] is True
 
     def test_non_staff_bypasses_otp(self, client, otp_on):
         client.post("/api/v1/auth/register", json={

@@ -7,7 +7,7 @@ export default function LoginPage() {
   const { login, verifyOtp } = useAuth()
   const navigate = useNavigate()
   const [form, setForm] = useState({ email: '', password: '' })
-  const [step, setStep] = useState('credentials') // 'credentials' | 'otp'
+  const [step, setStep] = useState('email') // 'email' | 'password' | 'otp'
   const [challengeId, setChallengeId] = useState(null)
   const [code, setCode] = useState('')
   const [error, setError] = useState(null)
@@ -19,7 +19,29 @@ export default function LoginPage() {
   const goByRole = (user) =>
     navigate(user.permissions?.includes('property:moderate') ? '/admin' : '/agente')
 
-  const submit = async (e) => {
+  // Step 1: email only. Staff get a code; everyone else is asked for a password.
+  const submitEmail = async (e) => {
+    e.preventDefault()
+    setError(null)
+    setLoading(true)
+    try {
+      const res = await login(form.email, null)
+      if (res.otpRequired) {
+        setChallengeId(res.challengeId)
+        setStep('otp')
+      } else if (res.passwordRequired) {
+        setStep('password')
+      } else if (res.user) {
+        goByRole(res.user)
+      }
+    } catch (err) {
+      setError(errMsg(err, 'No encontramos esa cuenta'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const submitPassword = async (e) => {
     e.preventDefault()
     setError(null)
     setLoading(true)
@@ -28,11 +50,11 @@ export default function LoginPage() {
       if (res.otpRequired) {
         setChallengeId(res.challengeId)
         setStep('otp')
-      } else {
+      } else if (res.user) {
         goByRole(res.user)
       }
     } catch (err) {
-      setError(errMsg(err, 'Credenciales incorrectas'))
+      setError(errMsg(err, 'Contraseña incorrecta'))
     } finally {
       setLoading(false)
     }
@@ -51,11 +73,16 @@ export default function LoginPage() {
     }
   }
 
-  const backToCredentials = () => {
-    setStep('credentials')
+  const back = () => {
+    setStep('email')
     setCode('')
+    setForm((f) => ({ ...f, password: '' }))
     setError(null)
   }
+
+  const title = step === 'otp' ? 'Verifica tu identidad'
+    : step === 'password' ? 'Ingresa tu contraseña'
+    : 'Iniciar sesión'
 
   return (
     <div className="page-wrap">
@@ -63,24 +90,36 @@ export default function LoginPage() {
       <div style={s.wrap}>
         <div style={s.card}>
           <div style={s.logoMark}>P</div>
-          <h1 style={s.h1}>{step === 'otp' ? 'Verifica tu identidad' : 'Iniciar sesión'}</h1>
+          <h1 style={s.h1}>{title}</h1>
 
           {error && <p style={s.error}>{error}</p>}
 
-          {step === 'credentials' ? (
-            <form onSubmit={submit}>
+          {step === 'email' && (
+            <form onSubmit={submitEmail}>
               <label style={s.label}>Correo electrónico</label>
               <input
                 required
                 type="email"
+                autoFocus
                 style={s.input}
                 value={form.email}
                 onChange={e => setForm({ ...form, email: e.target.value })}
               />
+              <button type="submit" disabled={loading} style={s.btn}>
+                {loading ? 'Continuando…' : 'Continuar'}
+              </button>
+              <p style={s.foot}>¿No tienes cuenta? <Link to="/registro" style={s.link}>Regístrate</Link></p>
+            </form>
+          )}
+
+          {step === 'password' && (
+            <form onSubmit={submitPassword}>
+              <p style={s.hint}>Cuenta: <b>{form.email}</b></p>
               <label style={s.label}>Contraseña</label>
               <input
                 required
                 type="password"
+                autoFocus
                 style={s.input}
                 value={form.password}
                 onChange={e => setForm({ ...form, password: e.target.value })}
@@ -88,15 +127,19 @@ export default function LoginPage() {
               <button type="submit" disabled={loading} style={s.btn}>
                 {loading ? 'Entrando…' : 'Entrar'}
               </button>
+              <button type="button" onClick={back} style={s.linkBtn}>← Volver</button>
             </form>
-          ) : (
+          )}
+
+          {step === 'otp' && (
             <form onSubmit={verify}>
-              <p style={s.hint}>Enviamos un código de 6 dígitos a <b>{form.email}</b>. Ingrésalo para continuar.</p>
+              <p style={s.hint}>Enviamos un código de 6 dígitos a <b>{form.email}</b>. Ingrésalo para entrar.</p>
               <label style={s.label}>Código de verificación</label>
               <input
                 required
                 inputMode="numeric"
                 autoComplete="one-time-code"
+                autoFocus
                 maxLength={6}
                 placeholder="••••••"
                 style={{ ...s.input, letterSpacing: 6, textAlign: 'center', fontSize: 20 }}
@@ -106,14 +149,8 @@ export default function LoginPage() {
               <button type="submit" disabled={loading || code.length < 6} style={s.btn}>
                 {loading ? 'Verificando…' : 'Verificar y entrar'}
               </button>
-              <button type="button" onClick={backToCredentials} style={s.linkBtn}>
-                ← Volver
-              </button>
+              <button type="button" onClick={back} style={s.linkBtn}>← Volver</button>
             </form>
-          )}
-
-          {step === 'credentials' && (
-            <p style={s.foot}>¿No tienes cuenta? <Link to="/registro" style={s.link}>Regístrate</Link></p>
           )}
         </div>
       </div>

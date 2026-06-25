@@ -27,7 +27,8 @@ class RegisterRequest(BaseModel):
 
 class LoginRequest(BaseModel):
     email: EmailStr
-    password: str
+    # Optional: staff log in passwordless (email → code) when 2FA is on.
+    password: str | None = None
 
 
 class TokenResponse(BaseModel):
@@ -44,6 +45,8 @@ class LoginResponse(BaseModel):
     token_type: str = "bearer"
     otp_required: bool = False
     challenge_id: str | None = None
+    # True when the email belongs to a non-staff account that still needs a password.
+    password_required: bool = False
 
 
 class OtpVerifyRequest(BaseModel):

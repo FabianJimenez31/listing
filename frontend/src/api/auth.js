@@ -1,7 +1,7 @@
 import api from './client'
 
 export const login = (email, password) =>
-  api.post('/auth/login', { email, password }).then((r) => r.data)
+  api.post('/auth/login', { email, password: password ?? null }).then((r) => r.data)
 
 // Second step of staff 2FA: exchange the emailed code for tokens.
 export const verifyLogin = (challengeId, code) =>
