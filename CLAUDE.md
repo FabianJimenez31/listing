@@ -76,9 +76,11 @@ docker compose up -d frontend     # recreate the container with the new image
 ### Deploy a backend change
 
 ```bash
-docker compose build backend
-docker compose up -d backend
+docker compose build backend     # bake the new code + Alembic migrations into the image
+docker compose up -d backend     # recreate; the entrypoint runs `alembic upgrade head` on startup
 ```
+
+> ⚠️ **Both the frontend `dist/` and the Alembic migrations are baked into their images at build time.** A migration file you only added to the working tree does **nothing** in production until you `docker compose build backend` (copies it into the image) and `up -d backend` (whose entrypoint applies it via `alembic upgrade head`). Running `alembic upgrade head` against the *already-running* container can't apply a migration the old image doesn't contain — **always rebuild first, then recreate.** The general rule for every service: **`docker compose build <service>` → `up -d <service>`**; editing source files alone never changes the live container.
 
 ### Verify what is actually being served
 
