@@ -19,6 +19,7 @@ class SiteSettingsResponse(BaseModel):
     """Public branding payload consumed by the SPA on every page load."""
 
     logo_url: str | None = None
+    footer_logo_url: str | None = None
     footer_tagline: str | None = None
     copyright_text: str | None = None
     social_instagram: str | None = None

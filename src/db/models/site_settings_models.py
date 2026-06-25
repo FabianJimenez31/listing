@@ -35,6 +35,11 @@ class SiteSettingsORM(Base):
     logo_storage_key = Column(String(500), nullable=True)
 
     # ── Footer configuration (admin-editable) ───────────────────────────────
+    # Footer brand logo, independent from the header `logo_url`. NULL → the
+    # footer falls back to the header logo, then to the text wordmark.
+    footer_logo_url = Column(String(1000), nullable=True)
+    footer_logo_storage_key = Column(String(500), nullable=True)
+
     # Brand description and copyright line shown in the footer.
     footer_tagline = Column(Text, nullable=True)
     copyright_text = Column(String(500), nullable=True)

@@ -1,7 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useSettings } from '../../contexts/SettingsContext'
-import { uploadLogo, deleteLogo, updateSettings, uploadFooterLogo } from '../../api/settings'
+import {
+  uploadLogo,
+  deleteLogo,
+  updateSettings,
+  uploadFooterLogo,
+  uploadFooterBrandLogo,
+  deleteFooterBrandLogo,
+} from '../../api/settings'
 import AdminPageHeader from '../../components/admin/AdminPageHeader'
 import { IconSettings } from '../../components/admin/adminIcons'
 
@@ -56,14 +63,21 @@ function FooterLogoPicker({ value, onChange }) {
 }
 
 export default function BrandingPage() {
-  const { logoUrl, settings, setSettings, refresh } = useSettings()
+  const { logoUrl, footerLogoUrl, settings, setSettings, refresh } = useSettings()
 
-  // ── Brand logo card state ──────────────────────────────────────────────
+  // ── Brand logo card state (header) ─────────────────────────────────────
   const [file, setFile] = useState(null)
   const [preview, setPreview] = useState(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
   const inputRef = useRef(null)
+
+  // ── Footer brand logo card state ───────────────────────────────────────
+  const [fLogoFile, setFLogoFile] = useState(null)
+  const [fLogoPreview, setFLogoPreview] = useState(null)
+  const [fLogoBusy, setFLogoBusy] = useState(false)
+  const [fLogoError, setFLogoError] = useState(null)
+  const fLogoInputRef = useRef(null)
 
   // ── Footer config form state ───────────────────────────────────────────
   const [form, setForm] = useState(toFooterForm(settings))
@@ -123,6 +137,50 @@ export default function BrandingPage() {
     }
   }
 
+  // ── Footer brand logo handlers ─────────────────────────────────────────
+  const fLogoPick = (e) => {
+    const f = e.target.files?.[0]
+    setFLogoError(null)
+    if (!f) return
+    setFLogoFile(f)
+    setFLogoPreview(URL.createObjectURL(f))
+  }
+
+  const fLogoReset = () => {
+    setFLogoFile(null)
+    setFLogoPreview(null)
+    if (fLogoInputRef.current) fLogoInputRef.current.value = ''
+  }
+
+  const fLogoSave = async () => {
+    if (!fLogoFile) return
+    setFLogoError(null)
+    setFLogoBusy(true)
+    try {
+      await uploadFooterBrandLogo(fLogoFile)
+      await refresh()
+      fLogoReset()
+    } catch (err) {
+      setFLogoError(err.response?.data?.error?.message || err.response?.data?.detail || 'Error al subir el logo del footer')
+    } finally {
+      setFLogoBusy(false)
+    }
+  }
+
+  const fLogoRemove = async () => {
+    if (!confirm('¿Quitar el logo del footer y usar el del encabezado?')) return
+    setFLogoBusy(true)
+    try {
+      await deleteFooterBrandLogo()
+      await refresh()
+      fLogoReset()
+    } catch {
+      setFLogoError('Error al quitar el logo del footer')
+    } finally {
+      setFLogoBusy(false)
+    }
+  }
+
   // ── Footer form helpers ────────────────────────────────────────────────
   const upd = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
   const addLogo = () =>
@@ -168,7 +226,7 @@ export default function BrandingPage() {
             : <span className="brand-preview-text"><span className="dot">P</span>Propp<b>ietario</b></span>}
         </div>
         {logoUrl
-          ? <p className="admin-hint">Se está usando un logo personalizado (encabezado, pie de página y panel).</p>
+          ? <p className="admin-hint">Se está usando un logo personalizado (encabezado y panel; el pie de página lo usa salvo que definas uno propio abajo).</p>
           : <p className="admin-hint">Sin logo personalizado: el portal muestra el texto «Proppietario».</p>}
         {logoUrl && (
           <button className="btn btn-outline btn-danger btn-sm" onClick={remove} disabled={busy} style={{ marginTop: 12 }}>
@@ -198,6 +256,40 @@ export default function BrandingPage() {
           </button>
           {file && (
             <button className="btn btn-outline" onClick={reset} disabled={busy}>Cancelar</button>
+          )}
+        </div>
+      </div>
+
+      {/* ── Logo del pie de página ───────────────────────────────────── */}
+      <div className="admin-card admin-card-form">
+        <h3 className="admin-card-title">Logo del pie de página</h3>
+        <p className="admin-hint" style={{ marginBottom: 14 }}>
+          Independiente del encabezado. Si lo dejas vacío, el footer usa el logo del encabezado.
+        </p>
+        {fLogoError && <p className="admin-error">{fLogoError}</p>}
+
+        <div className="brand-preview">
+          {fLogoPreview || footerLogoUrl
+            ? <img src={fLogoPreview || footerLogoUrl} alt="Logo del footer" className="brand-preview-img" />
+            : <span className="admin-hint">Usando el logo del encabezado</span>}
+        </div>
+
+        <div className="fg" style={{ marginTop: 12 }}>
+          <label>Archivo (PNG, JPG, WebP o GIF · máx. 10 MB)</label>
+          <input ref={fLogoInputRef} type="file" accept={ACCEPT} onChange={fLogoPick} />
+        </div>
+
+        <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+          <button className="btn btn-blue" onClick={fLogoSave} disabled={!fLogoFile || fLogoBusy}>
+            {fLogoBusy ? 'Guardando…' : 'Guardar logo del footer'}
+          </button>
+          {fLogoFile && (
+            <button className="btn btn-outline" onClick={fLogoReset} disabled={fLogoBusy}>Cancelar</button>
+          )}
+          {footerLogoUrl && !fLogoFile && (
+            <button className="btn btn-outline btn-danger" onClick={fLogoRemove} disabled={fLogoBusy}>
+              Quitar logo del footer
+            </button>
           )}
         </div>
       </div>

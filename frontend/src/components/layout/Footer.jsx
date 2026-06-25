@@ -81,7 +81,7 @@ export default function Footer() {
       <div className="wrap">
         <div className="foot-grid">
           <div className="foot-brand">
-            <Link to="/" className="logo"><BrandMark fallback={<><span className="dot">P</span>Proppietario</>} /></Link>
+            <Link to="/" className="logo"><BrandMark footer fallback={<><span className="dot">P</span>Proppietario</>} /></Link>
             <p>{s.footer_tagline || DEFAULT_TAGLINE}</p>
             <div className="socials">
               <Social label="Instagram" url={s.social_instagram}>{IG_ICON}</Social>

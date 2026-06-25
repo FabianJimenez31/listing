@@ -140,6 +140,48 @@ class TestUpdateFooter:
         assert resp.status_code == 403
 
 
+class TestFooterBrandLogo:
+    def test_default_footer_logo_url_none(self, client):
+        assert client.get("/api/v1/settings").json()["footer_logo_url"] is None
+
+    def test_upload_footer_brand_logo_admin(self, client, admin_user, admin_token):
+        resp = client.post(
+            "/api/v1/settings/footer-brand-logo",
+            files={"file": ("footer.png", io.BytesIO(_fake_png()), "image/png")},
+            headers=_auth(admin_token),
+        )
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["footer_logo_url"] is not None
+        # Independent from the header logo, which stays unset.
+        assert body["logo_url"] is None
+        # Public endpoint reflects it.
+        assert client.get("/api/v1/settings").json()["footer_logo_url"] == body["footer_logo_url"]
+
+    def test_upload_footer_brand_logo_requires_permission(self, client, agent_user, agent_token):
+        resp = client.post(
+            "/api/v1/settings/footer-brand-logo",
+            files={"file": ("footer.png", io.BytesIO(_fake_png()), "image/png")},
+            headers=_auth(agent_token),
+        )
+        assert resp.status_code == 403
+
+    def test_delete_footer_brand_logo_clears_it(self, client, admin_user, admin_token):
+        client.post(
+            "/api/v1/settings/footer-brand-logo",
+            files={"file": ("footer.png", io.BytesIO(_fake_png()), "image/png")},
+            headers=_auth(admin_token),
+        )
+        resp = client.delete("/api/v1/settings/footer-brand-logo", headers=_auth(admin_token))
+        assert resp.status_code == 200
+        assert resp.json()["footer_logo_url"] is None
+        assert client.get("/api/v1/settings").json()["footer_logo_url"] is None
+
+    def test_delete_footer_brand_logo_requires_permission(self, client, agent_user, agent_token):
+        resp = client.delete("/api/v1/settings/footer-brand-logo", headers=_auth(agent_token))
+        assert resp.status_code == 403
+
+
 class TestDeleteLogo:
     def test_delete_logo_clears_it(self, client, admin_user, admin_token):
         client.post(

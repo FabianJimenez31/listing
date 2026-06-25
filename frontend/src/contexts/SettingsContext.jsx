@@ -15,14 +15,16 @@ export function SettingsProvider({ children }) {
   useEffect(() => { refresh() }, [refresh])
 
   const logoUrl = settings?.logo_url || null
+  // Footer brand logo falls back to the header logo when not configured.
+  const footerLogoUrl = settings?.footer_logo_url || null
 
   return (
-    <SettingsContext.Provider value={{ settings, logoUrl, setSettings, refresh }}>
+    <SettingsContext.Provider value={{ settings, logoUrl, footerLogoUrl, setSettings, refresh }}>
       {children}
     </SettingsContext.Provider>
   )
 }
 
 export function useSettings() {
-  return useContext(SettingsContext) ?? { settings: null, logoUrl: null, setSettings: () => {}, refresh: () => {} }
+  return useContext(SettingsContext) ?? { settings: null, logoUrl: null, footerLogoUrl: null, setSettings: () => {}, refresh: () => {} }
 }

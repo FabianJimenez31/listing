@@ -1,10 +1,12 @@
 """Site settings router — global, admin-editable branding.
 
 GET    /settings             — public; the SPA reads brand + footer config on load
-PUT    /settings             — admin; update footer copy, social, legal and ally logos
-POST   /settings/logo        — admin; upload/replace the brand logo (multipart)
-DELETE /settings/logo        — admin; clear the logo (revert to the text wordmark)
-POST   /settings/footer-logo — admin; upload an ally logo image, returns its URL
+PUT    /settings                  — admin; update footer copy, social, legal and ally logos
+POST   /settings/logo             — admin; upload/replace the header brand logo (multipart)
+DELETE /settings/logo             — admin; clear the header logo (revert to the text wordmark)
+POST   /settings/footer-brand-logo — admin; upload/replace the footer brand logo (multipart)
+DELETE /settings/footer-brand-logo — admin; clear it (footer falls back to the header logo)
+POST   /settings/footer-logo      — admin; upload an ally logo image, returns its URL
 
 Storage mirrors property images: in development files land under temp/uploads/
 and are served at /static/; in production set STORAGE_BACKEND=s3 + the S3 env vars.
@@ -139,6 +141,69 @@ def delete_logo(current_user: CurrentUser, db: DB):
     old_key = settings.logo_storage_key
     settings.logo_url = None
     settings.logo_storage_key = None
+    settings.updated_by_id = current_user.id
+    db.commit()
+    db.refresh(settings)
+
+    if old_key:
+        _remove(old_key)
+
+    return settings
+
+
+@router.post(
+    "/footer-brand-logo",
+    response_model=SiteSettingsResponse,
+    dependencies=[Depends(require_permission("settings:manage"))],
+)
+async def upload_footer_brand_logo(current_user: CurrentUser, db: DB, file: UploadFile = File(...)):
+    """Upload (or replace) the footer brand logo, independent from the header logo."""
+    if file.content_type not in _ALLOWED_CONTENT_TYPES:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
+            f"Content-Type {file.content_type!r} not allowed. Use JPEG, PNG, WebP, or GIF.",
+        )
+
+    file_bytes = await file.read()
+    if len(file_bytes) > _MAX_BYTES:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
+            f"File too large ({len(file_bytes)} bytes). Max 10 MB.",
+        )
+
+    ext = (file.filename or "logo").rsplit(".", 1)[-1].lower()
+    storage_key = f"branding/footer-brand-{uuid.uuid4()}.{ext}"
+    cdn_url = _store(file_bytes, storage_key)
+
+    repo = SiteSettingsRepository(db)
+    settings = repo.get_or_create()
+
+    old_key = settings.footer_logo_storage_key
+    settings.footer_logo_url = cdn_url
+    settings.footer_logo_storage_key = storage_key
+    settings.updated_by_id = current_user.id
+    db.commit()
+    db.refresh(settings)
+
+    if old_key and old_key != storage_key:
+        _remove(old_key)
+
+    return settings
+
+
+@router.delete(
+    "/footer-brand-logo",
+    response_model=SiteSettingsResponse,
+    dependencies=[Depends(require_permission("settings:manage"))],
+)
+def delete_footer_brand_logo(current_user: CurrentUser, db: DB):
+    """Clear the footer brand logo so the footer falls back to the header logo."""
+    repo = SiteSettingsRepository(db)
+    settings = repo.get_or_create()
+
+    old_key = settings.footer_logo_storage_key
+    settings.footer_logo_url = None
+    settings.footer_logo_storage_key = None
     settings.updated_by_id = current_user.id
     db.commit()
     db.refresh(settings)

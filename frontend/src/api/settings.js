@@ -17,6 +17,19 @@ export const uploadLogo = (file) => {
 export const deleteLogo = () =>
   api.delete('/settings/logo').then((r) => r.data)
 
+// Admin-only: upload/replace the footer brand logo (independent from the header).
+export const uploadFooterBrandLogo = (file) => {
+  const form = new FormData()
+  form.append('file', file)
+  return api.post('/settings/footer-brand-logo', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }).then((r) => r.data)
+}
+
+// Admin-only: clear the footer brand logo (footer falls back to the header logo).
+export const deleteFooterBrandLogo = () =>
+  api.delete('/settings/footer-brand-logo').then((r) => r.data)
+
 // Admin-only: update the footer config (copy, social, legal, ally logos).
 export const updateSettings = (data) =>
   api.put('/settings', data).then((r) => r.data)
