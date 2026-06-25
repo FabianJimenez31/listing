@@ -1,6 +1,7 @@
 import { BrowserRouter, Outlet, Route, Routes } from 'react-router-dom'
 import { HelmetProvider } from 'react-helmet-async'
 import { AuthProvider } from './contexts/AuthContext'
+import { SettingsProvider } from './contexts/SettingsContext'
 import Layout from './components/layout/Layout'
 import PanelLayout from './components/panel/PanelLayout'
 
@@ -36,6 +37,7 @@ import FeaturedPage from './pages/admin/FeaturedPage'
 import AdminAgenciesPage from './pages/admin/AgenciesPage'
 import AdminPartnersPage from './pages/admin/PartnersPage'
 import AdminBlogPage from './pages/admin/BlogPage'
+import BrandingPage from './pages/admin/BrandingPage'
 
 function NotFound() {
   return (
@@ -59,6 +61,7 @@ export default function App() {
   return (
     <HelmetProvider>
       <AuthProvider>
+        <SettingsProvider>
         <BrowserRouter>
           <Routes>
             {/* Back-office — single sidebar shell for agents & admins.
@@ -82,6 +85,7 @@ export default function App() {
               <Route path="/admin/inmobiliarias" element={<AdminAgenciesPage />} />
               <Route path="/admin/aliados" element={<AdminPartnersPage />} />
               <Route path="/admin/blog" element={<AdminBlogPage />} />
+              <Route path="/admin/marca" element={<BrandingPage />} />
             </Route>
 
             {/* Public / user — header + footer shell */}
@@ -111,6 +115,7 @@ export default function App() {
             </Route>
           </Routes>
         </BrowserRouter>
+        </SettingsProvider>
       </AuthProvider>
     </HelmetProvider>
   )

@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react'
 import { Link, NavLink, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import Spinner from '../ui/Spinner'
+import BrandMark from '../layout/BrandMark'
 import {
   IconHome, IconPlus, IconBuilding, IconInbox, IconGrid, IconCheckCircle,
   IconStar, IconOffice, IconUsers, IconFile, IconImage, IconUserCog,
-  IconLogout, IconExternal, IconMenu,
+  IconLogout, IconExternal, IconMenu, IconSettings,
 } from '../admin/adminIcons'
 
 // The sidebar is a single shell for the whole back-office. Sections are
@@ -33,6 +34,7 @@ function buildNav({ hasPermission, isAdmin }) {
         { to: '/admin/aliados', label: 'Aliados', icon: IconUsers },
         { to: '/admin/blog', label: 'Blog', icon: IconFile },
         { to: '/admin/banners', label: 'Banners', icon: IconImage },
+        { to: '/admin/marca', label: 'Logo y marca', icon: IconSettings },
         { to: '/admin/usuarios', label: 'Usuarios', icon: IconUserCog },
       ],
     })
@@ -67,8 +69,10 @@ export default function PanelLayout() {
 
       <aside className={`admin-sidebar ${open ? 'open' : ''}`}>
         <Link to="/agente" className="admin-brand">
-          <span className="dot">P</span>
-          <span className="bt"><b>Proppietario</b><small>Panel</small></span>
+          <BrandMark
+            className="admin-brand-img"
+            fallback={<><span className="dot">P</span><span className="bt"><b>Proppietario</b><small>Panel</small></span></>}
+          />
         </Link>
 
         <nav className="admin-nav">

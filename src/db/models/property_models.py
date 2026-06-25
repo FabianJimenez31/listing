@@ -1,6 +1,7 @@
 """ORM models for Property and PropertyImage."""
 from __future__ import annotations
 
+import itertools
 from datetime import datetime, timezone
 
 from sqlalchemy import (
@@ -24,10 +25,30 @@ def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
 
+# HubSpot-style numeric "Record ID" (NID): a big, opaque integer that is the
+# canonical public identifier for a property (used in URLs and search).
+# Authoritative generator in production is the Postgres sequence
+# ``property_nid_seq`` (see the alembic migration). The fallback counter only
+# runs on non-Postgres engines — i.e. the in-memory SQLite test suite, which
+# builds the schema from these models via ``create_all`` instead of migrations.
+_NID_START = 1000000001
+_nid_fallback = itertools.count(_NID_START)
+
+
+def _next_nid(context) -> int:
+    """Context-sensitive column default: draw the next NID for the dialect."""
+    conn = context.connection
+    if conn.dialect.name == "postgresql":
+        return conn.exec_driver_sql("SELECT nextval('property_nid_seq')").scalar()
+    return next(_nid_fallback)
+
+
 class PropertyORM(Base):
     __tablename__ = "properties"
 
     id = Column(String(36), primary_key=True)
+    # Public, HubSpot-style numeric Record ID. NOT NULL + unique; auto-generated.
+    nid = Column(BigInteger, default=_next_nid, unique=True, index=True, nullable=False)
     owner_id = Column(String(36), ForeignKey("users.id"), nullable=False, index=True)
     agency_id = Column(String(36), ForeignKey("agencies.id"), nullable=True, index=True)
     location_id = Column(String(36), ForeignKey("locations.id"), nullable=True, index=True)
@@ -52,8 +73,19 @@ class PropertyORM(Base):
     bedrooms = Column(Integer, nullable=True)
     bathrooms = Column(Integer, nullable=True)
     parking_spots = Column(Integer, nullable=True)
+    has_storage = Column(Boolean, default=False, nullable=False)  # depósito / bodega
+    has_elevator = Column(Boolean, default=False, nullable=False)  # ascensor (edificio)
+    has_study = Column(Boolean, default=False, nullable=False)  # zona de estudio
+    has_balcony = Column(Boolean, default=False, nullable=False)  # balcón / terraza
     floor_number = Column(Integer, nullable=True)
     total_floors = Column(Integer, nullable=True)
+
+    # Descriptive attributes (Colombian listing fields)
+    stratum = Column(Integer, nullable=True)            # estrato socioeconómico (1–6)
+    view_type = Column(String(20), nullable=True)       # internal / external (vista)
+    age_years = Column(Integer, nullable=True)          # antigüedad en años
+    admin_fee_amount = Column(BigInteger, nullable=True)  # valor administración (minor units, /mes)
+    security_type = Column(String(20), nullable=True)   # none / private / automated (vigilancia)
 
     # Address (denormalized from Location)
     address_street = Column(String(500), nullable=True)

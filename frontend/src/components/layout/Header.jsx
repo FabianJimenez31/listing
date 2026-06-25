@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { IconLogin } from '../ui/icons'
+import BrandMark from './BrandMark'
 
 const NAV = [
   { label: 'Proyectos', to: '/proyectos' },
@@ -30,7 +31,7 @@ export default function Header() {
     <header className="site-header">
       <div className="wrap nav">
         <Link to="/" className="logo" onClick={close}>
-          <span className="dot">P</span>Propp<b>ietario</b>
+          <BrandMark fallback={<><span className="dot">P</span>Propp<b>ietario</b></>} />
         </Link>
 
         <nav className="nav-links">

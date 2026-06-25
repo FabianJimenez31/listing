@@ -54,19 +54,20 @@ class TestSitemapXml:
         # Create and publish a property
         create_resp = client.post("/api/v1/properties", json=_PROPERTY_PAYLOAD, headers=_auth(agent_token))
         prop_id = create_resp.json()["id"]
-        prop_slug = create_resp.json()["slug"]
+        prop_nid = create_resp.json()["nid"]
         client.post(f"/api/v1/properties/{prop_id}/submit", headers=_auth(agent_token))
         client.post(f"/api/v1/properties/{prop_id}/approve", headers=_auth(admin_token))
 
         resp = client.get("/sitemap.xml")
-        assert prop_slug in resp.text
+        # Canonical public URL is the numeric Record ID (NID), HubSpot-style.
+        assert f"/propiedades/{prop_nid}" in resp.text
 
     def test_sitemap_excludes_draft_property(self, client, agent_user, agent_token):
         create_resp = client.post("/api/v1/properties", json=_PROPERTY_PAYLOAD, headers=_auth(agent_token))
-        prop_slug = create_resp.json()["slug"]
+        prop_nid = create_resp.json()["nid"]
 
         resp = client.get("/sitemap.xml")
-        assert prop_slug not in resp.text
+        assert f"/propiedades/{prop_nid}" not in resp.text
 
     def test_sitemap_includes_static_pages(self, client):
         resp = client.get("/sitemap.xml")

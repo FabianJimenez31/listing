@@ -116,6 +116,7 @@ def admin_user(db_session):
         "agency:create", "agency:update", "agency:delete",
         "partner:create", "partner:delete",
         "post:create", "post:update", "post:delete",
+        "settings:manage",
     ])
     return _make_user(db_session, "admin@test.com", roles=[role])
 

@@ -27,6 +27,7 @@ from src.api.routers import (
     properties,
     search,
     seo,
+    settings,
     users,
 )
 from src.middleware.rate_limit import RateLimitMiddleware
@@ -92,6 +93,8 @@ def create_app() -> FastAPI:
     # Admin & metrics
     app.include_router(admin.router, prefix=_API_PREFIX)
     app.include_router(metrics.router, prefix=_API_PREFIX)
+
+    app.include_router(settings.router, prefix=_API_PREFIX)
 
     # SEO (no prefix — served at root: /sitemap.xml, /robots.txt)
     app.include_router(seo.router)

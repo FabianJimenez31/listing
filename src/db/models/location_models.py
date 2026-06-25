@@ -36,3 +36,20 @@ class LocationORM(Base):
     properties = relationship("PropertyORM", back_populates="location")
     banners = relationship("BannerORM", back_populates="locality")
     featured = relationship("FeaturedPropertyORM", back_populates="locality")
+
+    @property
+    def path(self) -> list["LocationORM"]:
+        """Ancestor chain from root to this node (e.g. Colombia → Bogotá → Chapinero).
+
+        Used to render breadcrumbs on the property detail. Walks ``parent`` (a
+        handful of lazy loads for a single property); the ``seen`` guard avoids
+        an infinite loop if the data ever contains a cycle.
+        """
+        chain: list[LocationORM] = []
+        node: LocationORM | None = self
+        seen: set[str] = set()
+        while node is not None and node.id not in seen:
+            seen.add(node.id)
+            chain.append(node)
+            node = node.parent
+        return list(reversed(chain))

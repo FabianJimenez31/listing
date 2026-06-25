@@ -26,6 +26,32 @@
 .admin-brand .bt { line-height: 1.1; }
 .admin-brand .bt b { font-size: 17px; font-weight: 800; letter-spacing: -.02em; }
 .admin-brand .bt small { display: block; font-size: 10px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.admin-brand .admin-brand-img { height: 44px; width: auto; max-width: 210px; object-fit: contain; display: block; }
+
+/* Branding page — logo preview */
+.brand-preview {
+  display: flex; align-items: center; justify-content: center; min-height: 96px;
+  padding: 18px; border: 1px dashed var(--line); border-radius: 12px; background: var(--bg-soft, #f7f8fb);
+}
+.brand-preview-img { max-height: 72px; max-width: 100%; object-fit: contain; }
+.brand-preview-text { display: flex; align-items: center; gap: 9px; font-weight: 800; font-size: 22px; color: var(--ink); letter-spacing: -.02em; }
+.brand-preview-text .dot {
+  width: 30px; height: 30px; border-radius: 9px; background: var(--blue); color: #fff;
+  display: grid; place-items: center; font-size: 17px; font-weight: 800;
+}
+.brand-preview-text b { color: var(--blue); }
+.admin-hint { font-size: 13px; color: var(--muted); margin-top: 10px; }
+.admin-ok { color: #15803d; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 9px 12px; font-size: 13px; margin-bottom: 12px; }
+
+/* ── Footer ally logos editor (Logo y marca) ─────────────────────── */
+.logo-picker { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.logo-picker-empty { display: grid; place-items: center; min-width: 80px; padding: 12px 14px; border: 1.5px dashed var(--line); border-radius: 8px; font-size: 12px; color: var(--muted-2, var(--muted)); }
+.footer-logo-thumb { height: 42px; width: auto; max-width: 150px; object-fit: contain; background: #0E1726; border-radius: 8px; padding: 6px; }
+.brand-logos { display: flex; flex-direction: column; gap: 14px; }
+.brand-logo-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg-soft); }
+.brand-logo-fields { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 180px; }
+.brand-logo-fields input { width: 100%; padding: 9px 11px; border: 1.5px solid var(--line); border-radius: 9px; font-size: 13.5px; font-family: inherit; outline: none; background: #fff; }
+.brand-logo-fields input:focus { border-color: var(--blue); }
 
 .admin-nav { flex: 1; overflow-y: auto; padding: 16px 12px; }
 .admin-nav-group { margin-bottom: 18px; }
@@ -141,3 +167,112 @@ a.stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
   .admin-topbar { padding: 0 16px; }
   .admin-pagehead h1 { font-size: 22px; }
 }
+
+/* ── Property form (agent: nueva / editar) ───────────────────── */
+.pform-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 22px; align-items: start; }
+@media (max-width: 960px) { .pform-layout { grid-template-columns: 1fr; } }
+
+.pform {
+  background: #fff; border: 1px solid #E7EBF1; border-radius: 18px;
+  padding: 6px 28px 26px; box-shadow: 0 14px 40px -24px rgba(8, 29, 103, .35);
+}
+.pform-fieldset { border: none; padding: 0; margin: 0; min-inline-size: 0; }
+.pform-fieldset.off { opacity: .55; pointer-events: none; }
+
+/* Sections: airy groups separated by a hairline instead of heavy boxes */
+.pform-section { padding: 24px 0; border-top: 1px solid #EEF1F7; }
+.pform-section:first-child { border-top: none; padding-top: 20px; }
+.pform-sec-head { margin-bottom: 16px; }
+.pform-sec-head b {
+  display: block; font-family: 'Montserrat', sans-serif; font-weight: 800;
+  font-size: 15.5px; color: #081D67; letter-spacing: -.01em;
+}
+.pform-sec-head small { display: block; font-size: 12.5px; color: #6B7686; margin-top: 3px; }
+
+.pform-grid { display: grid; gap: 16px; grid-template-columns: 1fr 1fr; }
+.pform-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+.pform-grid .col-full { grid-column: 1 / -1; }
+@media (max-width: 620px) { .pform-grid, .pform-grid.cols-3 { grid-template-columns: 1fr; } }
+
+.pf-field { display: flex; flex-direction: column; min-width: 0; }
+.pf-field > label {
+  font-size: 11.5px; font-weight: 700; color: #4A5680; margin-bottom: 6px;
+  letter-spacing: .04em; text-transform: uppercase;
+}
+.pf-input {
+  width: 100%; padding: 11px 13px; border: 1.5px solid #E2E8F5; border-radius: 11px;
+  font-size: 14.5px; color: #081D67; background: #fff; box-sizing: border-box; outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+.pf-input::placeholder { color: #9AA6BE; }
+.pf-input:focus { border-color: #0251FD; box-shadow: 0 0 0 3px rgba(2, 81, 253, .13); }
+.pf-input:disabled { background: #F4F6FB; color: #9AA6BE; cursor: not-allowed; }
+textarea.pf-input { min-height: 108px; resize: vertical; line-height: 1.5; }
+select.pf-input {
+  appearance: none; cursor: pointer; padding-right: 36px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%234A5680' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 13px center;
+}
+.pf-money { position: relative; }
+.pf-money > span { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: #8A94A3; font-size: 14px; pointer-events: none; }
+.pf-money .pf-input { padding-left: 36px; }
+
+/* Amenity chips */
+.pf-chips { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+.pf-chip {
+  display: flex; align-items: center; gap: 12px; padding: 13px 15px; background: #fff;
+  border: 1.5px solid #E2E8F5; border-radius: 13px; cursor: pointer; transition: border-color .15s, background .15s;
+}
+.pf-chip:hover { border-color: #BFD0F6; }
+.pf-chip.on { border-color: #0251FD; background: #F2F6FF; }
+.pf-chip input { position: absolute; opacity: 0; width: 0; height: 0; }
+.pf-chip .box {
+  width: 22px; height: 22px; border-radius: 7px; border: 1.5px solid #C9D5EC; flex-shrink: 0;
+  display: grid; place-items: center; color: #fff; font-size: 13px; font-weight: 800; transition: all .15s;
+}
+.pf-chip.on .box { background: #0251FD; border-color: #0251FD; }
+.pf-chip .txt b { display: block; font-size: 14px; font-weight: 700; color: #081D67; }
+.pf-chip .txt small { display: block; font-size: 12px; color: #6B7686; margin-top: 1px; }
+
+/* Highlighted switch row (show_on_home — persists instantly) */
+.pf-toggle {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 15px 18px; border: 1.5px solid #E2E8F5; border-radius: 14px; background: #FAFBFE;
+  cursor: pointer; margin-top: 18px;
+}
+.pf-toggle .txt b { display: block; font-size: 14px; font-weight: 700; color: #081D67; }
+.pf-toggle .txt small { display: block; font-size: 12.5px; color: #6B7686; margin-top: 2px; max-width: 52ch; }
+.pf-switch { position: relative; width: 46px; height: 27px; flex-shrink: 0; }
+.pf-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+.pf-switch .track { position: absolute; inset: 0; background: #CBD5E8; border-radius: 999px; transition: background .2s; }
+.pf-switch .track::before {
+  content: ""; position: absolute; width: 21px; height: 21px; left: 3px; top: 3px;
+  background: #fff; border-radius: 50%; transition: transform .2s; box-shadow: 0 1px 3px rgba(0, 0, 0, .25);
+}
+.pf-switch input:checked + .track { background: #0251FD; }
+.pf-switch input:checked + .track::before { transform: translateX(19px); }
+
+/* Submit */
+.pf-submit {
+  width: 100%; background: #0251FD; color: #fff; border: none; border-radius: 13px; padding: 14px;
+  font-size: 15px; font-weight: 800; cursor: pointer; margin-top: 22px;
+  font-family: 'Montserrat', sans-serif; transition: background .15s;
+}
+.pf-submit:hover:not(:disabled) { background: #0246d8; }
+.pf-submit:disabled { background: #DDE8FF; color: #8A94A3; cursor: not-allowed; }
+
+/* Photos aside */
+.pform-aside {
+  background: #fff; border: 1px solid #E7EBF1; border-radius: 18px; padding: 20px;
+  box-shadow: 0 14px 40px -24px rgba(8, 29, 103, .35); position: sticky; top: 88px;
+}
+.pform-aside h3 { font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 15px; color: #081D67; margin: 0 0 14px; }
+.pform-upload {
+  width: 100%; background: #F2F6FF; color: #0251FD; border: 1.5px dashed #B9CCF6; border-radius: 12px;
+  padding: 14px; cursor: pointer; font-weight: 700; font-size: 14px; transition: background .15s;
+}
+.pform-upload:hover { background: #E7F0FF; }
+.pf-progress { margin-top: 12px; background: #E2E8F5; border-radius: 8px; height: 20px; position: relative; overflow: hidden; }
+.pf-progress .bar { height: 100%; background: #0251FD; transition: width .3s; }
+.pf-progress .pct { position: absolute; inset: 0; display: grid; place-items: center; font-size: 11px; font-weight: 700; color: #081D67; }
+.pform-aside .hint { font-size: 12px; color: #6B7686; margin-top: 12px; line-height: 1.5; }

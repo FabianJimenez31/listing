@@ -32,6 +32,9 @@
   box-shadow: 0 6px 16px -6px rgba(42, 99, 232, .8);
 }
 .logo b { color: var(--blue); }
+/* Admin-uploaded logo (replaces the text wordmark when set). */
+.logo .logo-img { height: 48px; width: auto; max-width: 260px; object-fit: contain; display: block; }
+.site-footer .logo .logo-img { height: 42px; }
 .nav-links { display: flex; gap: 26px; align-items: center; }
 .nav-links a { font-size: 15px; font-weight: 600; color: var(--text); padding: 6px 0; transition: color .2s var(--ease); }
 .nav-links a:hover { color: var(--blue); }
@@ -184,6 +187,9 @@
 .socials { display: flex; gap: 10px; }
 .socials a { width: 36px; height: 36px; border-radius: 9px; background: rgba(255, 255, 255, .07); display: grid; place-items: center; color: #cdd5e0; transition: all .2s var(--ease); }
 .socials a:hover { background: var(--blue); color: #fff; }
+.foot-logos { display: flex; flex-wrap: wrap; align-items: center; gap: 28px; margin-top: 40px; padding-top: 28px; border-top: 1px solid rgba(255, 255, 255, .1); }
+.foot-logos img { height: 30px; width: auto; max-width: 150px; object-fit: contain; opacity: .65; filter: grayscale(1) brightness(1.6); transition: opacity .2s var(--ease), filter .2s var(--ease); }
+.foot-logos a:hover img, .foot-logos > img:hover { opacity: 1; filter: none; }
 .foot-bottom { margin-top: 46px; padding-top: 22px; border-top: 1px solid rgba(255, 255, 255, .1); display: flex; justify-content: space-between; gap: 14px; flex-wrap: wrap; font-size: 12.5px; }
 .foot-bottom a:hover { color: #fff; }
 

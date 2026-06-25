@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom'
+import BrandMark from './BrandMark'
+import { useSettings } from '../../contexts/SettingsContext'
 
 const COLS = [
   {
@@ -39,28 +41,52 @@ const COLS = [
   },
 ]
 
-const Social = ({ label, children }) => (
-  <a href="#" aria-label={label} onClick={(e) => e.preventDefault()}>{children}</a>
+const IG_ICON = (
+  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" /></svg>
+)
+const LI_ICON = (
+  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="3" /><path d="M7 10v7M7 7v.01M11 17v-4a2 2 0 0 1 4 0v4M11 11v6" /></svg>
+)
+const YT_ICON = (
+  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="5" width="20" height="14" rx="4" /><path d="m10 9 5 3-5 3z" fill="currentColor" stroke="none" /></svg>
 )
 
+// Defaults preserve the previous hard-coded footer until an admin edits it.
+const DEFAULT_TAGLINE = 'Construimos patrimonio con información, estrategia y acompañamiento. Colombia y Estados Unidos.'
+const DEFAULT_COPYRIGHT = '© 2026 Proppietario. Todos los derechos reservados. · Bogotá · Miami'
+
+const Social = ({ label, url, children }) => (
+  <a
+    href={url || '#'}
+    aria-label={label}
+    {...(url ? { target: '_blank', rel: 'noreferrer' } : { onClick: (e) => e.preventDefault() })}
+  >
+    {children}
+  </a>
+)
+
+const isExternal = (url) => /^https?:\/\//i.test(url || '')
+const LegalLink = ({ to, children }) =>
+  isExternal(to)
+    ? <a href={to} target="_blank" rel="noreferrer">{children}</a>
+    : <Link to={to || '/blog'}>{children}</Link>
+
 export default function Footer() {
+  const { settings } = useSettings()
+  const s = settings || {}
+  const footerLogos = s.footer_logos || []
+
   return (
     <footer className="site-footer">
       <div className="wrap">
         <div className="foot-grid">
           <div className="foot-brand">
-            <Link to="/" className="logo"><span className="dot">P</span>Proppietario</Link>
-            <p>Construimos patrimonio con información, estrategia y acompañamiento. Colombia y Estados Unidos.</p>
+            <Link to="/" className="logo"><BrandMark fallback={<><span className="dot">P</span>Proppietario</>} /></Link>
+            <p>{s.footer_tagline || DEFAULT_TAGLINE}</p>
             <div className="socials">
-              <Social label="Instagram">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" /></svg>
-              </Social>
-              <Social label="LinkedIn">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="3" /><path d="M7 10v7M7 7v.01M11 17v-4a2 2 0 0 1 4 0v4M11 11v6" /></svg>
-              </Social>
-              <Social label="YouTube">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="5" width="20" height="14" rx="4" /><path d="m10 9 5 3-5 3z" fill="currentColor" stroke="none" /></svg>
-              </Social>
+              <Social label="Instagram" url={s.social_instagram}>{IG_ICON}</Social>
+              <Social label="LinkedIn" url={s.social_linkedin}>{LI_ICON}</Social>
+              <Social label="YouTube" url={s.social_youtube}>{YT_ICON}</Social>
             </div>
           </div>
 
@@ -74,12 +100,26 @@ export default function Footer() {
           ))}
         </div>
 
+        {footerLogos.length > 0 && (
+          <div className="foot-logos">
+            {footerLogos.map((logo, i) =>
+              logo.link ? (
+                <a key={i} href={logo.link} target="_blank" rel="noreferrer" title={logo.name}>
+                  <img src={logo.image_url} alt={logo.name || 'Aliado'} />
+                </a>
+              ) : (
+                <img key={i} src={logo.image_url} alt={logo.name || 'Aliado'} title={logo.name} />
+              ),
+            )}
+          </div>
+        )}
+
         <div className="foot-bottom">
-          <span>© 2026 Proppietario. Todos los derechos reservados. · Bogotá · Miami</span>
+          <span>{s.copyright_text || DEFAULT_COPYRIGHT}</span>
           <span style={{ display: 'flex', gap: 20 }}>
-            <Link to="/blog">Privacidad</Link>
-            <Link to="/blog">Términos de uso</Link>
-            <Link to="/blog">Política de cookies</Link>
+            <LegalLink to={s.legal_privacy_url}>Privacidad</LegalLink>
+            <LegalLink to={s.legal_terms_url}>Términos de uso</LegalLink>
+            <LegalLink to={s.legal_cookies_url}>Política de cookies</LegalLink>
           </span>
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import {
@@ -15,6 +15,7 @@ import {
   updateProperty,
   uploadImage,
 } from '../../api/properties'
+import { getLocations } from '../../api/catalog'
 import { useAuth } from '../../contexts/AuthContext'
 import AdminPageHeader from '../../components/admin/AdminPageHeader'
 import Spinner from '../../components/ui/Spinner'
@@ -35,31 +36,64 @@ const EDITABLE = ['draft', 'paused', 'rejected']
 
 const EMPTY = {
   title: '', description: '', operation_type: 'sale', property_kind: 'house',
-  price_amount: '', currency: 'COP', bedrooms: '', bathrooms: '',
+  price_amount: '', currency: 'COP', admin_fee_amount: '', bedrooms: '', bathrooms: '',
   total_area_m2: '', built_area_m2: '', parking_spots: '',
+  stratum: '', floor_number: '', total_floors: '', age_years: '',
+  view_type: '', security_type: '',
   address_street: '', contact_phone: '', contact_whatsapp: '',
+  location_id: '',
+  has_storage: false,
+  has_elevator: false,
+  has_study: false,
+  has_balcony: false,
   show_on_home: false,
 }
 
-// Defined at module scope (NOT inside the page component) so its identity is
+// Estrato options (1–6, Colombian socioeconomic stratum) for the select.
+const STRATUM_OPTS = [['', '—'], ['1', '1'], ['2', '2'], ['3', '3'], ['4', '4'], ['5', '5'], ['6', '6']]
+const VIEW_OPTS = [['', '—'], ['internal', 'Interna'], ['external', 'Externa']]
+const SECURITY_OPTS = [['', '—'], ['none', 'Sin vigilancia'], ['private', 'Privada (portería)'], ['automated', 'Automatizada']]
+
+// Defined at module scope (NOT inside the page component) so their identity is
 // stable across renders — otherwise React remounts the input on every keystroke
 // and the field loses focus.
-function Field({ label, k, form, upd, type = 'text', as = 'input', options = null, required = false }) {
+function Field({ label, k, form, upd, type = 'text', as = 'input', options = null, required = false, full = false }) {
   // Counts and areas can never be negative; step="any" keeps decimals (m²) valid.
   const numberProps = type === 'number' ? { min: 0, step: 'any' } : {}
   return (
-    <div style={s.field}>
-      <label style={s.label}>{label}</label>
+    <div className={`pf-field${full ? ' col-full' : ''}`}>
+      <label>{label}</label>
       {as === 'textarea' ? (
-        <textarea value={form[k]} onChange={upd(k)} required={required} style={{ ...s.input, height: 90, resize: 'vertical' }} />
+        <textarea className="pf-input" value={form[k]} onChange={upd(k)} required={required} />
       ) : options ? (
-        <select value={form[k]} onChange={upd(k)} required={required} style={s.input}>
+        <select className="pf-input" value={form[k]} onChange={upd(k)} required={required}>
           {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </select>
       ) : (
-        <input type={type} value={form[k]} onChange={upd(k)} required={required} {...numberProps} style={s.input} />
+        <input className="pf-input" type={type} value={form[k]} onChange={upd(k)} required={required} {...numberProps} />
       )}
     </div>
+  )
+}
+
+// A titled group of fields, separated by a hairline (replaces the old flat list).
+function Section({ title, hint, children }) {
+  return (
+    <section className="pform-section">
+      <div className="pform-sec-head"><b>{title}</b>{hint && <small>{hint}</small>}</div>
+      {children}
+    </section>
+  )
+}
+
+// Selectable amenity chip. Pure (props only) so it never remounts unexpectedly.
+function Chip({ active, onToggle, title, desc }) {
+  return (
+    <label className={`pf-chip${active ? ' on' : ''}`}>
+      <input type="checkbox" checked={active} onChange={(e) => onToggle(e.target.checked)} />
+      <span className="box">{active ? '✓' : ''}</span>
+      <span className="txt"><b>{title}</b><small>{desc}</small></span>
+    </label>
   )
 }
 
@@ -76,7 +110,43 @@ export default function PropertyFormPage() {
   const [error, setError] = useState(null)
   const [uploadProgress, setUploadProgress] = useState(null)
   const [images, setImages] = useState([])
+  const [locs, setLocs] = useState([])
   const fileRef = useRef()
+
+  // The location tree (country → state → city → locality) drives the cascading
+  // País / Ciudad / Barrio selects. We fetch it once and resolve relations on
+  // the client; `location_id` (the deepest pick) is the single value persisted.
+  useEffect(() => { getLocations().then((r) => setLocs(r || [])).catch(() => setLocs([])) }, [])
+
+  const locById = useMemo(() => Object.fromEntries(locs.map((l) => [l.id, l])), [locs])
+  const ancestorOfLevel = (id, level) => {
+    let n = locById[id]
+    while (n) { if (n.level === level) return n.id; n = n.parent_id ? locById[n.parent_id] : null }
+    return ''
+  }
+  // Reconstruct the three select values from the persisted location_id.
+  const sel = useMemo(() => {
+    const node = locById[form.location_id]
+    return {
+      country: ancestorOfLevel(form.location_id, 'country'),
+      city: ancestorOfLevel(form.location_id, 'city'),
+      barrio: node && (node.level === 'locality' || node.level === 'neighborhood') ? node.id : '',
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.location_id, locById])
+
+  const countryOpts = useMemo(() => locs.filter((l) => l.level === 'country'), [locs])
+  const cityOpts = useMemo(
+    () => (sel.country ? locs.filter((l) => l.level === 'city' && ancestorOfLevel(l.id, 'country') === sel.country) : []),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [locs, sel.country, locById],
+  )
+  const barrioOpts = useMemo(
+    () => (sel.city ? locs.filter((l) => (l.level === 'locality' || l.level === 'neighborhood') && ancestorOfLevel(l.id, 'city') === sel.city) : []),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [locs, sel.city, locById],
+  )
+  const setLocation = (id) => setForm((f) => ({ ...f, location_id: id }))
 
   const loadProperty = () => {
     setLoading(true)
@@ -85,10 +155,19 @@ export default function PropertyFormPage() {
         title: data.title || '', description: data.description || '',
         operation_type: data.operation_type || 'sale', property_kind: data.property_kind || 'house',
         price_amount: minorToMajor(data.price_amount), currency: data.currency || 'COP',
+        admin_fee_amount: minorToMajor(data.admin_fee_amount),
         bedrooms: data.bedrooms ?? '', bathrooms: data.bathrooms ?? '',
         total_area_m2: data.total_area_m2 ?? '', built_area_m2: data.built_area_m2 ?? '',
         parking_spots: data.parking_spots ?? '', address_street: data.address_street || '',
+        stratum: data.stratum ?? '', floor_number: data.floor_number ?? '',
+        total_floors: data.total_floors ?? '', age_years: data.age_years ?? '',
+        view_type: data.view_type || '', security_type: data.security_type || '',
         contact_phone: data.contact_phone || '', contact_whatsapp: data.contact_whatsapp || '',
+        location_id: data.location?.id || '',
+        has_storage: data.has_storage ?? false,
+        has_elevator: data.has_elevator ?? false,
+        has_study: data.has_study ?? false,
+        has_balcony: data.has_balcony ?? false,
         show_on_home: data.show_on_home ?? false,
       })
       setStatus(data.status)
@@ -125,6 +204,8 @@ export default function PropertyFormPage() {
   }
 
   const editable = !isEdit || EDITABLE.includes(status)
+  // Para casa/lote/finca el área principal es la del lote; para apto es el área total.
+  const areaLabel = ['house', 'lot', 'farm'].includes(form.property_kind) ? 'Área de lote m²' : 'Área total m²'
 
   const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files || [])
@@ -159,6 +240,13 @@ export default function PropertyFormPage() {
     if (payload.total_area_m2 !== '') payload.total_area_m2 = Math.max(0, parseFloat(payload.total_area_m2) || 0)
     if (payload.built_area_m2 !== '') payload.built_area_m2 = Math.max(0, parseFloat(payload.built_area_m2) || 0)
     if (payload.parking_spots !== '') payload.parking_spots = Math.max(0, parseInt(payload.parking_spots, 10) || 0)
+    // Descriptive integer fields (estrato, piso, antigüedad…)
+    if (payload.stratum !== '') payload.stratum = Math.max(0, parseInt(payload.stratum, 10) || 0)
+    if (payload.floor_number !== '') payload.floor_number = Math.max(0, parseInt(payload.floor_number, 10) || 0)
+    if (payload.total_floors !== '') payload.total_floors = Math.max(0, parseInt(payload.total_floors, 10) || 0)
+    if (payload.age_years !== '') payload.age_years = Math.max(0, parseInt(payload.age_years, 10) || 0)
+    // Administración is stored in minor units, like the price.
+    if (form.admin_fee_amount !== '') payload.admin_fee_amount = majorToMinor(form.admin_fee_amount)
     // Drop empty optional fields so the API doesn't reject "" for int/None columns
     Object.keys(payload).forEach((k) => { if (payload[k] === '') delete payload[k] })
     try {
@@ -220,87 +308,163 @@ export default function PropertyFormPage() {
 
       {error && <p style={s.error}>{error}</p>}
 
-      <div style={s.layout}>
-        <form onSubmit={submit} style={s.form}>
-          <fieldset disabled={!editable} style={{ ...s.fieldset, ...(editable ? null : s.fieldsetOff) }}>
-          <Field label="Título *" k="title" form={form} upd={upd} required />
-          <Field label="Descripción" k="description" as="textarea" form={form} upd={upd} />
-          <div style={s.row2}>
-            <Field label="Operación" k="operation_type" form={form} upd={upd} options={[['sale', 'Venta'], ['rent', 'Renta'], ['temporary', 'Temporal']]} />
-            <Field label="Tipo" k="property_kind" form={form} upd={upd} options={[['house', 'Casa'], ['apartment', 'Apartamento'], ['lot', 'Terreno'], ['office', 'Oficina']]} />
-          </div>
-          <div style={s.row2}>
-            <div style={s.field}>
-              <label style={s.label}>Precio ({form.currency}) *</label>
-              <div style={{ position: 'relative' }}>
-                <span style={s.moneyPrefix}>{form.currency === 'USD' ? 'US$' : form.currency === 'EUR' ? '€' : '$'}</span>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  placeholder="0"
-                  required
-                  value={groupThousands(form.price_amount)}
-                  onChange={(e) => setForm((f) => ({ ...f, price_amount: digitsOnly(e.target.value) }))}
-                  style={{ ...s.input, paddingLeft: 36 }}
-                />
+      <div className="pform-layout">
+        <form onSubmit={submit} className="pform">
+          <fieldset disabled={!editable} className={`pform-fieldset${editable ? '' : ' off'}`}>
+
+            <Section title="Información básica">
+              <div className="pform-grid">
+                <Field full label="Título *" k="title" form={form} upd={upd} required />
+                <Field full label="Descripción" k="description" as="textarea" form={form} upd={upd} />
+                <Field label="Operación" k="operation_type" form={form} upd={upd} options={[['sale', 'Venta'], ['rent', 'Renta'], ['temporary', 'Temporal']]} />
+                <Field label="Tipo" k="property_kind" form={form} upd={upd} options={[['house', 'Casa'], ['apartment', 'Apartamento'], ['lot', 'Terreno'], ['office', 'Oficina']]} />
               </div>
-            </div>
-            <Field label="Moneda" k="currency" form={form} upd={upd} options={[['COP', 'COP'], ['USD', 'USD'], ['EUR', 'EUR']]} />
-          </div>
-          <div style={s.row3}>
-            <Field label="Recámaras" k="bedrooms" type="number" form={form} upd={upd} />
-            <Field label="Baños" k="bathrooms" type="number" form={form} upd={upd} />
-            <Field label="Estacionamientos" k="parking_spots" type="number" form={form} upd={upd} />
-          </div>
-          <div style={s.row2}>
-            <Field label="Área total m²" k="total_area_m2" type="number" form={form} upd={upd} />
-            <Field label="Área construida m²" k="built_area_m2" type="number" form={form} upd={upd} />
-          </div>
-          <Field label="Dirección" k="address_street" form={form} upd={upd} />
-          <Field label="Teléfono de contacto" k="contact_phone" form={form} upd={upd} />
-          <Field label="WhatsApp de contacto" k="contact_whatsapp" form={form} upd={upd} />
+            </Section>
+
+            <Section title="Precio">
+              <div className="pform-grid">
+                <div className="pf-field">
+                  <label>Precio ({form.currency}) *</label>
+                  <div className="pf-money">
+                    <span>{form.currency === 'USD' ? 'US$' : form.currency === 'EUR' ? '€' : '$'}</span>
+                    <input
+                      className="pf-input"
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="0"
+                      required
+                      value={groupThousands(form.price_amount)}
+                      onChange={(e) => setForm((f) => ({ ...f, price_amount: digitsOnly(e.target.value) }))}
+                    />
+                  </div>
+                </div>
+                <Field label="Moneda" k="currency" form={form} upd={upd} options={[['COP', 'COP'], ['USD', 'USD'], ['EUR', 'EUR']]} />
+                <div className="pf-field">
+                  <label>Administración ({form.currency}) / mes</label>
+                  <div className="pf-money">
+                    <span>{form.currency === 'USD' ? 'US$' : form.currency === 'EUR' ? '€' : '$'}</span>
+                    <input
+                      className="pf-input"
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="0"
+                      value={groupThousands(form.admin_fee_amount)}
+                      onChange={(e) => setForm((f) => ({ ...f, admin_fee_amount: digitsOnly(e.target.value) }))}
+                    />
+                  </div>
+                </div>
+              </div>
+            </Section>
+
+            <Section title="Características">
+              <div className="pform-grid cols-3">
+                <Field label="Habitaciones" k="bedrooms" type="number" form={form} upd={upd} />
+                <Field label="Baños" k="bathrooms" type="number" form={form} upd={upd} />
+                <Field label="Estacionamientos" k="parking_spots" type="number" form={form} upd={upd} />
+                <Field label={areaLabel} k="total_area_m2" type="number" form={form} upd={upd} />
+                <Field label="Área construida m²" k="built_area_m2" type="number" form={form} upd={upd} />
+                <Field label="Estrato" k="stratum" form={form} upd={upd} options={STRATUM_OPTS} />
+                <Field label="No. de piso" k="floor_number" type="number" form={form} upd={upd} />
+                <Field label="Pisos del edificio" k="total_floors" type="number" form={form} upd={upd} />
+                <Field label="Antigüedad (años)" k="age_years" type="number" form={form} upd={upd} />
+                <Field label="Vista" k="view_type" form={form} upd={upd} options={VIEW_OPTS} />
+                <Field label="Vigilancia" k="security_type" form={form} upd={upd} options={SECURITY_OPTS} />
+              </div>
+            </Section>
+
+            <Section title="Comodidades" hint="Marca lo que aplique al inmueble.">
+              <div className="pf-chips">
+                <Chip active={form.has_storage} onToggle={(v) => setForm((f) => ({ ...f, has_storage: v }))}
+                  title="Depósito / Bodega" desc="Cuenta con depósito o bodega" />
+                <Chip active={form.has_elevator} onToggle={(v) => setForm((f) => ({ ...f, has_elevator: v }))}
+                  title="Ascensor" desc="El edificio tiene ascensor" />
+                <Chip active={form.has_study} onToggle={(v) => setForm((f) => ({ ...f, has_study: v }))}
+                  title="Zona de estudio" desc="El apartamento tiene zona de estudio" />
+                <Chip active={form.has_balcony} onToggle={(v) => setForm((f) => ({ ...f, has_balcony: v }))}
+                  title="Balcón / Terraza" desc="Cuenta con balcón o terraza" />
+              </div>
+            </Section>
+
+            <Section title="Ubicación">
+              <div className="pform-grid cols-3">
+                <div className="pf-field">
+                  <label>País</label>
+                  <select className="pf-input" value={sel.country} onChange={(e) => setLocation(e.target.value)}>
+                    <option value="">— Selecciona —</option>
+                    {countryOpts.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
+                  </select>
+                </div>
+                <div className="pf-field">
+                  <label>Ciudad</label>
+                  <select className="pf-input" value={sel.city} onChange={(e) => setLocation(e.target.value || sel.country)} disabled={!sel.country}>
+                    <option value="">— Selecciona —</option>
+                    {cityOpts.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
+                  </select>
+                </div>
+                <div className="pf-field">
+                  <label>Barrio</label>
+                  <select className="pf-input" value={sel.barrio} onChange={(e) => setLocation(e.target.value || sel.city)} disabled={!sel.city}>
+                    <option value="">— Selecciona —</option>
+                    {barrioOpts.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="pform-grid" style={{ marginTop: 16 }}>
+                <Field full label="Dirección" k="address_street" form={form} upd={upd} />
+              </div>
+            </Section>
+
+            <Section title="Contacto">
+              <div className="pform-grid">
+                <Field label="Teléfono de contacto" k="contact_phone" form={form} upd={upd} />
+                <Field label="WhatsApp de contacto" k="contact_whatsapp" form={form} upd={upd} />
+              </div>
+            </Section>
           </fieldset>
 
-          <label style={s.homeToggle}>
-            <input
-              type="checkbox"
-              checked={form.show_on_home}
-              onChange={(e) => {
-                const checked = e.target.checked
-                setForm((f) => ({ ...f, show_on_home: checked }))
-                // Persist immediately for existing properties (works in any status);
-                // for new ones it travels in the create payload.
-                if (isEdit) {
-                  setError(null)
-                  setShowOnHome(id, checked).catch(() => {
-                    setForm((f) => ({ ...f, show_on_home: !checked }))
-                    setError('No se pudo cambiar la visibilidad en portada')
-                  })
-                }
-              }}
-            />
-            <span>
+          <label className="pf-toggle">
+            <span className="txt">
               <b>Mostrar en portada</b>
-              <small style={s.homeHint}>Aparece en “Propiedades destacadas” del inicio (solo si está publicada). Se guarda al instante.</small>
+              <small>Aparece en “Propiedades destacadas” del inicio (solo si está publicada). Se guarda al instante.</small>
+            </span>
+            <span className="pf-switch">
+              <input
+                type="checkbox"
+                checked={form.show_on_home}
+                onChange={(e) => {
+                  const checked = e.target.checked
+                  setForm((f) => ({ ...f, show_on_home: checked }))
+                  // Persist immediately for existing properties (works in any status);
+                  // for new ones it travels in the create payload.
+                  if (isEdit) {
+                    setError(null)
+                    setShowOnHome(id, checked).catch(() => {
+                      setForm((f) => ({ ...f, show_on_home: !checked }))
+                      setError('No se pudo cambiar la visibilidad en portada')
+                    })
+                  }
+                }}
+              />
+              <span className="track" />
             </span>
           </label>
 
-          <button type="submit" disabled={saving || !editable} style={{ ...s.btn, ...(editable ? {} : s.btnDisabled) }}>
+          <button type="submit" disabled={saving || !editable} className="pf-submit">
             {saving ? 'Guardando…' : !editable ? 'No editable en este estado' : isEdit ? 'Guardar cambios' : 'Crear propiedad'}
           </button>
         </form>
 
         {isEdit && (
-          <aside style={s.aside}>
-            <h3 style={s.asideH}>Fotos ({images.length})</h3>
+          <aside className="pform-aside">
+            <h3>Fotos ({images.length})</h3>
             <input type="file" ref={fileRef} multiple accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
-            <button type="button" onClick={() => fileRef.current?.click()} style={s.uploadBtn}>
+            <button type="button" onClick={() => fileRef.current?.click()} className="pform-upload">
               + Subir fotos
             </button>
             {uploadProgress !== null && (
-              <div style={s.progress}>
-                <div style={{ ...s.progressBar, width: `${uploadProgress}%` }} />
-                <span style={s.progressLabel}>{uploadProgress}%</span>
+              <div className="pf-progress">
+                <div className="bar" style={{ width: `${uploadProgress}%` }} />
+                <span className="pct">{uploadProgress}%</span>
               </div>
             )}
             {images.length > 0 && (
@@ -316,7 +480,7 @@ export default function PropertyFormPage() {
                 ))}
               </div>
             )}
-            <p style={{ fontSize: 12, color: '#4A5680', marginTop: 10, lineHeight: 1.5 }}>
+            <p className="hint">
               Sube varias fotos a la vez. La marcada como <b>portada</b> se usa en la tarjeta y como primera del carrusel.
             </p>
           </aside>
@@ -326,19 +490,10 @@ export default function PropertyFormPage() {
   )
 }
 
+// Inline styles kept only for the status bar / lifecycle controls (the form body
+// itself is now styled via the .pform* classes in admin.css).
 const s = {
-  header: { display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.75rem' },
-  back: { background: 'none', border: 'none', color: '#0251FD', cursor: 'pointer', fontSize: 14, fontWeight: 600 },
-  h1: { fontFamily: "'Montserrat', sans-serif", fontWeight: 800, fontSize: 22, color: '#081D67', margin: 0 },
   error: { background: '#fef2f2', color: '#D7263D', borderRadius: 10, padding: '10px 14px', fontSize: 14, marginBottom: 16 },
-  layout: { display: 'grid', gridTemplateColumns: '1fr 280px', gap: '2rem', alignItems: 'start' },
-  form: { background: '#fff', borderRadius: 16, padding: '1.75rem', border: '1px solid #DDE8FF', boxShadow: '0 8px 24px rgba(8,29,103,0.06)' },
-  fieldset: { border: 'none', padding: 0, margin: 0, minInlineSize: 0 },
-  fieldsetOff: { opacity: 0.55 },
-  field: { marginBottom: '1rem' },
-  label: { display: 'block', fontSize: 12, fontWeight: 700, color: '#4A5680', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.04em' },
-  input: { display: 'block', width: '100%', padding: '9px 12px', border: '1px solid #DDE8FF', borderRadius: 8, fontSize: 14, boxSizing: 'border-box', color: '#081D67', outline: 'none' },
-  moneyPrefix: { position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#8A94A3', fontSize: 14, pointerEvents: 'none' },
   statusPanel: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap', background: '#fff', border: '1px solid #DDE8FF', borderRadius: 14, padding: '14px 18px', marginBottom: 16, boxShadow: '0 8px 24px rgba(8,29,103,0.06)' },
   statusInfo: { display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' },
   statusLabel: { fontSize: 11, fontWeight: 700, color: '#8A94A3', textTransform: 'uppercase', letterSpacing: '0.05em' },
@@ -350,21 +505,4 @@ const s = {
   lcBtnDanger: { background: '#fef2f2', color: '#b91c1c', border: '1px solid #fecaca', borderRadius: 10, padding: '8px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer' },
   muted: { fontSize: 13, color: '#6B7686' },
   notice: { background: '#FEF3C7', color: '#92400e', borderRadius: 10, padding: '10px 14px', fontSize: 13.5, marginBottom: 16 },
-  btnDisabled: { background: '#DDE8FF', color: '#8A94A3', cursor: 'not-allowed' },
-  homeToggle: { display: 'flex', gap: 10, alignItems: 'flex-start', background: '#F4F6FB', border: '1px solid #DDE8FF', borderRadius: 10, padding: '12px 14px', margin: '4px 0 4px', cursor: 'pointer' },
-  homeHint: { display: 'block', color: '#4A5680', fontSize: 12.5, marginTop: 2, fontWeight: 400 },
-  row2: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' },
-  row3: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' },
-  btn: {
-    width: '100%', background: '#0251FD', color: '#fff',
-    border: 'none', borderRadius: 12, padding: '12px',
-    fontSize: 15, fontWeight: 700, cursor: 'pointer', marginTop: 8,
-    fontFamily: "'Montserrat', sans-serif",
-  },
-  aside: { background: '#fff', borderRadius: 16, padding: '1.5rem', border: '1px solid #DDE8FF', boxShadow: '0 8px 24px rgba(8,29,103,0.06)' },
-  asideH: { fontFamily: "'Montserrat', sans-serif", fontWeight: 700, fontSize: 15, color: '#081D67', margin: '0 0 1rem' },
-  uploadBtn: { width: '100%', background: '#F4F6FB', color: '#4A5680', border: '1px solid #DDE8FF', borderRadius: 10, padding: '9px', cursor: 'pointer', fontWeight: 600 },
-  progress: { marginTop: 10, background: '#DDE8FF', borderRadius: 8, height: 18, position: 'relative', overflow: 'hidden' },
-  progressBar: { height: '100%', background: '#0251FD', transition: 'width .3s' },
-  progressLabel: { position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#081D67' },
 }

@@ -8,6 +8,7 @@ Import order matters for FK resolution during create_all:
 5. Promotions (FKs to properties, locations)
 6. Engagement (FKs to properties, users)
 7. SEO (standalone polymorphic)
+8. Site settings (singleton; FK to users)
 """
 from src.db.models.user_models import UserORM, RoleORM, PermissionORM  # noqa: F401
 from src.db.models.location_models import LocationORM  # noqa: F401
@@ -21,6 +22,7 @@ from src.db.models.engagement_models import FavoriteORM, AuditLogORM, PropertyVi
 from src.db.models.partner_models import PartnerORM  # noqa: F401
 from src.db.models.blog_models import PostORM  # noqa: F401
 from src.db.models.seo_models import SeoMetadataORM  # noqa: F401
+from src.db.models.site_settings_models import SiteSettingsORM  # noqa: F401
 
 __all__ = [
     "UserORM", "RoleORM", "PermissionORM",
@@ -34,4 +36,5 @@ __all__ = [
     "FavoriteORM", "AuditLogORM", "PropertyViewORM",
     "PartnerORM", "PostORM",
     "SeoMetadataORM",
+    "SiteSettingsORM",
 ]

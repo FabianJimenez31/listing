@@ -10,7 +10,7 @@ import { formatPrice } from '../components/property/PropertyCard'
 import ImageCarousel from '../components/ui/ImageCarousel'
 import Spinner from '../components/ui/Spinner'
 import {
-  IconArea, IconBath, IconBed, IconCar, IconHeart, IconPhone, IconPin, IconShare, IconWhatsapp,
+  IconArea, IconBath, IconBed, IconCar, IconCheck, IconHeart, IconPhone, IconPin, IconShare, IconWhatsapp,
 } from '../components/ui/icons'
 
 const PropertyMap = lazy(() => import('../components/property/PropertyMap'))
@@ -22,6 +22,11 @@ const KIND_LABEL = {
 }
 const CONDITION_LABEL = { new: 'Nuevo', used: 'Usado', remodeled: 'Remodelado', under_construction: 'En construcción' }
 const STATUS_LABEL = { paused: 'Pausado', sold: 'Vendido', rented: 'Arrendado' }
+const VIEW_LABEL = { internal: 'Interna', external: 'Externa' }
+const SECURITY_LABEL = { none: 'Sin vigilancia', private: 'Privada', automated: 'Automatizada' }
+
+// "5 años", "1 año", "Menos de 1 año" (0).
+const formatAge = (years) => (years === 0 ? 'Menos de 1 año' : `${years} año${years === 1 ? '' : 's'}`)
 
 function buildWhatsappUrl(phone, title, url) {
   const clean = phone.replace(/\D/g, '')
@@ -80,16 +85,29 @@ export default function PropertyDetailPage() {
   const contactRole = agency ? 'Inmobiliaria' : 'Asesor'
   const initials = (agency?.initials || contactName).slice(0, 2).toUpperCase()
 
+  const areaLabel = ['house', 'lot', 'farm'].includes(property.property_kind) ? 'Área de lote' : 'Área total'
   const facts = [
     ['Operación', opLabel],
     ['Tipo', KIND_LABEL[property.property_kind] || property.property_kind],
-    property.condition && ['Estado', CONDITION_LABEL[property.condition] || property.condition],
-    property.total_area_m2 != null && ['Área total', `${property.total_area_m2} m²`],
+    // Áreas
+    property.total_area_m2 != null && [areaLabel, `${property.total_area_m2} m²`],
     property.built_area_m2 != null && ['Área construida', `${property.built_area_m2} m²`],
+    // Distribución y atributos
     property.bedrooms != null && ['Habitaciones', property.bedrooms],
     property.bathrooms != null && ['Baños', property.bathrooms],
     property.parking_spots != null && ['Parqueaderos', property.parking_spots],
-    ['Código', property.slug],
+    property.stratum != null && ['Estrato', property.stratum],
+    property.floor_number != null && ['Piso', property.total_floors ? `${property.floor_number} de ${property.total_floors}` : property.floor_number],
+    property.age_years != null && ['Antigüedad', formatAge(property.age_years)],
+    property.condition && ['Estado', CONDITION_LABEL[property.condition] || property.condition],
+    property.view_type && ['Vista', VIEW_LABEL[property.view_type] || property.view_type],
+    property.admin_fee_amount != null && ['Administración', `${formatPrice(property.admin_fee_amount, property.currency)} / mes`],
+    property.security_type && property.security_type !== 'none' && ['Vigilancia', SECURITY_LABEL[property.security_type] || property.security_type],
+    property.has_balcony && ['Balcón / Terraza', 'Sí'],
+    property.has_elevator && ['Ascensor', 'Sí'],
+    property.has_storage && ['Depósito / Bodega', 'Sí'],
+    property.has_study && ['Zona de estudio', 'Sí'],
+    ['Código', property.nid],
   ].filter(Boolean)
 
   const trackCta = () => trackEvent('cta_click', property.id, null).catch(() => null)
@@ -111,12 +129,13 @@ export default function PropertyDetailPage() {
         <meta name="description" content={property.description?.slice(0, 155) || property.title} />
         <meta property="og:title" content={property.title} />
         {main && <meta property="og:image" content={main.cdn_url} />}
-        <link rel="canonical" href={`${window.location.origin}/propiedades/${property.slug}`} />
+        <link rel="canonical" href={`${window.location.origin}/propiedades/${property.nid}`} />
       </Helmet>
 
       <div className="pdp-crumbs">
         <Link to="/">Inicio</Link> · <Link to={`/propiedades?operation_type=${property.operation_type}`}>{opLabel}</Link>
-        {property.location?.name ? ` · ${property.location.name}` : ''}
+        {(property.location?.path?.length ? property.location.path : (property.location ? [property.location] : []))
+          .map((c) => <span key={c.id}> · {c.name}</span>)}
       </div>
 
       {/* Gallery carousel */}
@@ -149,17 +168,23 @@ export default function PropertyDetailPage() {
           </div>
 
           <div className="pdp-specs">
+            {property.total_area_m2 != null && (
+              <div className="pdp-spec"><span className="ic"><IconArea /></span><span className="v">{property.total_area_m2} m²</span><span className="k">{areaLabel}</span></div>
+            )}
             {property.bedrooms != null && (
               <div className="pdp-spec"><span className="ic"><IconBed /></span><span className="v">{property.bedrooms}</span><span className="k">Habitaciones</span></div>
             )}
             {property.bathrooms != null && (
               <div className="pdp-spec"><span className="ic"><IconBath /></span><span className="v">{property.bathrooms}</span><span className="k">Baños</span></div>
             )}
-            {property.total_area_m2 != null && (
-              <div className="pdp-spec"><span className="ic"><IconArea /></span><span className="v">{property.total_area_m2} m²</span><span className="k">Área total</span></div>
-            )}
             {property.parking_spots != null && (
               <div className="pdp-spec"><span className="ic"><IconCar /></span><span className="v">{property.parking_spots}</span><span className="k">Parqueaderos</span></div>
+            )}
+            {property.age_years != null && (
+              <div className="pdp-spec"><span className="ic"><IconCheck /></span><span className="v">{formatAge(property.age_years)}</span><span className="k">Antigüedad</span></div>
+            )}
+            {property.condition && (
+              <div className="pdp-spec"><span className="ic"><IconCheck /></span><span className="v">{CONDITION_LABEL[property.condition] || property.condition}</span><span className="k">Estado</span></div>
             )}
           </div>
 
@@ -195,7 +220,7 @@ export default function PropertyDetailPage() {
             '@type': 'RealEstateListing',
             name: property.title,
             description: property.description || '',
-            url: `${window.location.origin}/propiedades/${property.slug}`,
+            url: `${window.location.origin}/propiedades/${property.nid}`,
             image: main?.cdn_url || '',
             ...(mapLat && mapLng ? { geo: { '@type': 'GeoCoordinates', latitude: mapLat, longitude: mapLng } } : {}),
           }) }} />

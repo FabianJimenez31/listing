@@ -16,6 +16,7 @@ def search_properties(
     db: DB,
     current_user: OptionalUser,
     q: str | None = Query(None, description="Free-text search (title/description)"),
+    nid: int | None = Query(None, description="Filter by numeric Record ID (NID)"),
     operation_type: str | None = Query(None, description="sale | rent | temporary"),
     property_kind: str | None = Query(None, description="house | apartment | lot | …"),
     location_id: str | None = Query(None, description="Filter by location UUID"),
@@ -61,6 +62,7 @@ def search_properties(
         min_area=min_area,
         max_area=max_area,
         text=q,
+        nid=nid,
         page=page,
         page_size=page_size,
     )

@@ -53,6 +53,8 @@ Current layout (kept flat and focused — grow by **domain capability**, not by 
 
 ## 🚀 Deployment (Docker Compose)
 
+> 🌐 **Production is LIVE at https://proppietario.co (+ www).** Public traffic enters through the **host system nginx** (`/etc/nginx/sites-available/proppietario.co`, _not_ this repo's `nginx.conf`), which terminates SSL (Let's Encrypt via certbot, auto-renew) and reverse-proxies to the `frontend` container on `127.0.0.1:8090`. The host is **shared** with other production sites (`einstein`, `leads`, `tienda-ara`, …) — **never touch other `sites-enabled/` blocks**. Runtime URLs are `SITE_URL=https://proppietario.co` and `CDN_BASE_URL=https://proppietario.co/static`. ⚠️ Image URLs are stored **absolute** in the DB at upload time (`property_images.cdn_url`/`thumb_url`, `site_settings.logo_url`), so changing the domain requires a DB rewrite of those columns, not just an env change.
+
 The live stack runs on this host via `docker-compose.yml` — **the server _is_ `158.69.204.107`**. Four services:
 
 | Service    | Image / build                              | Port (host→container) | Notes |

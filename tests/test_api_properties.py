@@ -43,6 +43,164 @@ class TestPropertyCreate:
         resp = client.post("/api/v1/properties", json={**_BASE_PAYLOAD, "title": "   "}, headers=_auth(agent_token))
         assert resp.status_code == 422
 
+    def test_has_storage_defaults_false(self, client, agent_user, agent_token):
+        resp = client.post("/api/v1/properties", json=_BASE_PAYLOAD, headers=_auth(agent_token))
+        assert resp.status_code == 201
+        assert resp.json()["has_storage"] is False
+
+    def test_create_with_storage_persists(self, client, agent_user, agent_token):
+        resp = client.post(
+            "/api/v1/properties",
+            json={**_BASE_PAYLOAD, "has_storage": True},
+            headers=_auth(agent_token),
+        )
+        assert resp.status_code == 201
+        prop_id = resp.json()["id"]
+        assert resp.json()["has_storage"] is True
+        # Survives a re-read.
+        got = client.get(f"/api/v1/properties/{prop_id}", headers=_auth(agent_token))
+        assert got.json()["has_storage"] is True
+
+    def test_update_storage_flag(self, client, agent_user, agent_token):
+        prop_id = client.post(
+            "/api/v1/properties", json=_BASE_PAYLOAD, headers=_auth(agent_token)
+        ).json()["id"]
+        upd = client.put(
+            f"/api/v1/properties/{prop_id}",
+            json={"has_storage": True},
+            headers=_auth(agent_token),
+        )
+        assert upd.status_code == 200
+        assert upd.json()["has_storage"] is True
+
+    def test_feature_flags_default_false(self, client, agent_user, agent_token):
+        data = client.post("/api/v1/properties", json=_BASE_PAYLOAD, headers=_auth(agent_token)).json()
+        assert data["has_elevator"] is False
+        assert data["has_study"] is False
+
+    def test_create_with_elevator_and_study_persists(self, client, agent_user, agent_token):
+        resp = client.post(
+            "/api/v1/properties",
+            json={**_BASE_PAYLOAD, "has_elevator": True, "has_study": True},
+            headers=_auth(agent_token),
+        )
+        assert resp.status_code == 201
+        prop_id = resp.json()["id"]
+        assert resp.json()["has_elevator"] is True
+        assert resp.json()["has_study"] is True
+        got = client.get(f"/api/v1/properties/{prop_id}", headers=_auth(agent_token)).json()
+        assert got["has_elevator"] is True
+        assert got["has_study"] is True
+
+
+class TestPropertyDescriptiveFields:
+    """Estrato, balcón/terraza, vista, administración, antigüedad, vigilancia, piso."""
+
+    _EXTRA = {
+        "stratum": 4,
+        "has_balcony": True,
+        "view_type": "external",
+        "admin_fee_amount": 250000,  # minor units (centavos)
+        "age_years": 8,
+        "security_type": "private",
+        "floor_number": 7,
+        "total_floors": 12,
+    }
+
+    def test_defaults_when_absent(self, client, agent_user, agent_token):
+        data = client.post("/api/v1/properties", json=_BASE_PAYLOAD, headers=_auth(agent_token)).json()
+        assert data["has_balcony"] is False
+        assert data["stratum"] is None
+        assert data["view_type"] is None
+        assert data["admin_fee_amount"] is None
+        assert data["age_years"] is None
+        assert data["security_type"] is None
+
+    def test_create_persists_descriptive_fields(self, client, agent_user, agent_token):
+        resp = client.post(
+            "/api/v1/properties", json={**_BASE_PAYLOAD, **self._EXTRA}, headers=_auth(agent_token)
+        )
+        assert resp.status_code == 201, resp.text
+        prop_id = resp.json()["id"]
+        got = client.get(f"/api/v1/properties/{prop_id}", headers=_auth(agent_token)).json()
+        for key, value in self._EXTRA.items():
+            assert got[key] == value, key
+
+    def test_update_descriptive_fields(self, client, agent_user, agent_token):
+        prop_id = client.post(
+            "/api/v1/properties", json=_BASE_PAYLOAD, headers=_auth(agent_token)
+        ).json()["id"]
+        upd = client.put(
+            f"/api/v1/properties/{prop_id}",
+            json={"stratum": 6, "security_type": "automated", "has_balcony": True},
+            headers=_auth(agent_token),
+        )
+        assert upd.status_code == 200
+        body = upd.json()
+        assert body["stratum"] == 6
+        assert body["security_type"] == "automated"
+        assert body["has_balcony"] is True
+
+    def test_stratum_out_of_range_rejected(self, client, agent_token):
+        resp = client.post(
+            "/api/v1/properties", json={**_BASE_PAYLOAD, "stratum": 7}, headers=_auth(agent_token)
+        )
+        assert resp.status_code == 422
+
+    def test_invalid_view_type_rejected(self, client, agent_token):
+        resp = client.post(
+            "/api/v1/properties", json={**_BASE_PAYLOAD, "view_type": "panoramic"}, headers=_auth(agent_token)
+        )
+        assert resp.status_code == 422
+
+    def test_duplicate_copies_descriptive_fields(self, client, agent_user, agent_token, admin_user, admin_token):
+        prop_id = client.post(
+            "/api/v1/properties", json={**_BASE_PAYLOAD, **self._EXTRA}, headers=_auth(agent_token)
+        ).json()["id"]
+        client.post(f"/api/v1/properties/{prop_id}/submit", headers=_auth(agent_token))
+        client.post(f"/api/v1/properties/{prop_id}/approve", headers=_auth(admin_token))
+        clone = client.post(f"/api/v1/properties/{prop_id}/duplicate", headers=_auth(agent_token)).json()
+        for key, value in self._EXTRA.items():
+            assert clone[key] == value, key
+
+
+class TestPropertyLocationBreadcrumb:
+    def _mkloc(self, client, admin_token, name, slug, level, parent=None):
+        resp = client.post(
+            "/api/v1/locations",
+            json={"name": name, "slug": slug, "level": level, "parent_id": parent},
+            headers=_auth(admin_token),
+        )
+        assert resp.status_code == 201, resp.text
+        return resp.json()["id"]
+
+    def test_detail_returns_full_location_path(self, client, agent_user, agent_token, admin_user, admin_token):
+        country = self._mkloc(client, admin_token, "Colombia", "colombia", "country")
+        city = self._mkloc(client, admin_token, "Bogotá", "bogota", "city", country)
+        barrio = self._mkloc(client, admin_token, "Chapinero", "chapinero", "locality", city)
+
+        resp = client.post(
+            "/api/v1/properties",
+            json={**_BASE_PAYLOAD, "location_id": barrio},
+            headers=_auth(agent_token),
+        )
+        assert resp.status_code == 201
+        prop_id = resp.json()["id"]
+
+        got = client.get(f"/api/v1/properties/{prop_id}", headers=_auth(agent_token)).json()
+        assert got["location"]["id"] == barrio
+        assert [c["name"] for c in got["location"]["path"]] == ["Colombia", "Bogotá", "Chapinero"]
+
+    def test_path_is_single_node_when_no_parent(self, client, agent_user, agent_token, admin_user, admin_token):
+        country = self._mkloc(client, admin_token, "Colombia", "colombia", "country")
+        prop_id = client.post(
+            "/api/v1/properties",
+            json={**_BASE_PAYLOAD, "location_id": country},
+            headers=_auth(agent_token),
+        ).json()["id"]
+        got = client.get(f"/api/v1/properties/{prop_id}", headers=_auth(agent_token)).json()
+        assert [c["name"] for c in got["location"]["path"]] == ["Colombia"]
+
 
 class TestPropertyGet:
     def test_get_draft_by_owner(self, client, agent_user, agent_token):
@@ -65,6 +223,37 @@ class TestPropertyGet:
         resp = client.get(f"/api/v1/properties/{prop_id}")
         assert resp.status_code == 200
         assert resp.json()["status"] == "published"
+
+
+class TestPropertyNid:
+    """HubSpot-style numeric Record ID (NID)."""
+
+    def test_create_assigns_numeric_nid(self, client, agent_user, agent_token):
+        resp = client.post("/api/v1/properties", json=_BASE_PAYLOAD, headers=_auth(agent_token))
+        nid = resp.json()["nid"]
+        assert isinstance(nid, int)
+        assert nid >= 1_000_000_001
+
+    def test_nids_are_unique_and_increasing(self, client, agent_user, agent_token):
+        a = client.post("/api/v1/properties", json=_BASE_PAYLOAD, headers=_auth(agent_token)).json()["nid"]
+        b = client.post("/api/v1/properties", json=_BASE_PAYLOAD, headers=_auth(agent_token)).json()["nid"]
+        assert b > a
+
+    def test_get_by_nid_resolves_property(self, client, agent_user, agent_token):
+        created = client.post("/api/v1/properties", json=_BASE_PAYLOAD, headers=_auth(agent_token)).json()
+        resp = client.get(f"/api/v1/properties/{created['nid']}", headers=_auth(agent_token))
+        assert resp.status_code == 200
+        assert resp.json()["id"] == created["id"]
+
+    def test_search_by_nid(self, client, agent_user, agent_token, admin_user, admin_token):
+        created = client.post("/api/v1/properties", json=_BASE_PAYLOAD, headers=_auth(agent_token)).json()
+        client.post(f"/api/v1/properties/{created['id']}/submit", headers=_auth(agent_token))
+        client.post(f"/api/v1/properties/{created['id']}/approve", headers=_auth(admin_token))
+        resp = client.get("/api/v1/properties", params={"nid": created["nid"]})
+        assert resp.status_code == 200
+        data = resp.json()["data"]
+        assert len(data) == 1
+        assert data[0]["nid"] == created["nid"]
 
 
 class TestPropertyLifecycle:

@@ -40,6 +40,27 @@ class LocationEmbedded(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class LocationCrumb(BaseModel):
+    """A single hop of a location's ancestor chain (for breadcrumbs)."""
+
+    id: str
+    name: str
+    slug: str
+    level: str
+
+    model_config = {"from_attributes": True}
+
+
+class LocationDetailEmbedded(LocationEmbedded):
+    """Location embedded on the property *detail* with its full root→leaf path.
+
+    Kept separate from LocationEmbedded so list endpoints (cards) don't pay the
+    parent-chain walk for every item.
+    """
+
+    path: list[LocationCrumb] = []
+
+
 # ---------------------------------------------------------------------------
 # Owner sub-schema
 # ---------------------------------------------------------------------------
@@ -84,8 +105,17 @@ class PropertyCreateRequest(BaseModel):
     bedrooms: int | None = None
     bathrooms: int | None = None
     parking_spots: int | None = None
+    has_storage: bool = False  # depósito / bodega
+    has_elevator: bool = False  # ascensor (edificio)
+    has_study: bool = False  # zona de estudio
+    has_balcony: bool = False  # balcón / terraza
     floor_number: int | None = None
     total_floors: int | None = None
+    stratum: int | None = None  # estrato socioeconómico (1–6)
+    view_type: Literal["internal", "external"] | None = None  # vista interna/externa
+    age_years: int | None = None  # antigüedad en años
+    admin_fee_amount: int | None = None  # valor administración (minor units, /mes)
+    security_type: Literal["none", "private", "automated"] | None = None  # vigilancia
     address_street: str | None = None
     address_detail: str | None = None
     location_id: str | None = None
@@ -101,6 +131,20 @@ class PropertyCreateRequest(BaseModel):
     def price_non_negative(cls, v: int) -> int:
         if v < 0:
             raise ValueError("price_amount must be non-negative")
+        return v
+
+    @field_validator("stratum")
+    @classmethod
+    def stratum_in_range(cls, v: int | None) -> int | None:
+        if v is not None and not (1 <= v <= 6):
+            raise ValueError("stratum must be between 1 and 6")
+        return v
+
+    @field_validator("admin_fee_amount", "age_years")
+    @classmethod
+    def non_negative_optional(cls, v: int | None) -> int | None:
+        if v is not None and v < 0:
+            raise ValueError("value must be non-negative")
         return v
 
     @field_validator("currency")
@@ -132,8 +176,17 @@ class PropertyUpdateRequest(BaseModel):
     bedrooms: int | None = None
     bathrooms: int | None = None
     parking_spots: int | None = None
+    has_storage: bool | None = None  # depósito / bodega
+    has_elevator: bool | None = None  # ascensor (edificio)
+    has_study: bool | None = None  # zona de estudio
+    has_balcony: bool | None = None  # balcón / terraza
     floor_number: int | None = None
     total_floors: int | None = None
+    stratum: int | None = None  # estrato socioeconómico (1–6)
+    view_type: Literal["internal", "external"] | None = None  # vista interna/externa
+    age_years: int | None = None  # antigüedad en años
+    admin_fee_amount: int | None = None  # valor administración (minor units, /mes)
+    security_type: Literal["none", "private", "automated"] | None = None  # vigilancia
     address_street: str | None = None
     address_detail: str | None = None
     location_id: str | None = None
@@ -165,6 +218,7 @@ class PropertyRejectRequest(BaseModel):
 
 class PropertyResponse(BaseModel):
     id: str
+    nid: int  # public HubSpot-style numeric Record ID
     owner_id: str
     title: str
     slug: str
@@ -179,8 +233,17 @@ class PropertyResponse(BaseModel):
     bedrooms: int | None = None
     bathrooms: int | None = None
     parking_spots: int | None = None
+    has_storage: bool = False  # depósito / bodega
+    has_elevator: bool = False  # ascensor (edificio)
+    has_study: bool = False  # zona de estudio
+    has_balcony: bool = False  # balcón / terraza
     floor_number: int | None = None
     total_floors: int | None = None
+    stratum: int | None = None  # estrato socioeconómico (1–6)
+    view_type: str | None = None  # vista interna/externa
+    age_years: int | None = None  # antigüedad en años
+    admin_fee_amount: int | None = None  # valor administración (minor units, /mes)
+    security_type: str | None = None  # vigilancia
     address_street: str | None = None
     status: str
     published_at: datetime | None = None
@@ -196,7 +259,7 @@ class PropertyResponse(BaseModel):
     contact_whatsapp: str | None = None
     agency_id: str | None = None
     images: list[PropertyImageResponse] = []
-    location: LocationEmbedded | None = None
+    location: LocationDetailEmbedded | None = None
     owner: OwnerEmbedded | None = None
     agency: AgencyEmbedded | None = None
 
@@ -205,6 +268,7 @@ class PropertyResponse(BaseModel):
 
 class PropertyListItem(BaseModel):
     id: str
+    nid: int  # public HubSpot-style numeric Record ID
     title: str
     slug: str
     operation_type: str
@@ -214,6 +278,9 @@ class PropertyListItem(BaseModel):
     total_area_m2: float | None = None
     bedrooms: int | None = None
     bathrooms: int | None = None
+    has_storage: bool = False  # depósito / bodega
+    has_elevator: bool = False  # ascensor (edificio)
+    has_study: bool = False  # zona de estudio
     status: str
     views_count: int = 0
     show_on_home: bool = False

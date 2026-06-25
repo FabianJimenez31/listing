@@ -36,10 +36,15 @@ class PropertyRepository(BaseRepository[PropertyORM]):
         return self.db.scalar(stmt)
 
     def get_with_images(self, id_or_slug: str) -> PropertyORM | None:
+        # Resolve by NID (numeric Record ID), UUID, or slug — in that order of
+        # likelihood for public URLs (which are now numeric).
+        match = [PropertyORM.id == id_or_slug, PropertyORM.slug == id_or_slug]
+        if id_or_slug.isdigit() and len(id_or_slug) <= 18:  # fits a signed BIGINT
+            match.append(PropertyORM.nid == int(id_or_slug))
         stmt = (
             select(PropertyORM)
             .where(
-                or_(PropertyORM.id == id_or_slug, PropertyORM.slug == id_or_slug),
+                or_(*match),
                 PropertyORM.deleted_at.is_(None),
             )
             .options(
@@ -74,6 +79,7 @@ class PropertyRepository(BaseRepository[PropertyORM]):
         min_area: float | None = None,
         max_area: float | None = None,
         text: str | None = None,
+        nid: int | None = None,
         owner_id: str | None = None,
         page: int = 1,
         page_size: int = 20,
@@ -82,6 +88,8 @@ class PropertyRepository(BaseRepository[PropertyORM]):
 
         if status:
             filters.append(PropertyORM.status == status)
+        if nid is not None:
+            filters.append(PropertyORM.nid == nid)
         if operation_type:
             filters.append(PropertyORM.operation_type == operation_type)
         if property_kind:

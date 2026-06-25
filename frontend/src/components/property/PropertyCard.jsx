@@ -31,7 +31,7 @@ export default function PropertyCard({ property }) {
   const photoCount = property.images?.length
 
   return (
-    <Link to={`/propiedades/${property.slug}`} className="listing" aria-label={property.title}>
+    <Link to={`/propiedades/${property.nid}`} className="listing" aria-label={property.title}>
       <div className="photo">
         <div className="badges">
           {isUSA && <span className="badge usa">USA</span>}
@@ -55,9 +55,9 @@ export default function PropertyCard({ property }) {
         <div className="title">{property.title}</div>
         {city && <div className="loc"><IconPin /> {city}</div>}
         <div className="specs">
+          {property.total_area_m2 != null && <span><IconArea /> {property.total_area_m2} m²</span>}
           {property.bedrooms != null && <span><IconBed /> {property.bedrooms} hab</span>}
           {property.bathrooms != null && <span><IconBath /> {property.bathrooms} baños</span>}
-          {property.total_area_m2 != null && <span><IconArea /> {property.total_area_m2} m²</span>}
         </div>
         {agency && (
           <div className="agency">

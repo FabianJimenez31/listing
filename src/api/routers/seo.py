@@ -90,7 +90,8 @@ def sitemap_xml(db: DB):
         .all()
     )
     for prop in props:
-        url = f"{_SITE_URL}/propiedades/{_xml_escape(prop.slug)}"
+        # Canonical public URL is the numeric Record ID (NID), HubSpot-style.
+        url = f"{_SITE_URL}/propiedades/{prop.nid}"
         entries.append(_url_entry(url, lastmod=prop.updated_at, priority="0.8"))
 
     body = (

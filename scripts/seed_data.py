@@ -61,6 +61,8 @@ PERMISSIONS: list[str] = [
     # Metrics & audit
     "metrics:read",
     "audit:read",
+    # Site settings (branding / logo)
+    "settings:manage",
 ]
 
 ROLES: dict[str, list[str]] = {
@@ -102,6 +104,7 @@ ROLES: dict[str, list[str]] = {
         "amenity:create",
         "metrics:read",
         "audit:read",
+        "settings:manage",
     ],
     "SUPERADMIN": PERMISSIONS,  # all permissions
 }
