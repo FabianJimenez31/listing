@@ -24,6 +24,7 @@ def search_properties(
     agency_id: str | None = Query(None, description="Filter by agency UUID"),
     owner_id: str | None = Query(None, description="Filter by owner (admins with property:read_all)"),
     include_own: bool = Query(False, description="Return the caller's own properties across all statuses"),
+    all_: bool = Query(False, alias="all", description="Admins: ALL properties (every owner & status)"),
     on_home: bool = Query(False, description="Only properties flagged to show on the home page"),
     min_price: int | None = Query(None, ge=0, description="Min price in minor units"),
     max_price: int | None = Query(None, ge=0, description="Max price in minor units"),
@@ -39,11 +40,15 @@ def search_properties(
     # Default: public listing of published properties only.
     search_status: str | None = "published"
     search_owner: str | None = None
-    if include_own and current_user:
+    is_admin = bool(current_user and current_user.has_permission("property:read_all"))
+    if all_ and is_admin:
+        # Admin management view: every property, every owner, every status.
+        search_status = None
+    elif include_own and current_user:
         # "Mis propiedades": the caller's own listings in every status (drafts too)
         search_status = None
         search_owner = current_user.id
-    elif owner_id and current_user and current_user.has_permission("property:read_all"):
+    elif owner_id and is_admin:
         search_owner = owner_id
 
     items, total = repo.search(

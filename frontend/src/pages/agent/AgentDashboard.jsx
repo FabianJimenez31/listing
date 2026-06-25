@@ -20,16 +20,24 @@ const STATUS = {
 }
 
 export default function AgentDashboard() {
-  const { user } = useAuth()
+  const { user, hasPermission } = useAuth()
+  const isAdmin = hasPermission('property:read_all')
   const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
   const [query, setQuery] = useState('')        // what's typed in the box
   const [search, setSearch] = useState('')       // committed search term
+  // Admins default to every owner's properties; agents only see their own.
+  const [scope, setScope] = useState('mine')     // 'all' | 'mine'
+  useEffect(() => { if (isAdmin) setScope('all') }, [isAdmin])
+
+  const showingAll = isAdmin && scope === 'all'
 
   const loadProperties = () => {
     setLoading(true)
-    const params = { owner_id: user?.id, page, page_size: 10, include_own: true }
+    const params = showingAll
+      ? { all: true, page, page_size: 10 }
+      : { owner_id: user?.id, include_own: true, page, page_size: 10 }
     const term = search.trim()
     if (term) {
       // A pure number is treated as a Record ID (NID); anything else as text.
@@ -42,7 +50,9 @@ export default function AgentDashboard() {
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => { if (user) loadProperties() }, [user, page, search])
+  useEffect(() => { if (user) loadProperties() }, [user, page, search, scope])
+
+  const setScopeAndReset = (s) => { setScope(s); setPage(1) }
 
   const action = async (fn, id) => { await fn(id); loadProperties() }
 
@@ -58,11 +68,18 @@ export default function AgentDashboard() {
       <Helmet><title>Mis propiedades | Proppietario</title></Helmet>
 
       <AdminPageHeader
-        title="Mis propiedades"
-        subtitle="Gestiona tus publicaciones"
+        title={showingAll ? 'Propiedades' : 'Mis propiedades'}
+        subtitle={showingAll ? 'Todas las propiedades del portal' : 'Gestiona tus publicaciones'}
         count={result?.meta?.total ?? props.length}
         actions={<Link to="/agente/nueva" className="btn btn-blue">+ Nueva propiedad</Link>}
       />
+
+      {isAdmin && (
+        <div style={{ display: 'flex', gap: 8, margin: '0 0 14px' }}>
+          <button type="button" className={`btn btn-sm ${scope === 'all' ? 'btn-blue' : 'btn-outline'}`} onClick={() => setScopeAndReset('all')}>Todas</button>
+          <button type="button" className={`btn btn-sm ${scope === 'mine' ? 'btn-blue' : 'btn-outline'}`} onClick={() => setScopeAndReset('mine')}>Mías</button>
+        </div>
+      )}
 
       <form onSubmit={onSearch} className="adm-search" style={{ display: 'flex', gap: 8, margin: '0 0 16px', flexWrap: 'wrap' }}>
         <input
@@ -85,6 +102,8 @@ export default function AgentDashboard() {
               <b>Sin resultados para «{search}»</b>
               <button type="button" className="btn btn-outline btn-sm" onClick={clearSearch}>Ver todas</button>
             </>
+          ) : showingAll ? (
+            <b>No hay propiedades en el portal</b>
           ) : (
             <>
               <b>Aún no tienes propiedades</b>

@@ -427,3 +427,23 @@ class TestShowOnHome:
     def test_toggle_home_requires_auth(self, client, agent_user, agent_token, admin_user, admin_token):
         cid = self._publish(client, agent_token, admin_token, title="Owned")
         assert client.patch(f"/api/v1/properties/{cid}/home", json={"show_on_home": True}).status_code == 401
+
+
+@pytest.mark.integration
+class TestAdminListAll:
+    """Admins can list every owner's properties (every status) with ?all=true."""
+
+    def test_admin_all_sees_other_owners_draft(self, client, agent_user, agent_token, admin_user, admin_token):
+        created = client.post("/api/v1/properties", json=_BASE_PAYLOAD, headers=_auth(agent_token)).json()
+        resp = client.get("/api/v1/properties?all=true", headers=_auth(admin_token))
+        assert resp.status_code == 200
+        nids = [p["nid"] for p in resp.json()["data"]]
+        assert created["nid"] in nids  # an agent's draft is visible to the admin
+
+    def test_non_admin_all_is_ignored(self, client, agent_user, agent_token):
+        # Not an admin → ?all=true falls back to the public (published-only) view,
+        # so the agent's own draft does NOT leak in.
+        created = client.post("/api/v1/properties", json=_BASE_PAYLOAD, headers=_auth(agent_token)).json()
+        resp = client.get("/api/v1/properties?all=true", headers=_auth(agent_token))
+        nids = [p["nid"] for p in resp.json()["data"]]
+        assert created["nid"] not in nids
