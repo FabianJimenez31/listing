@@ -11,6 +11,7 @@ Import order matters for FK resolution during create_all:
 8. Site settings (singleton; FK to users)
 """
 from src.db.models.user_models import UserORM, RoleORM, PermissionORM  # noqa: F401
+from src.db.models.login_otp_models import LoginOtpORM  # noqa: F401
 from src.db.models.location_models import LocationORM  # noqa: F401
 from src.db.models.agency_models import AgencyORM  # noqa: F401
 from src.db.models.catalog_models import PropertyTypeORM, AmenityORM, PropertyAmenityORM  # noqa: F401
@@ -26,6 +27,7 @@ from src.db.models.site_settings_models import SiteSettingsORM  # noqa: F401
 
 __all__ = [
     "UserORM", "RoleORM", "PermissionORM",
+    "LoginOtpORM",
     "LocationORM",
     "AgencyORM",
     "PropertyTypeORM", "AmenityORM", "PropertyAmenityORM",

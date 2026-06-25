@@ -8,11 +8,14 @@ from sqlalchemy.orm import Session
 
 from src.api.deps import CurrentUser, DB
 from src.auth.jwt_handler import create_access_token, create_refresh_token, decode_token
+from src.auth.login_otp import issue_challenge, user_requires_otp, verify_challenge
 from src.auth.password import hash_password, verify_password
 from src.db.models.user_models import UserORM
 from src.repositories.user_repo import UserRepository
 from src.schemas.auth_schemas import (
     LoginRequest,
+    LoginResponse,
+    OtpVerifyRequest,
     RefreshRequest,
     RegisterRequest,
     TokenResponse,
@@ -41,7 +44,7 @@ def register(body: RegisterRequest, db: DB):
     return UserResponse.from_orm_with_permissions(user)
 
 
-@router.post("/login", response_model=TokenResponse)
+@router.post("/login", response_model=LoginResponse)
 def login(body: LoginRequest, db: DB):
     repo = UserRepository(db)
     user = repo.get_by_email(body.email.lower())
@@ -50,6 +53,31 @@ def login(body: LoginRequest, db: DB):
     if not user.is_active:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Account is disabled")
 
+    # Staff (admin/agent) get an email OTP step when 2FA is enabled; everyone
+    # else (and all logins when 2FA is off) receives tokens directly.
+    if user_requires_otp(user):
+        try:
+            challenge_id = issue_challenge(db, user)
+        except Exception:
+            db.rollback()
+            raise HTTPException(
+                status.HTTP_503_SERVICE_UNAVAILABLE,
+                "No se pudo enviar el código de verificación. Intenta de nuevo.",
+            )
+        return LoginResponse(otp_required=True, challenge_id=challenge_id)
+
+    return LoginResponse(
+        access_token=create_access_token(user.id, user.email),
+        refresh_token=create_refresh_token(user.id),
+    )
+
+
+@router.post("/login/verify", response_model=TokenResponse)
+def login_verify(body: OtpVerifyRequest, db: DB):
+    """Exchange a valid OTP code for tokens (second step of staff 2FA login)."""
+    user = verify_challenge(db, body.challenge_id, body.code)
+    if not user or not user.is_active:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Código inválido o expirado")
     return TokenResponse(
         access_token=create_access_token(user.id, user.email),
         refresh_token=create_refresh_token(user.id),

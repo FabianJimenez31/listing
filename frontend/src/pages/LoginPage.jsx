@@ -4,24 +4,57 @@ import { Helmet } from 'react-helmet-async'
 import { useAuth } from '../contexts/AuthContext'
 
 export default function LoginPage() {
-  const { login } = useAuth()
+  const { login, verifyOtp } = useAuth()
   const navigate = useNavigate()
   const [form, setForm] = useState({ email: '', password: '' })
+  const [step, setStep] = useState('credentials') // 'credentials' | 'otp'
+  const [challengeId, setChallengeId] = useState(null)
+  const [code, setCode] = useState('')
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
+
+  const errMsg = (err, fallback) =>
+    err.response?.data?.error?.message || err.response?.data?.detail || fallback
+
+  const goByRole = (user) =>
+    navigate(user.permissions?.includes('property:moderate') ? '/admin' : '/agente')
 
   const submit = async (e) => {
     e.preventDefault()
     setError(null)
     setLoading(true)
     try {
-      const user = await login(form.email, form.password)
-      navigate(user.permissions?.includes('property:moderate') ? '/admin' : '/agente')
+      const res = await login(form.email, form.password)
+      if (res.otpRequired) {
+        setChallengeId(res.challengeId)
+        setStep('otp')
+      } else {
+        goByRole(res.user)
+      }
     } catch (err) {
-      setError(err.response?.data?.error?.message || 'Credenciales incorrectas')
+      setError(errMsg(err, 'Credenciales incorrectas'))
     } finally {
       setLoading(false)
     }
+  }
+
+  const verify = async (e) => {
+    e.preventDefault()
+    setError(null)
+    setLoading(true)
+    try {
+      goByRole(await verifyOtp(challengeId, code.trim()))
+    } catch (err) {
+      setError(errMsg(err, 'Código inválido o expirado'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const backToCredentials = () => {
+    setStep('credentials')
+    setCode('')
+    setError(null)
   }
 
   return (
@@ -30,33 +63,58 @@ export default function LoginPage() {
       <div style={s.wrap}>
         <div style={s.card}>
           <div style={s.logoMark}>P</div>
-          <h1 style={s.h1}>Iniciar sesión</h1>
+          <h1 style={s.h1}>{step === 'otp' ? 'Verifica tu identidad' : 'Iniciar sesión'}</h1>
 
           {error && <p style={s.error}>{error}</p>}
 
-          <form onSubmit={submit}>
-            <label style={s.label}>Correo electrónico</label>
-            <input
-              required
-              type="email"
-              style={s.input}
-              value={form.email}
-              onChange={e => setForm({ ...form, email: e.target.value })}
-            />
-            <label style={s.label}>Contraseña</label>
-            <input
-              required
-              type="password"
-              style={s.input}
-              value={form.password}
-              onChange={e => setForm({ ...form, password: e.target.value })}
-            />
-            <button type="submit" disabled={loading} style={s.btn}>
-              {loading ? 'Entrando…' : 'Entrar'}
-            </button>
-          </form>
+          {step === 'credentials' ? (
+            <form onSubmit={submit}>
+              <label style={s.label}>Correo electrónico</label>
+              <input
+                required
+                type="email"
+                style={s.input}
+                value={form.email}
+                onChange={e => setForm({ ...form, email: e.target.value })}
+              />
+              <label style={s.label}>Contraseña</label>
+              <input
+                required
+                type="password"
+                style={s.input}
+                value={form.password}
+                onChange={e => setForm({ ...form, password: e.target.value })}
+              />
+              <button type="submit" disabled={loading} style={s.btn}>
+                {loading ? 'Entrando…' : 'Entrar'}
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={verify}>
+              <p style={s.hint}>Enviamos un código de 6 dígitos a <b>{form.email}</b>. Ingrésalo para continuar.</p>
+              <label style={s.label}>Código de verificación</label>
+              <input
+                required
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                placeholder="••••••"
+                style={{ ...s.input, letterSpacing: 6, textAlign: 'center', fontSize: 20 }}
+                value={code}
+                onChange={e => setCode(e.target.value.replace(/\D/g, ''))}
+              />
+              <button type="submit" disabled={loading || code.length < 6} style={s.btn}>
+                {loading ? 'Verificando…' : 'Verificar y entrar'}
+              </button>
+              <button type="button" onClick={backToCredentials} style={s.linkBtn}>
+                ← Volver
+              </button>
+            </form>
+          )}
 
-          <p style={s.foot}>¿No tienes cuenta? <Link to="/registro" style={s.link}>Regístrate</Link></p>
+          {step === 'credentials' && (
+            <p style={s.foot}>¿No tienes cuenta? <Link to="/registro" style={s.link}>Regístrate</Link></p>
+          )}
         </div>
       </div>
     </div>
@@ -132,4 +190,17 @@ const s = {
   },
   foot: { textAlign: 'center', fontSize: 14, color: '#4A5680', marginTop: '1.25rem' },
   link: { color: '#0251FD', fontWeight: 600 },
+  hint: { fontSize: 14, color: '#4A5680', marginBottom: 8, lineHeight: 1.5 },
+  linkBtn: {
+    display: 'block',
+    width: '100%',
+    background: 'none',
+    border: 'none',
+    color: '#0251FD',
+    fontSize: 14,
+    fontWeight: 600,
+    cursor: 'pointer',
+    marginTop: 14,
+    fontFamily: "'Montserrat', sans-serif",
+  },
 }

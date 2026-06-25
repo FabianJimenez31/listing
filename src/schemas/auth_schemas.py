@@ -36,5 +36,20 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
 
 
+class LoginResponse(BaseModel):
+    """Login result: tokens directly, or an OTP challenge when 2FA is required."""
+
+    access_token: str | None = None
+    refresh_token: str | None = None
+    token_type: str = "bearer"
+    otp_required: bool = False
+    challenge_id: str | None = None
+
+
+class OtpVerifyRequest(BaseModel):
+    challenge_id: str
+    code: str
+
+
 class RefreshRequest(BaseModel):
     refresh_token: str

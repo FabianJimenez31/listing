@@ -98,6 +98,60 @@ class TestRefresh:
         assert resp.status_code == 401
 
 
+class TestLoginOtp:
+    """Email 2FA for staff logins (gated by OTP_2FA_ENABLED)."""
+
+    FIXED_CODE = "123456"
+
+    @pytest.fixture
+    def otp_on(self, monkeypatch):
+        monkeypatch.setenv("OTP_2FA_ENABLED", "true")
+        monkeypatch.setattr("src.auth.login_otp.generate_code", lambda: self.FIXED_CODE)
+
+    def _login(self, client, email, password="Password123"):
+        return client.post("/api/v1/auth/login", json={"email": email, "password": password})
+
+    def test_flag_off_admin_gets_tokens(self, client, admin_user):
+        # 2FA disabled by default → admin logs in directly (back-compatible).
+        data = self._login(client, "admin@test.com").json()
+        assert data["access_token"]
+        assert not data.get("otp_required")
+
+    def test_admin_login_requires_otp(self, client, admin_user, otp_on):
+        data = self._login(client, "admin@test.com").json()
+        assert data["otp_required"] is True
+        assert data["challenge_id"]
+        assert data.get("access_token") is None
+
+    def test_agent_login_requires_otp(self, client, agent_user, otp_on):
+        assert self._login(client, "agent@test.com").json()["otp_required"] is True
+
+    def test_verify_correct_code_returns_tokens(self, client, admin_user, otp_on):
+        challenge = self._login(client, "admin@test.com").json()["challenge_id"]
+        resp = client.post("/api/v1/auth/login/verify", json={"challenge_id": challenge, "code": self.FIXED_CODE})
+        assert resp.status_code == 200
+        assert resp.json()["access_token"]
+
+    def test_verify_wrong_code_rejected(self, client, admin_user, otp_on):
+        challenge = self._login(client, "admin@test.com").json()["challenge_id"]
+        resp = client.post("/api/v1/auth/login/verify", json={"challenge_id": challenge, "code": "000000"})
+        assert resp.status_code == 401
+
+    def test_code_is_single_use(self, client, admin_user, otp_on):
+        challenge = self._login(client, "admin@test.com").json()["challenge_id"]
+        client.post("/api/v1/auth/login/verify", json={"challenge_id": challenge, "code": self.FIXED_CODE})
+        again = client.post("/api/v1/auth/login/verify", json={"challenge_id": challenge, "code": self.FIXED_CODE})
+        assert again.status_code == 401
+
+    def test_non_staff_bypasses_otp(self, client, otp_on):
+        client.post("/api/v1/auth/register", json={
+            "email": "buyer@example.com", "password": "Password123", "full_name": "Buyer",
+        })
+        data = self._login(client, "buyer@example.com").json()
+        assert data["access_token"]
+        assert not data.get("otp_required")
+
+
 class TestMe:
     def test_me_authenticated(self, client, agent_user, agent_token):
         resp = client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {agent_token}"})

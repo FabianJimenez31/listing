@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
-import { login as apiLogin, logout as apiLogout, getMe } from '../api/auth'
+import { login as apiLogin, verifyLogin as apiVerifyLogin, logout as apiLogout, getMe } from '../api/auth'
 
 const AuthContext = createContext(null)
 
@@ -20,14 +20,26 @@ export function AuthProvider({ children }) {
       .finally(() => setLoading(false))
   }, [])
 
-  const login = useCallback(async (email, password) => {
-    const data = await apiLogin(email, password)
+  const storeSession = useCallback(async (data) => {
     localStorage.setItem('access_token', data.access_token)
     localStorage.setItem('refresh_token', data.refresh_token)
     const me = await getMe()
     setUser(me)
     return me
   }, [])
+
+  // Returns { otpRequired, challengeId } when staff 2FA kicks in, else { user }.
+  const login = useCallback(async (email, password) => {
+    const data = await apiLogin(email, password)
+    if (data.otp_required) return { otpRequired: true, challengeId: data.challenge_id }
+    return { user: await storeSession(data) }
+  }, [storeSession])
+
+  // Second step: exchange the emailed code for a session.
+  const verifyOtp = useCallback(async (challengeId, code) => {
+    const data = await apiVerifyLogin(challengeId, code)
+    return storeSession(data)
+  }, [storeSession])
 
   const logout = useCallback(async () => {
     try { await apiLogout() } catch (_) { /* ignore */ }
@@ -45,7 +57,7 @@ export function AuthProvider({ children }) {
     hasPermission('property:moderate'), [hasPermission])
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, hasPermission, isAdmin }}>
+    <AuthContext.Provider value={{ user, loading, login, verifyOtp, logout, hasPermission, isAdmin }}>
       {children}
     </AuthContext.Provider>
   )
