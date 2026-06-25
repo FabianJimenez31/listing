@@ -86,6 +86,11 @@ export default function PropertyDetailPage() {
   const initials = (agency?.initials || contactName).slice(0, 2).toUpperCase()
 
   const areaLabel = ['house', 'lot', 'farm'].includes(property.property_kind) ? 'Área de lote' : 'Área total'
+  // For a casa the built area is the headline metric in the ficha; the lot area
+  // stays in the detail list. Other kinds keep the lot/total area up top.
+  const primaryArea = property.property_kind === 'house' && property.built_area_m2 != null
+    ? { value: property.built_area_m2, label: 'Área construida' }
+    : { value: property.total_area_m2, label: areaLabel }
   const facts = [
     ['Operación', opLabel],
     ['Tipo', KIND_LABEL[property.property_kind] || property.property_kind],
@@ -168,8 +173,8 @@ export default function PropertyDetailPage() {
           </div>
 
           <div className="pdp-specs">
-            {property.total_area_m2 != null && (
-              <div className="pdp-spec"><span className="ic"><IconArea /></span><span className="v">{property.total_area_m2} m²</span><span className="k">{areaLabel}</span></div>
+            {primaryArea.value != null && (
+              <div className="pdp-spec"><span className="ic"><IconArea /></span><span className="v">{primaryArea.value} m²</span><span className="k">{primaryArea.label}</span></div>
             )}
             {property.bedrooms != null && (
               <div className="pdp-spec"><span className="ic"><IconBed /></span><span className="v">{property.bedrooms}</span><span className="k">Habitaciones</span></div>
