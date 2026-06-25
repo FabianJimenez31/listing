@@ -130,7 +130,8 @@ export default function PropertyFormPage() {
     return {
       country: ancestorOfLevel(form.location_id, 'country'),
       city: ancestorOfLevel(form.location_id, 'city'),
-      barrio: node && (node.level === 'locality' || node.level === 'neighborhood') ? node.id : '',
+      locality: ancestorOfLevel(form.location_id, 'locality'),
+      barrio: node && node.level === 'neighborhood' ? node.id : '',
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.location_id, locById])
@@ -141,10 +142,15 @@ export default function PropertyFormPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [locs, sel.country, locById],
   )
-  const barrioOpts = useMemo(
-    () => (sel.city ? locs.filter((l) => (l.level === 'locality' || l.level === 'neighborhood') && ancestorOfLevel(l.id, 'city') === sel.city) : []),
+  const localityOpts = useMemo(
+    () => (sel.city ? locs.filter((l) => l.level === 'locality' && ancestorOfLevel(l.id, 'city') === sel.city) : []),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [locs, sel.city, locById],
+  )
+  const barrioOpts = useMemo(
+    () => (sel.locality ? locs.filter((l) => l.level === 'neighborhood' && ancestorOfLevel(l.id, 'locality') === sel.locality) : []),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [locs, sel.locality, locById],
   )
   const setLocation = (id) => setForm((f) => ({ ...f, location_id: id }))
 
@@ -402,8 +408,15 @@ export default function PropertyFormPage() {
                   </select>
                 </div>
                 <div className="pf-field">
+                  <label>Localidad</label>
+                  <select className="pf-input" value={sel.locality} onChange={(e) => setLocation(e.target.value || sel.city)} disabled={!sel.city}>
+                    <option value="">— Selecciona —</option>
+                    {localityOpts.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
+                  </select>
+                </div>
+                <div className="pf-field">
                   <label>Barrio</label>
-                  <select className="pf-input" value={sel.barrio} onChange={(e) => setLocation(e.target.value || sel.city)} disabled={!sel.city}>
+                  <select className="pf-input" value={sel.barrio} onChange={(e) => setLocation(e.target.value || sel.locality)} disabled={!sel.locality}>
                     <option value="">— Selecciona —</option>
                     {barrioOpts.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
                   </select>
