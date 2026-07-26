@@ -68,8 +68,8 @@ AGENCIES: list[dict] = [
     {"slug": "engel-volkers-bogota", "name": "Engel & Völkers Bogotá", "initials": "EV", "city": "bogota", "verified": True, "phone": "+5715551234"},
     {"slug": "propiedad-raiz", "name": "Propiedad Raíz", "initials": "PR", "city": "bogota", "phone": "+5715559876"},
     {"slug": "grupo-arenas", "name": "Grupo Arenas", "initials": "GA", "city": "medellin", "verified": True, "phone": "+5745550000"},
-    {"slug": "proppietario-usa", "name": "Proppietario USA", "initials": "PU", "city": "miami", "verified": True, "phone": "+13055551212"},
-    {"slug": "proppietario-developments", "name": "Proppietario Developments", "initials": "PD", "city": "cali", "verified": True, "phone": "+5725554444"},
+    {"slug": "proppia-usa", "name": "Proppia USA", "initials": "PU", "city": "miami", "verified": True, "phone": "+13055551212"},
+    {"slug": "proppia-developments", "name": "Proppia Developments", "initials": "PD", "city": "cali", "verified": True, "phone": "+5725554444"},
 ]
 
 # ---------------------------------------------------------------------------
@@ -91,8 +91,8 @@ PROJECTS: list[dict] = [
     {
         "slug": "torres-verde-cali",
         "title": "Torres Verde — apartamentos sobre planos",
-        "developer_name": "Proppietario Developments",
-        "agency_slug": "proppietario-developments",
+        "developer_name": "Proppia Developments",
+        "agency_slug": "proppia-developments",
         "location_slug": "ciudad-jardin",
         "type_code": "apartment",
         "stage": "preventa",
@@ -110,8 +110,8 @@ PROJECTS: list[dict] = [
     {
         "slug": "brickell-bay-residences",
         "title": "Brickell Bay Residences — condominios frente al mar",
-        "developer_name": "Proppietario USA",
-        "agency_slug": "proppietario-usa",
+        "developer_name": "Proppia USA",
+        "agency_slug": "proppia-usa",
         "location_slug": "brickell",
         "type_code": "apartment",
         "stage": "preventa",
@@ -150,7 +150,7 @@ EXTRA_PROPERTIES: list[dict] = [
         "price_amount": 48_000_000_000, "currency": "COP",
         "bedrooms": 3, "bathrooms": 2, "parking_spots": 1, "total_area_m2": 98.0,
         "location_slug": "ciudad-jardin", "type_code": "apartment",
-        "agency_slug": "proppietario-developments", "image": "photo-1502672260266-1c1ef2d93688",
+        "agency_slug": "proppia-developments", "image": "photo-1502672260266-1c1ef2d93688",
     },
     {
         "slug": "venta-condo-brickell-001",
@@ -160,7 +160,7 @@ EXTRA_PROPERTIES: list[dict] = [
         "price_amount": 52_000_000, "currency": "USD",  # USD 520.000
         "bedrooms": 2, "bathrooms": 2, "parking_spots": 1, "total_area_m2": 120.0,
         "location_slug": "brickell", "type_code": "apartment",
-        "agency_slug": "proppietario-usa", "image": "photo-1512917774080-9991f1c4c750",
+        "agency_slug": "proppia-usa", "image": "photo-1512917774080-9991f1c4c750",
     },
     {
         "slug": "arriendo-loft-downtown-austin-001",
@@ -170,7 +170,7 @@ EXTRA_PROPERTIES: list[dict] = [
         "price_amount": 320_000, "currency": "USD",  # USD 3.200/mes
         "bedrooms": 1, "bathrooms": 1, "parking_spots": 1, "total_area_m2": 64.0,
         "location_slug": "downtown-austin", "type_code": "apartment",
-        "agency_slug": "proppietario-usa", "image": "photo-1502005229762-cf1b2da7c5d6",
+        "agency_slug": "proppia-usa", "image": "photo-1502005229762-cf1b2da7c5d6",
     },
     {
         "slug": "venta-apartamento-manhattan-001",
@@ -180,7 +180,7 @@ EXTRA_PROPERTIES: list[dict] = [
         "price_amount": 98_000_000, "currency": "USD",
         "bedrooms": 2, "bathrooms": 2, "total_area_m2": 95.0,
         "location_slug": "nueva-york", "type_code": "apartment",
-        "agency_slug": "proppietario-usa", "image": "photo-1496588152823-86ff7695e68f",
+        "agency_slug": "proppia-usa", "image": "photo-1496588152823-86ff7695e68f",
     },
 ]
 

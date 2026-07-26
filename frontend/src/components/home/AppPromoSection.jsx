@@ -13,7 +13,7 @@ export default function AppPromoSection() {
       <div className="wrap">
         <div>
           <h2>Tu próxima inversión, a una descarga</h2>
-          <p className="lead">Recibe alertas de nuevas oportunidades, guarda favoritos y contacta directamente desde la app de Proppietario.</p>
+          <p className="lead">Recibe alertas de nuevas oportunidades, guarda favoritos y contacta directamente desde la app de Proppia.</p>
           <div className="app-feats">
             {FEATURES.map((f) => (
               <div className="app-feat" key={f.text}>
@@ -35,7 +35,7 @@ export default function AppPromoSection() {
         <div className="phone-wrap">
           <div className="phone">
             <div className="screen">
-              <div className="ph-top">Proppietario</div>
+              <div className="ph-top">Proppia</div>
               <div className="qr"><div className="qrbox" /></div>
               <div className="ph-cap">Escanea para descargar</div>
             </div>

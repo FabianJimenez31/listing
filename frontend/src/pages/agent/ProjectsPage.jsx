@@ -38,7 +38,7 @@ export default function AgentProjectsPage() {
 
   return (
     <>
-      <Helmet><title>Proyectos | Proppietario</title></Helmet>
+      <Helmet><title>Proyectos | Proppia</title></Helmet>
 
       <AdminPageHeader
         title="Proyectos"

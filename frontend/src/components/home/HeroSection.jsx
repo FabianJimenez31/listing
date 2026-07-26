@@ -60,8 +60,8 @@ export default function HeroSection() {
       </div>
       <div className="hero-inner">
         <div className="wrap">
-          <h1>Lo mejor de invertir<br />es <span style={{ color: '#9fc0ff' }}>encontrar</span></h1>
-          <p className="sub">Venta, arriendo y proyectos en Colombia y Estados Unidos. Todo tu patrimonio en un solo lugar.</p>
+          <h1>Tu patrimonio en <span style={{ color: '#9fc0ff' }}>un solo lugar</span></h1>
+          <p className="sub">Venta, arriendo, proyectos en Colombia y Estados Unidos.</p>
 
           <form className="searchcard" onSubmit={submit}>
             <div className="tabs">

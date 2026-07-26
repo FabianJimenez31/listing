@@ -49,7 +49,7 @@ export default function ProjectsPage() {
   return (
     <div className="page-wrap">
       <Helmet>
-        <title>Proyectos | Proppietario</title>
+        <title>Proyectos | Proppia</title>
         <meta name="description" content="Proyectos inmobiliarios en preventa y sobre planos en Colombia y Estados Unidos." />
       </Helmet>
 

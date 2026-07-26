@@ -9,6 +9,6 @@ import { useSettings } from '../../contexts/SettingsContext'
 export default function BrandMark({ fallback, className = 'logo-img', footer = false }) {
   const { logoUrl, footerLogoUrl } = useSettings()
   const src = footer ? footerLogoUrl || logoUrl : logoUrl
-  if (src) return <img src={src} alt="Proppietario" className={className} />
+  if (src) return <img src={src} alt="Proppia" className={className} />
   return fallback
 }

@@ -14,8 +14,8 @@ export default function AgenciesPage() {
   return (
     <div className="page-wrap">
       <Helmet>
-        <title>Inmobiliarias | Proppietario</title>
-        <meta name="description" content="Inmobiliarias y agencias aliadas de Proppietario en Colombia y Estados Unidos." />
+        <title>Inmobiliarias | Proppia</title>
+        <meta name="description" content="Inmobiliarias y agencias aliadas de Proppia en Colombia y Estados Unidos." />
       </Helmet>
 
       <div className="sec-head" style={{ marginBottom: 20 }}>

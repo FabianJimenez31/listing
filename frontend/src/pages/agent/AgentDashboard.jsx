@@ -65,7 +65,7 @@ export default function AgentDashboard() {
 
   return (
     <>
-      <Helmet><title>Mis propiedades | Proppietario</title></Helmet>
+      <Helmet><title>Mis propiedades | Proppia</title></Helmet>
 
       <AdminPageHeader
         title={showingAll ? 'Propiedades' : 'Mis propiedades'}

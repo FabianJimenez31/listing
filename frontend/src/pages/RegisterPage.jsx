@@ -28,7 +28,7 @@ export default function RegisterPage() {
 
   return (
     <div className="page-wrap">
-      <Helmet><title>Crear cuenta | Proppietario</title></Helmet>
+      <Helmet><title>Crear cuenta | Proppia</title></Helmet>
       <div style={s.wrap}>
         <div style={s.card}>
           <div style={s.logoMark}>P</div>

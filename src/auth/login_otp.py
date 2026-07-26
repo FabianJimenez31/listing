@@ -46,7 +46,7 @@ def generate_code() -> str:
 def _send_code_email(email: str, code: str) -> None:
     send_email(
         to=email,
-        subject="Tu código de acceso a Proppietario",
+        subject="Tu código de acceso a Proppia",
         body=(
             f"Tu código de verificación es: {code}\n\n"
             f"Vence en {CODE_TTL_MINUTES} minutos. "

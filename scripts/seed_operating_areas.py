@@ -1,4 +1,4 @@
-"""Seed operating areas: Proppietario coverage outside Bogotá city + Bogotá's
+"""Seed operating areas: Proppia coverage outside Bogotá city + Bogotá's
 20 official localidades.
 
 Idempotent — upserts by slug, so it is safe to re-run. Adds:

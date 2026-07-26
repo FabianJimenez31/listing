@@ -14,7 +14,7 @@ export default function BlogPage() {
   return (
     <div className="page-wrap">
       <Helmet>
-        <title>Blog de inversión | Proppietario</title>
+        <title>Blog de inversión | Proppia</title>
         <meta name="description" content="Guías y análisis de inversión inmobiliaria en Colombia y Estados Unidos." />
       </Helmet>
 

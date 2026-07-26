@@ -45,7 +45,7 @@ def send_email(to: str, subject: str, body: str) -> bool:
     port = int(os.getenv("SMTP_PORT", "587"))
     user = os.getenv("SMTP_USER")
     password = os.getenv("SMTP_PASSWORD")
-    sender = os.getenv("SMTP_FROM") or user or "no-reply@proppietario.co"
+    sender = os.getenv("SMTP_FROM") or user or "no-reply@proppia.com.co"
 
     msg = EmailMessage()
     msg["From"] = sender

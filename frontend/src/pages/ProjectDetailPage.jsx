@@ -53,7 +53,7 @@ export default function ProjectDetailPage() {
 
   return (
     <div className="page-wrap">
-      <Helmet><title>{`${project.title} | Proppietario`}</title></Helmet>
+      <Helmet><title>{`${project.title} | Proppia`}</title></Helmet>
       <div className="crumbs">
         <Link to="/proyectos">Proyectos</Link>{project.location?.name ? ` · ${project.location.name}` : ''}
       </div>

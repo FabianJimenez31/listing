@@ -42,7 +42,7 @@ export default function FavoritesPage() {
   return (
     <div className="page-wrap">
       <Helmet>
-        <title>Mis Favoritos | Proppietario</title>
+        <title>Mis Favoritos | Proppia</title>
         <meta name="robots" content="noindex" />
       </Helmet>
 

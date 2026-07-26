@@ -39,7 +39,7 @@ export default function LeadsPage() {
 
   return (
     <>
-      <Helmet><title>Leads | Proppietario</title></Helmet>
+      <Helmet><title>Leads | Proppia</title></Helmet>
 
       <AdminPageHeader
         title="Leads"

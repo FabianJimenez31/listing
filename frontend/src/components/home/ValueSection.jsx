@@ -29,7 +29,7 @@ export default function ValueSection() {
       <div className="wrap">
         <div className="sec-head" style={{ justifyContent: 'center', textAlign: 'center', flexDirection: 'column', alignItems: 'center' }}>
           <div>
-            <h2>Por qué Proppietario</h2>
+            <h2>Por qué Proppia</h2>
             <p>Un solo asesor que entiende el panorama completo de tu inversión</p>
           </div>
         </div>

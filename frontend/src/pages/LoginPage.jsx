@@ -86,7 +86,7 @@ export default function LoginPage() {
 
   return (
     <div className="page-wrap">
-      <Helmet><title>Iniciar sesión | Proppietario</title></Helmet>
+      <Helmet><title>Iniciar sesión | Proppia</title></Helmet>
       <div style={s.wrap}>
         <div style={s.card}>
           <div style={s.logoMark}>P</div>
