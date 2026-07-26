@@ -369,6 +369,33 @@ class TestSearch:
         resp2 = client.get("/api/v1/properties?max_price=200000000")
         assert resp2.json()["meta"]["total"] == 1
 
+    def _mkloc(self, client, admin_token, name, slug, level, parent=None):
+        resp = client.post(
+            "/api/v1/locations",
+            json={"name": name, "slug": slug, "level": level, "parent_id": parent},
+            headers=_auth(admin_token),
+        )
+        assert resp.status_code == 201, resp.text
+        return resp.json()["id"]
+
+    def test_search_filter_by_location_subtree(self, client, agent_user, agent_token, admin_user, admin_token):
+        # País → Ciudad → Localidad → Barrio (la cascada de 4 niveles).
+        country = self._mkloc(client, admin_token, "Colombia", "colombia", "country")
+        city = self._mkloc(client, admin_token, "Bogotá", "bogota", "city", country)
+        locality = self._mkloc(client, admin_token, "Chapinero", "chapinero", "locality", city)
+        barrio = self._mkloc(client, admin_token, "Chicó", "chico", "neighborhood", locality)
+
+        # Las propiedades cuelgan de niveles distintos: una del barrio, otra de la ciudad.
+        self._publish(client, agent_token, admin_token, {**_BASE_PAYLOAD, "title": "En el barrio", "location_id": barrio})
+        self._publish(client, agent_token, admin_token, {**_BASE_PAYLOAD, "title": "En la ciudad", "location_id": city})
+
+        # Filtrar por la CIUDAD trae todo su subárbol (ciudad + barrio) = 2.
+        assert client.get("/api/v1/properties?location=bogota").json()["meta"]["total"] == 2
+        # Filtrar por el BARRIO (hoja) trae solo esa propiedad = 1.
+        assert client.get("/api/v1/properties?location=chico").json()["meta"]["total"] == 1
+        # Slug inexistente → filtro imposible (sin resultados), no ignorado.
+        assert client.get("/api/v1/properties?location=zzz-no-existe").json()["meta"]["total"] == 0
+
     def test_search_pagination(self, client, agent_user, agent_token, admin_user, admin_token):
         for i in range(5):
             self._publish(client, agent_token, admin_token, {**_BASE_PAYLOAD, "title": f"Casa {i}"})

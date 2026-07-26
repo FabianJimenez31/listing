@@ -45,8 +45,9 @@ def list_property_types(db: DB):
 def featured_cities(db: DB, limit: int = Query(8, ge=1, le=24)):
     """City-level locations with a cover image, ranked by property count."""
     result: list[FeaturedCityItem] = []
-    for location, count in LocationRepository(db).featured_cities(limit=limit):
+    for location, count, image_url in LocationRepository(db).featured_cities(limit=limit):
         item = FeaturedCityItem.model_validate(location)
         item.property_count = count
+        item.image_url = image_url
         result.append(item)
     return result

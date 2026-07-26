@@ -69,6 +69,7 @@ class PropertyRepository(BaseRepository[PropertyORM]):
         operation_type: str | None = None,
         property_kind: str | None = None,
         location_id: str | None = None,
+        location: str | None = None,
         country: str | None = None,
         agency_id: str | None = None,
         on_home: bool = False,
@@ -96,6 +97,12 @@ class PropertyRepository(BaseRepository[PropertyORM]):
             filters.append(PropertyORM.property_kind == property_kind)
         if location_id:
             filters.append(PropertyORM.location_id == location_id)
+        if location:
+            # Subtree match: the chosen node and every descendant (city → locality →
+            # neighborhood). Properties hang off mixed levels, so an exact match is
+            # not enough — picking a city must surface listings tagged to its barrios.
+            loc_subtree = LocationRepository(self.db).subtree_ids(location)
+            filters.append(PropertyORM.location_id.in_(loc_subtree or ["__none__"]))
         if country:
             subtree = LocationRepository(self.db).subtree_ids(country)
             # No matching country → impossible filter so the result is empty

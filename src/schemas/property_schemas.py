@@ -96,7 +96,7 @@ class PropertyCreateRequest(BaseModel):
     title: str
     description: str | None = None
     operation_type: Literal["sale", "rent", "temporary"]
-    property_kind: Literal["house", "apartment", "lot", "office", "commercial", "farm", "other"]
+    property_kind: Literal["house", "apartment", "studio", "lot", "office", "commercial", "farm", "other"]
     condition: Literal["new", "used", "remodeled", "under_construction"] | None = None
     price_amount: int  # minor units (cents)
     currency: str = "USD"
@@ -169,6 +169,7 @@ class PropertyCreateRequest(BaseModel):
 class PropertyUpdateRequest(BaseModel):
     title: str | None = None
     description: str | None = None
+    property_kind: Literal["house", "apartment", "studio", "lot", "office", "commercial", "farm", "other"] | None = None
     price_amount: int | None = None
     currency: str | None = None
     total_area_m2: float | None = None
