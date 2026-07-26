@@ -31,6 +31,7 @@ function buildNav({ hasPermission, isAdmin }) {
         { to: '/admin/moderacion', label: 'Por aprobar', icon: IconCheckCircle },
         { to: '/admin/destacados', label: 'Destacados', icon: IconStar },
         { to: '/admin/inmobiliarias', label: 'Inmobiliarias', icon: IconOffice },
+        { to: '/admin/ciudades', label: 'Ciudades', icon: IconBuilding },
         { to: '/admin/aliados', label: 'Aliados', icon: IconUsers },
         { to: '/admin/blog', label: 'Blog', icon: IconFile },
         { to: '/admin/banners', label: 'Banners', icon: IconImage },
@@ -71,7 +72,7 @@ export default function PanelLayout() {
         <Link to="/agente" className="admin-brand">
           <BrandMark
             className="admin-brand-img"
-            fallback={<><span className="dot">P</span><span className="bt"><b>Proppietario</b><small>Panel</small></span></>}
+            fallback={<><span className="dot">P</span><span className="bt"><b>Proppia</b><small>Panel</small></span></>}
           />
         </Link>
 

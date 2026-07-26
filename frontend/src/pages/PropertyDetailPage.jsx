@@ -6,6 +6,7 @@ import { addFavorite, removeFavorite } from '../api/favorites'
 import { trackEvent } from '../api/admin'
 import { useAuth } from '../contexts/AuthContext'
 import LeadForm from '../components/property/LeadForm'
+import PropertyDescription from '../components/property/PropertyDescription'
 import { formatPrice } from '../components/property/PropertyCard'
 import ImageCarousel from '../components/ui/ImageCarousel'
 import Spinner from '../components/ui/Spinner'
@@ -80,9 +81,13 @@ export default function PropertyDetailPage() {
   const mapLat = property.location?.center_lat
   const mapLng = property.location?.center_lng
 
+  // Mono-marca: una propiedad sin inmobiliaria propia ligada se presenta como
+  // "Proppia" (la marca del portal), nunca como la cuenta interna que la
+  // creó (owner.full_name). Si en el futuro se liga una inmobiliaria distinta,
+  // se muestra su nombre.
   const agency = property.agency
-  const contactName = agency?.name || property.owner?.full_name || 'Proppietario'
-  const contactRole = agency ? 'Inmobiliaria' : 'Asesor'
+  const contactName = agency?.name || 'Proppia'
+  const contactRole = 'Inmobiliaria'
   const initials = (agency?.initials || contactName).slice(0, 2).toUpperCase()
 
   const areaLabel = ['house', 'lot', 'farm'].includes(property.property_kind) ? 'Área de lote' : 'Área total'
@@ -130,7 +135,7 @@ export default function PropertyDetailPage() {
   return (
     <div className="page-wrap">
       <Helmet>
-        <title>{`${property.title} | Proppietario`}</title>
+        <title>{`${property.title} | Proppia`}</title>
         <meta name="description" content={property.description?.slice(0, 155) || property.title} />
         <meta property="og:title" content={property.title} />
         {main && <meta property="og:image" content={main.cdn_url} />}
@@ -160,7 +165,7 @@ export default function PropertyDetailPage() {
             <IconShare />
           </button>
         </div>
-        <ImageCarousel images={images} alt={property.title} />
+        <ImageCarousel key={property.nid} images={images} alt={property.title} />
       </div>
 
       <div className="detail-cols">
@@ -196,7 +201,7 @@ export default function PropertyDetailPage() {
           {property.description && (
             <section className="pdp-section">
               <h2>Descripción</h2>
-              <div className="prose"><p>{property.description}</p></div>
+              <PropertyDescription text={property.description} />
             </section>
           )}
 

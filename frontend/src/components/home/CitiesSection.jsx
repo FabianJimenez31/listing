@@ -27,13 +27,12 @@ export default function CitiesSection() {
             const wide = i === 0 || (cities.length >= 6 && i === cities.length - 1)
             return (
               <Link className={`city ${wide ? 'wide' : ''}`} to={`/propiedades?country=${c.slug}`} key={c.id}>
-                {c.image_url && (
-                  <img
-                    src={c.image_url}
-                    alt={c.name}
-                    onError={(e) => { e.currentTarget.src = `https://picsum.photos/seed/${c.slug}/800/400` }}
-                  />
-                )}
+                <img
+                  src={c.image_url || `https://picsum.photos/seed/${c.slug}/800/400`}
+                  alt={c.name}
+                  loading="lazy"
+                  onError={(e) => { e.currentTarget.src = `https://picsum.photos/seed/${c.slug}/800/400` }}
+                />
                 <div className="cc">
                   <div className="n">{c.name}</div>
                   <div className="c">{c.property_count} {c.property_count === 1 ? 'propiedad' : 'propiedades'}</div>
