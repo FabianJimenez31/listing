@@ -31,12 +31,12 @@ const COLS = [
     ],
   },
   {
-    title: 'Proppietario',
+    title: 'Proppia',
     links: [
+      ['Crédito hipotecario', '/credito-hipotecario'],
       ['Inmobiliarias', '/inmobiliarias'],
       ['Proyectos', '/proyectos'],
       ['Blog de inversión', '/blog'],
-      ['Preguntas frecuentes', '/blog'],
     ],
   },
 ]
@@ -53,7 +53,7 @@ const YT_ICON = (
 
 // Defaults preserve the previous hard-coded footer until an admin edits it.
 const DEFAULT_TAGLINE = 'Construimos patrimonio con información, estrategia y acompañamiento. Colombia y Estados Unidos.'
-const DEFAULT_COPYRIGHT = '© 2026 Proppietario. Todos los derechos reservados. · Bogotá · Miami'
+const DEFAULT_COPYRIGHT = '© 2026 Proppia. Todos los derechos reservados. · Bogotá · Miami'
 
 const Social = ({ label, url, children }) => (
   <a
@@ -66,10 +66,13 @@ const Social = ({ label, url, children }) => (
 )
 
 const isExternal = (url) => /^https?:\/\//i.test(url || '')
-const LegalLink = ({ to, children }) =>
-  isExternal(to)
+// Sin documento cargado no se pinta el enlace (antes caía al blog, que confundía).
+const LegalLink = ({ to, children }) => {
+  if (!to) return null
+  return isExternal(to)
     ? <a href={to} target="_blank" rel="noreferrer">{children}</a>
-    : <Link to={to || '/blog'}>{children}</Link>
+    : <Link to={to}>{children}</Link>
+}
 
 export default function Footer() {
   const { settings } = useSettings()
@@ -81,7 +84,7 @@ export default function Footer() {
       <div className="wrap">
         <div className="foot-grid">
           <div className="foot-brand">
-            <Link to="/" className="logo"><BrandMark footer fallback={<><span className="dot">P</span>Proppietario</>} /></Link>
+            <Link to="/" className="logo"><BrandMark footer fallback={<><span className="dot">P</span>Proppia</>} /></Link>
             <p>{s.footer_tagline || DEFAULT_TAGLINE}</p>
             <div className="socials">
               <Social label="Instagram" url={s.social_instagram}>{IG_ICON}</Social>

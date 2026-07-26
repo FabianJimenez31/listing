@@ -51,3 +51,11 @@ class SiteSettingsUpdateRequest(BaseModel):
 class FooterLogoUploadResponse(BaseModel):
     url: str
     storage_key: str
+
+
+class LegalDocumentUploadResponse(BaseModel):
+    """An uploaded legal document (terms, privacy, cookies) ready to be linked."""
+
+    url: str
+    storage_key: str
+    filename: str | None = None

@@ -35,6 +35,16 @@ export const updateSettings = (data) =>
   api.put('/settings', data).then((r) => r.data)
 
 // Admin-only: upload an ally logo for the footer strip; returns { url, storage_key }.
+// Sube un documento legal (PDF, DOC, DOCX o TXT) y devuelve su URL pública.
+export const uploadLegalDocument = (file, kind) => {
+  const form = new FormData()
+  form.append('file', file)
+  return api.post('/settings/legal-document', form, {
+    params: { kind },
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }).then((r) => r.data)
+}
+
 export const uploadFooterLogo = (file) => {
   const form = new FormData()
   form.append('file', file)

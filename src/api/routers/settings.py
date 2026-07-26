@@ -7,6 +7,7 @@ DELETE /settings/logo             — admin; clear the header logo (revert to th
 POST   /settings/footer-brand-logo — admin; upload/replace the footer brand logo (multipart)
 DELETE /settings/footer-brand-logo — admin; clear it (footer falls back to the header logo)
 POST   /settings/footer-logo      — admin; upload an ally logo image, returns its URL
+POST   /settings/legal-document   — admin; upload a legal document (PDF…), returns its URL
 
 Storage mirrors property images: in development files land under temp/uploads/
 and are served at /static/; in production set STORAGE_BACKEND=s3 + the S3 env vars.
@@ -15,15 +16,17 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 
 from src.api.deps import DB, CurrentUser, require_permission
 from src.repositories.site_settings_repo import SiteSettingsRepository
 from src.schemas.site_settings_schemas import (
     FooterLogoUploadResponse,
+    LegalDocumentUploadResponse,
     SiteSettingsResponse,
     SiteSettingsUpdateRequest,
 )
+from src.storage.document_store import store_document as _store_document
 from src.storage.image_store import (
     ALLOWED_CONTENT_TYPES as _ALLOWED_CONTENT_TYPES,
     MAX_BYTES as _MAX_BYTES,
@@ -85,6 +88,31 @@ async def upload_footer_logo(db: DB, file: UploadFile = File(...)):
     storage_key = f"branding/footer-{uuid.uuid4()}.{ext}"
     cdn_url = _store(file_bytes, storage_key)
     return FooterLogoUploadResponse(url=cdn_url, storage_key=storage_key)
+
+
+_LEGAL_KINDS = {"terminos", "privacidad", "cookies"}
+
+
+@router.post(
+    "/legal-document",
+    response_model=LegalDocumentUploadResponse,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require_permission("settings:manage"))],
+)
+async def upload_legal_document(
+    db: DB,
+    kind: str = Query("documento", description="terminos | privacidad | cookies"),
+    file: UploadFile = File(...),
+):
+    """Upload a legal document (terms, privacy, cookies) and return its public URL.
+
+    The admin then stores that URL in the matching ``legal_*_url`` field via
+    ``PUT /settings``, which is what the portal footer links to.
+    """
+    slug = kind if kind in _LEGAL_KINDS else "documento"
+    file_bytes = await file.read()
+    url, storage_key = _store_document(file_bytes, file.content_type, f"legal/{slug}")
+    return LegalDocumentUploadResponse(url=url, storage_key=storage_key, filename=file.filename)
 
 
 @router.post(

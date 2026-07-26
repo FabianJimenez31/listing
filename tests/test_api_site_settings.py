@@ -80,6 +80,69 @@ class TestUploadLogo:
         assert resp.status_code == 422
 
 
+class TestUploadLegalDocument:
+    def test_upload_pdf_admin(self, client, admin_user, admin_token):
+        resp = client.post(
+            "/api/v1/settings/legal-document",
+            params={"kind": "terminos"},
+            files={"file": ("terminos.pdf", io.BytesIO(b"%PDF-1.4 fake"), "application/pdf")},
+            headers=_auth(admin_token),
+        )
+        assert resp.status_code == 201, resp.text
+        body = resp.json()
+        assert body["url"].endswith(".pdf")
+        assert body["storage_key"].startswith("legal/terminos-")
+        assert body["filename"] == "terminos.pdf"
+
+    def test_uploaded_url_can_be_saved_as_legal_link(self, client, admin_user, admin_token):
+        url = client.post(
+            "/api/v1/settings/legal-document",
+            params={"kind": "privacidad"},
+            files={"file": ("p.pdf", io.BytesIO(b"%PDF-1.4"), "application/pdf")},
+            headers=_auth(admin_token),
+        ).json()["url"]
+
+        client.put(
+            "/api/v1/settings",
+            json={"legal_privacy_url": url, "footer_logos": []},
+            headers=_auth(admin_token),
+        )
+        assert client.get("/api/v1/settings").json()["legal_privacy_url"] == url
+
+    def test_unknown_kind_falls_back(self, client, admin_user, admin_token):
+        resp = client.post(
+            "/api/v1/settings/legal-document",
+            params={"kind": "../../etc"},
+            files={"file": ("x.pdf", io.BytesIO(b"%PDF"), "application/pdf")},
+            headers=_auth(admin_token),
+        )
+        assert resp.status_code == 201
+        assert resp.json()["storage_key"].startswith("legal/documento-")
+
+    def test_rejects_image_content_type(self, client, admin_user, admin_token):
+        resp = client.post(
+            "/api/v1/settings/legal-document",
+            files={"file": ("logo.png", io.BytesIO(_fake_png()), "image/png")},
+            headers=_auth(admin_token),
+        )
+        assert resp.status_code == 422
+
+    def test_requires_permission(self, client, agent_user, agent_token):
+        resp = client.post(
+            "/api/v1/settings/legal-document",
+            files={"file": ("x.pdf", io.BytesIO(b"%PDF"), "application/pdf")},
+            headers=_auth(agent_token),
+        )
+        assert resp.status_code == 403
+
+    def test_requires_auth(self, client):
+        resp = client.post(
+            "/api/v1/settings/legal-document",
+            files={"file": ("x.pdf", io.BytesIO(b"%PDF"), "application/pdf")},
+        )
+        assert resp.status_code == 401
+
+
 class TestUpdateFooter:
     def test_get_settings_exposes_footer_fields(self, client):
         data = client.get("/api/v1/settings").json()
@@ -89,7 +152,7 @@ class TestUpdateFooter:
     def test_update_footer_admin(self, client, admin_user, admin_token):
         payload = {
             "footer_tagline": "Texto del footer",
-            "copyright_text": "© 2026 Proppietario",
+            "copyright_text": "© 2026 Proppia",
             "social_instagram": "https://instagram.com/proppietario",
             "social_linkedin": None,
             "social_youtube": None,

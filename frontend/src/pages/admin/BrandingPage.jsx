@@ -8,11 +8,13 @@ import {
   uploadFooterLogo,
   uploadFooterBrandLogo,
   deleteFooterBrandLogo,
+  uploadLegalDocument,
 } from '../../api/settings'
 import AdminPageHeader from '../../components/admin/AdminPageHeader'
 import { IconSettings } from '../../components/admin/adminIcons'
 
 const ACCEPT = 'image/png,image/jpeg,image/webp,image/gif'
+const ACCEPT_DOC = 'application/pdf,.pdf,.doc,.docx,.txt'
 
 const toFooterForm = (s) => ({
   footer_tagline: s?.footer_tagline || '',
@@ -57,6 +59,73 @@ function FooterLogoPicker({ value, onChange }) {
       <button type="button" className="btn btn-outline btn-sm" disabled={busy} onClick={() => ref.current?.click()}>
         {busy ? 'Subiendo…' : value ? 'Cambiar' : 'Subir imagen'}
       </button>
+      {err && <p className="admin-error" style={{ marginTop: 6 }}>{err}</p>}
+    </div>
+  )
+}
+
+// Un documento legal del footer: se sube un PDF (o se pega una URL externa).
+// Al subir o quitar el archivo el enlace se guarda de inmediato.
+function LegalDocField({ label, kind, value, onChange, onSave }) {
+  const ref = useRef(null)
+  const [busy, setBusy] = useState(false)
+  const [done, setDone] = useState(false)
+  const [err, setErr] = useState(null)
+
+  const pick = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setErr(null)
+    setDone(false)
+    setBusy(true)
+    try {
+      const { url } = await uploadLegalDocument(file, kind)
+      await onSave(url)
+      setDone(true)
+    } catch (error) {
+      setErr(error.response?.data?.error?.message || error.response?.data?.detail || 'No se pudo subir el documento')
+    } finally {
+      setBusy(false)
+      if (ref.current) ref.current.value = ''
+    }
+  }
+
+  const clear = async () => {
+    if (!confirm(`¿Quitar el enlace de «${label}» del pie de página?`)) return
+    setErr(null)
+    setDone(false)
+    setBusy(true)
+    try {
+      await onSave('')
+    } catch {
+      setErr('No se pudo quitar el enlace')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="fg" style={{ marginTop: 14 }}>
+      <label>{label}</label>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+        <input
+          style={{ flex: '1 1 260px' }}
+          placeholder="Sube un PDF o pega una URL"
+          value={value}
+          onChange={onChange}
+        />
+        <input ref={ref} type="file" accept={ACCEPT_DOC} onChange={pick} style={{ display: 'none' }} />
+        <button type="button" className="btn btn-outline btn-sm" disabled={busy} onClick={() => ref.current?.click()}>
+          {busy ? 'Subiendo…' : value ? 'Cambiar archivo' : 'Subir PDF'}
+        </button>
+        {value && (
+          <>
+            <a className="btn btn-outline btn-sm" href={value} target="_blank" rel="noreferrer">Ver</a>
+            <button type="button" className="btn btn-outline btn-sm btn-danger" disabled={busy} onClick={clear}>Quitar</button>
+          </>
+        )}
+      </div>
+      {done && <p className="admin-ok" style={{ marginTop: 6 }}>Documento subido y publicado en el pie de página.</p>}
       {err && <p className="admin-error" style={{ marginTop: 6 }}>{err}</p>}
     </div>
   )
@@ -190,6 +259,15 @@ export default function BrandingPage() {
   const removeLogo = (i) =>
     setForm((f) => ({ ...f, footer_logos: f.footer_logos.filter((_, idx) => idx !== i) }))
 
+  // Guarda un enlace legal (URL subida o vacía) sin esperar el botón del formulario.
+  const saveLegalUrl = (key) => async (url) => {
+    const next = { ...form, [key]: url }
+    setForm(next)
+    const updated = await updateSettings({ ...next, footer_logos: next.footer_logos.filter((l) => l.image_url) })
+    setSettings(updated)
+    setForm(toFooterForm(updated))
+  }
+
   const saveFooter = async (e) => {
     e.preventDefault()
     setFooterError(null)
@@ -227,7 +305,7 @@ export default function BrandingPage() {
         </div>
         {logoUrl
           ? <p className="admin-hint">Se está usando un logo personalizado (encabezado y panel; el pie de página lo usa salvo que definas uno propio abajo).</p>
-          : <p className="admin-hint">Sin logo personalizado: el portal muestra el texto «Proppietario».</p>}
+          : <p className="admin-hint">Sin logo personalizado: el portal muestra el texto «Proppia».</p>}
         {logoUrl && (
           <button className="btn btn-outline btn-danger btn-sm" onClick={remove} disabled={busy} style={{ marginTop: 12 }}>
             Quitar logo
@@ -314,10 +392,33 @@ export default function BrandingPage() {
         </div>
 
         <div className="admin-card admin-card-form">
-          <h3 className="admin-card-title">Enlaces legales</h3>
-          <div className="fg"><label>Privacidad</label><input value={form.legal_privacy_url} onChange={upd('legal_privacy_url')} /></div>
-          <div className="fg" style={{ marginTop: 12 }}><label>Términos de uso</label><input value={form.legal_terms_url} onChange={upd('legal_terms_url')} /></div>
-          <div className="fg" style={{ marginTop: 12 }}><label>Política de cookies</label><input value={form.legal_cookies_url} onChange={upd('legal_cookies_url')} /></div>
+          <h3 className="admin-card-title">Documentos legales</h3>
+          <p className="admin-hint" style={{ marginBottom: 6 }}>
+            Sube el PDF de cada documento (máx. 10 MB; también acepta DOC, DOCX o TXT) y el pie de página
+            enlazará a él automáticamente. Si prefieres alojarlo en otro sitio, pega la URL y guarda los cambios.
+            Un campo vacío oculta ese enlace del pie de página.
+          </p>
+          <LegalDocField
+            label="Términos de uso"
+            kind="terminos"
+            value={form.legal_terms_url}
+            onChange={upd('legal_terms_url')}
+            onSave={saveLegalUrl('legal_terms_url')}
+          />
+          <LegalDocField
+            label="Política de privacidad"
+            kind="privacidad"
+            value={form.legal_privacy_url}
+            onChange={upd('legal_privacy_url')}
+            onSave={saveLegalUrl('legal_privacy_url')}
+          />
+          <LegalDocField
+            label="Política de cookies"
+            kind="cookies"
+            value={form.legal_cookies_url}
+            onChange={upd('legal_cookies_url')}
+            onSave={saveLegalUrl('legal_cookies_url')}
+          />
         </div>
 
         <div className="admin-card admin-card-form">
