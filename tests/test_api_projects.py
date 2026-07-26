@@ -7,7 +7,7 @@ pytestmark = pytest.mark.integration
 
 _PROJECT_PAYLOAD = {
     "title": "Torres Verde",
-    "developer_name": "Proppietario Developments",
+    "developer_name": "Proppia Developments",
     "stage": "preventa",
     "price_from": 29000000000,
     "price_to": 52000000000,

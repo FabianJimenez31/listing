@@ -225,6 +225,8 @@ async def upload_project_image(
         for img in project.images:
             if img.role == "main":
                 img.role = "gallery"
+        # Keep the denormalized cover in sync — list cards read cover_image_url.
+        project.cover_image_url = cdn_url
     position = max((img.position for img in project.images), default=-1) + 1
 
     image = ProjectImageORM(
@@ -243,12 +245,43 @@ async def upload_project_image(
     return image
 
 
+@router.patch(
+    "/{project_id}/images/{image_id}/main",
+    response_model=ProjectImageItem,
+    dependencies=[Depends(require_permission("project:create"))],
+)
+def set_main_project_image(project_id: str, image_id: str, db: DB):
+    """Promote an existing image to the cover (role=main), demoting the rest, and
+    keep the denormalized cover_image_url in sync so list cards reflect it."""
+    repo = ProjectRepository(db)
+    project = repo.get_by_id(project_id)
+    if not project or project.deleted_at is not None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Project not found")
+    target = (
+        db.query(ProjectImageORM)
+        .filter_by(id=image_id, project_id=project_id)
+        .first()
+    )
+    if not target:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Image not found")
+    for img in project.images:
+        img.role = "main" if img.id == image_id else "gallery"
+    project.cover_image_url = target.cdn_url
+    db.commit()
+    db.refresh(target)
+    return target
+
+
 @router.delete(
     "/{project_id}/images/{image_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(require_permission("project:create"))],
 )
 def delete_project_image(project_id: str, image_id: str, db: DB):
+    repo = ProjectRepository(db)
+    project = repo.get_by_id(project_id)
+    if not project:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Project not found")
     image = (
         db.query(ProjectImageORM)
         .filter_by(id=image_id, project_id=project_id)
@@ -256,8 +289,22 @@ def delete_project_image(project_id: str, image_id: str, db: DB):
     )
     if not image:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Image not found")
+    was_main = image.role == "main"
     if image.storage_key:
         storage_remove(image.storage_key)
     db.delete(image)
+    db.flush()  # drop the row so it leaves project.images before we repoint the cover
+    # If we removed the cover, promote the next remaining image (by position) and
+    # keep cover_image_url in sync; clear it when no images remain.
+    if was_main:
+        remaining = sorted(
+            (img for img in project.images if img.id != image_id),
+            key=lambda i: i.position,
+        )
+        if remaining:
+            remaining[0].role = "main"
+            project.cover_image_url = remaining[0].cdn_url
+        else:
+            project.cover_image_url = None
     db.commit()
     return None

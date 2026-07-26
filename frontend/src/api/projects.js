@@ -37,5 +37,8 @@ export const uploadProjectImage = (id, file, role = 'gallery') => {
     .then((r) => r.data)
 }
 
+export const setMainProjectImage = (id, imageId) =>
+  api.patch(`/projects/${id}/images/${imageId}/main`).then((r) => r.data)
+
 export const deleteProjectImage = (id, imageId) =>
   api.delete(`/projects/${id}/images/${imageId}`)
