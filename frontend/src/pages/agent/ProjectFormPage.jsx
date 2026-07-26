@@ -3,16 +3,17 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { useAuth } from '../../contexts/AuthContext'
 import {
-  addProjectImage,
   createProject,
   deleteProjectImage,
   getProject,
   getProjectImages,
+  setMainProjectImage,
   updateProject,
   uploadProjectImage,
 } from '../../api/projects'
 import { getAgencies } from '../../api/agencies'
-import { getLocations, getPropertyTypes } from '../../api/catalog'
+import { getPropertyTypes } from '../../api/catalog'
+import LocationPicker from '../../components/property/LocationPicker'
 import AdminPageHeader from '../../components/admin/AdminPageHeader'
 import Spinner from '../../components/ui/Spinner'
 import { digitsOnly, groupThousands, majorToMinor, minorToMajor } from '../../lib/money'
@@ -23,7 +24,7 @@ const EMPTY = {
   price_from: '', price_to: '',
   bedrooms_min: '', bedrooms_max: '', bathrooms_min: '', bathrooms_max: '',
   area_min_m2: '', area_max_m2: '', total_units: '', available_units: '',
-  address_street: '', contact_phone: '', contact_whatsapp: '', cover_image_url: '', description: '',
+  address_street: '', contact_phone: '', contact_whatsapp: '', description: '',
 }
 
 const num = (v) => (v === '' || v == null ? null : parseInt(v, 10))
@@ -40,12 +41,11 @@ export default function ProjectFormPage() {
   const [projectId, setProjectId] = useState(null)
   const [images, setImages] = useState([])
   const [agencies, setAgencies] = useState([])
-  const [locations, setLocations] = useState([])
   const [types, setTypes] = useState([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
-  const [imgUrl, setImgUrl] = useState('')
+  const [uploadProgress, setUploadProgress] = useState(null)
 
   useEffect(() => {
     if (!authLoading) {
@@ -56,11 +56,9 @@ export default function ProjectFormPage() {
 
     Promise.all([
       getAgencies().catch(() => []),
-      getLocations().catch(() => []),
       getPropertyTypes().catch(() => []),
-    ]).then(([ag, loc, ty]) => {
+    ]).then(([ag, ty]) => {
       setAgencies(ag || [])
-      setLocations(Array.isArray(loc) ? loc : loc.data || [])
       setTypes(ty || [])
     })
 
@@ -107,7 +105,6 @@ export default function ProjectFormPage() {
     address_street: form.address_street || null,
     contact_phone: form.contact_phone || null,
     contact_whatsapp: form.contact_whatsapp || null,
-    cover_image_url: form.cover_image_url || null,
     description: form.description || null,
   })
 
@@ -133,22 +130,24 @@ export default function ProjectFormPage() {
 
   const reloadImages = () => getProjectImages(projectId).then(setImages).catch(() => null)
 
-  const onUpload = async (e) => {
-    const file = e.target.files?.[0]
-    if (!file || !projectId) return
-    const role = images.length === 0 ? 'main' : 'gallery'
-    await uploadProjectImage(projectId, file, role).catch(() => null)
+  // Bulk upload: the first image of an empty gallery becomes the cover (role=main),
+  // the rest go to the gallery. Mirrors the property form.
+  const handleUpload = async (e) => {
+    const files = Array.from(e.target.files || [])
+    if (!files.length || !projectId) return
+    setUploadProgress(0)
+    const hadNone = images.length === 0
+    for (let i = 0; i < files.length; i++) {
+      const role = hadNone && i === 0 ? 'main' : 'gallery'
+      await uploadProjectImage(projectId, files[i], role).catch(() => null)
+      setUploadProgress(Math.round(((i + 1) / files.length) * 100))
+    }
     if (fileRef.current) fileRef.current.value = ''
+    setUploadProgress(null)
     reloadImages()
   }
 
-  const addByUrl = async () => {
-    if (!imgUrl.trim() || !projectId) return
-    const role = images.length === 0 ? 'main' : 'gallery'
-    await addProjectImage(projectId, { cdn_url: imgUrl.trim(), role }).catch(() => null)
-    setImgUrl('')
-    reloadImages()
-  }
+  const makeMain = (id) => setMainProjectImage(projectId, id).then(reloadImages).catch(() => null)
 
   const removeImage = async (id) => {
     await deleteProjectImage(projectId, id).catch(() => null)
@@ -159,7 +158,7 @@ export default function ProjectFormPage() {
 
   return (
     <>
-      <Helmet><title>{`${editing ? 'Editar' : 'Nuevo'} proyecto | Proppietario`}</title></Helmet>
+      <Helmet><title>{`${editing ? 'Editar' : 'Nuevo'} proyecto | Proppia`}</title></Helmet>
       <AdminPageHeader title={editing ? 'Editar proyecto' : 'Nuevo proyecto'} subtitle="Datos del desarrollo inmobiliario" />
 
       <form className="admin-card" onSubmit={submit}>
@@ -180,12 +179,12 @@ export default function ProjectFormPage() {
               {agencies.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
             </select>
           </div>
-          <div className="fg"><label>Ubicación</label>
-            <select value={form.location_id} onChange={upd('location_id')}>
-              <option value="">—</option>
-              {locations.map((l) => <option key={l.id} value={l.id}>{l.name} ({l.level})</option>)}
-            </select>
-          </div>
+          <LocationPicker
+            value={form.location_id}
+            onChange={(id) => setForm((f) => ({ ...f, location_id: id }))}
+            fieldClass="fg"
+            inputClass=""
+          />
           <div className="fg"><label>Tipo</label>
             <select value={form.property_type_id} onChange={upd('property_type_id')}>
               <option value="">—</option>
@@ -211,7 +210,6 @@ export default function ProjectFormPage() {
           <div className="fg full"><label>Dirección</label><input value={form.address_street} onChange={upd('address_street')} /></div>
           <div className="fg"><label>Teléfono contacto</label><input value={form.contact_phone} onChange={upd('contact_phone')} /></div>
           <div className="fg"><label>WhatsApp contacto</label><input value={form.contact_whatsapp} onChange={upd('contact_whatsapp')} /></div>
-          <div className="fg full"><label>Imagen de portada (URL)</label><input value={form.cover_image_url} onChange={upd('cover_image_url')} /></div>
           <div className="fg full"><label>Descripción</label><textarea rows={4} value={form.description} onChange={upd('description')} /></div>
         </div>
         <button className="btn btn-blue" disabled={saving} style={{ marginTop: 14 }}>
@@ -221,30 +219,33 @@ export default function ProjectFormPage() {
 
       {editing && (
         <div className="admin-card">
-          <h3 style={{ fontWeight: 800, color: 'var(--ink)', marginBottom: 12 }}>Galería del proyecto</h3>
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-            <input ref={fileRef} type="file" accept="image/*" onChange={onUpload} />
-            <span style={{ color: 'var(--muted)', fontSize: 13 }}>o</span>
-            <input
-              placeholder="Pega una URL de imagen"
-              value={imgUrl}
-              onChange={(e) => setImgUrl(e.target.value)}
-              style={{ flex: 1, minWidth: 180, padding: '9px 12px', border: '1.5px solid var(--line)', borderRadius: 10 }}
-            />
-            <button type="button" className="btn btn-outline btn-sm" onClick={addByUrl}>Agregar URL</button>
-          </div>
+          <h3 style={{ fontWeight: 800, color: 'var(--ink)', marginBottom: 12 }}>Galería del proyecto ({images.length})</h3>
+          <input ref={fileRef} type="file" multiple accept="image/*" onChange={handleUpload} style={{ display: 'none' }} />
+          <button type="button" className="btn btn-blue btn-sm" onClick={() => fileRef.current?.click()}>+ Subir fotos</button>
+          {uploadProgress !== null && (
+            <div className="pf-progress" style={{ maxWidth: 280 }}>
+              <div className="bar" style={{ width: `${uploadProgress}%` }} />
+              <span className="pct">{uploadProgress}%</span>
+            </div>
+          )}
           {images.length === 0 ? (
-            <p style={{ color: 'var(--muted)', marginTop: 12 }}>Sin imágenes todavía.</p>
+            <p style={{ color: 'var(--muted)', marginTop: 12 }}>Sin imágenes todavía. Sube varias a la vez y elige cuál es la portada.</p>
           ) : (
-            <div className="thumb-row">
+            <div className="img-manager">
               {images.map((img) => (
-                <div className="thumb" key={img.id}>
-                  <img src={img.cdn_url} alt={img.alt_text || ''} />
+                <div className={`img-tile ${img.role === 'main' ? 'main' : ''}`} key={img.id}>
+                  <img src={img.thumb_url || img.cdn_url} alt={img.alt_text || ''} />
                   <button type="button" className="x" onClick={() => removeImage(img.id)} aria-label="Quitar">✕</button>
+                  {img.role === 'main'
+                    ? <span className="mainbadge">PORTADA</span>
+                    : <button type="button" className="setmain" onClick={() => makeMain(img.id)}>Hacer portada</button>}
                 </div>
               ))}
             </div>
           )}
+          <p style={{ color: 'var(--muted)', fontSize: 13, marginTop: 10 }}>
+            Sube varias fotos a la vez. La marcada como <b>portada</b> se usa en la tarjeta del listado y como primera del carrusel.
+          </p>
         </div>
       )}
     </>

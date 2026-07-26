@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import {
@@ -15,7 +15,7 @@ import {
   updateProperty,
   uploadImage,
 } from '../../api/properties'
-import { getLocations } from '../../api/catalog'
+import LocationPicker from '../../components/property/LocationPicker'
 import { useAuth } from '../../contexts/AuthContext'
 import AdminPageHeader from '../../components/admin/AdminPageHeader'
 import Spinner from '../../components/ui/Spinner'
@@ -110,48 +110,10 @@ export default function PropertyFormPage() {
   const [error, setError] = useState(null)
   const [uploadProgress, setUploadProgress] = useState(null)
   const [images, setImages] = useState([])
-  const [locs, setLocs] = useState([])
   const fileRef = useRef()
 
-  // The location tree (country → state → city → locality) drives the cascading
-  // País / Ciudad / Barrio selects. We fetch it once and resolve relations on
-  // the client; `location_id` (the deepest pick) is the single value persisted.
-  useEffect(() => { getLocations().then((r) => setLocs(r || [])).catch(() => setLocs([])) }, [])
-
-  const locById = useMemo(() => Object.fromEntries(locs.map((l) => [l.id, l])), [locs])
-  const ancestorOfLevel = (id, level) => {
-    let n = locById[id]
-    while (n) { if (n.level === level) return n.id; n = n.parent_id ? locById[n.parent_id] : null }
-    return ''
-  }
-  // Reconstruct the three select values from the persisted location_id.
-  const sel = useMemo(() => {
-    const node = locById[form.location_id]
-    return {
-      country: ancestorOfLevel(form.location_id, 'country'),
-      city: ancestorOfLevel(form.location_id, 'city'),
-      locality: ancestorOfLevel(form.location_id, 'locality'),
-      barrio: node && node.level === 'neighborhood' ? node.id : '',
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form.location_id, locById])
-
-  const countryOpts = useMemo(() => locs.filter((l) => l.level === 'country'), [locs])
-  const cityOpts = useMemo(
-    () => (sel.country ? locs.filter((l) => l.level === 'city' && ancestorOfLevel(l.id, 'country') === sel.country) : []),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [locs, sel.country, locById],
-  )
-  const localityOpts = useMemo(
-    () => (sel.city ? locs.filter((l) => l.level === 'locality' && ancestorOfLevel(l.id, 'city') === sel.city) : []),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [locs, sel.city, locById],
-  )
-  const barrioOpts = useMemo(
-    () => (sel.locality ? locs.filter((l) => l.level === 'neighborhood' && ancestorOfLevel(l.id, 'locality') === sel.locality) : []),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [locs, sel.locality, locById],
-  )
+  // `location_id` (el nodo más profundo elegido) es lo único que se persiste;
+  // LocationPicker resuelve la cascada País → Departamento → Ciudad → Localidad → Barrio.
   const setLocation = (id) => setForm((f) => ({ ...f, location_id: id }))
 
   const loadProperty = () => {
@@ -269,7 +231,7 @@ export default function PropertyFormPage() {
 
   return (
     <>
-      <Helmet><title>{`${isEdit ? 'Editar propiedad' : 'Nueva propiedad'} | Proppietario`}</title></Helmet>
+      <Helmet><title>{`${isEdit ? 'Editar propiedad' : 'Nueva propiedad'} | Proppia`}</title></Helmet>
 
       <AdminPageHeader title={isEdit ? 'Editar propiedad' : 'Nueva propiedad'} subtitle="Completa los datos de la publicación" />
 
@@ -323,7 +285,7 @@ export default function PropertyFormPage() {
                 <Field full label="Título *" k="title" form={form} upd={upd} required />
                 <Field full label="Descripción" k="description" as="textarea" form={form} upd={upd} />
                 <Field label="Operación" k="operation_type" form={form} upd={upd} options={[['sale', 'Venta'], ['rent', 'Renta'], ['temporary', 'Temporal']]} />
-                <Field label="Tipo" k="property_kind" form={form} upd={upd} options={[['house', 'Casa'], ['apartment', 'Apartamento'], ['lot', 'Terreno'], ['office', 'Oficina']]} />
+                <Field label="Tipo" k="property_kind" form={form} upd={upd} options={[['house', 'Casa'], ['apartment', 'Apartamento'], ['studio', 'Aparta estudio'], ['lot', 'Terreno'], ['office', 'Oficina']]} />
               </div>
             </Section>
 
@@ -393,34 +355,7 @@ export default function PropertyFormPage() {
 
             <Section title="Ubicación">
               <div className="pform-grid cols-3">
-                <div className="pf-field">
-                  <label>País</label>
-                  <select className="pf-input" value={sel.country} onChange={(e) => setLocation(e.target.value)}>
-                    <option value="">— Selecciona —</option>
-                    {countryOpts.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
-                  </select>
-                </div>
-                <div className="pf-field">
-                  <label>Ciudad</label>
-                  <select className="pf-input" value={sel.city} onChange={(e) => setLocation(e.target.value || sel.country)} disabled={!sel.country}>
-                    <option value="">— Selecciona —</option>
-                    {cityOpts.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
-                  </select>
-                </div>
-                <div className="pf-field">
-                  <label>Localidad</label>
-                  <select className="pf-input" value={sel.locality} onChange={(e) => setLocation(e.target.value || sel.city)} disabled={!sel.city}>
-                    <option value="">— Selecciona —</option>
-                    {localityOpts.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
-                  </select>
-                </div>
-                <div className="pf-field">
-                  <label>Barrio</label>
-                  <select className="pf-input" value={sel.barrio} onChange={(e) => setLocation(e.target.value || sel.locality)} disabled={!sel.locality}>
-                    <option value="">— Selecciona —</option>
-                    {barrioOpts.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
-                  </select>
-                </div>
+                <LocationPicker value={form.location_id} onChange={setLocation} />
               </div>
               <div className="pform-grid" style={{ marginTop: 16 }}>
                 <Field full label="Dirección" k="address_street" form={form} upd={upd} />

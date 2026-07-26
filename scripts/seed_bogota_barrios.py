@@ -60,12 +60,13 @@ BARRIOS: dict[str, list[str]] = {
     ],
     "fontibon": [
         "Fontibón Centro", "Modelia", "Hayuelos", "Capellanía", "Versalles",
-        "Belén", "Zona Franca", "Villemar", "La Felicidad", "San Pablo",
+        "Belén", "Zona Franca", "Villemar", "La Felicidad", "San Pablo", "Salitre",
     ],
     "engativa": [
         "Normandía", "La Granja", "Boyacá Real", "Las Ferias", "Bonanza",
         "Santa Helenita", "La Estrada", "Villa Luz", "Garcés Navas",
         "Villas de Granada", "Bachué", "Quirigua", "Minuto de Dios", "Álamos",
+        "Santa María del Lago",
     ],
     "suba": [
         "Niza", "La Alhambra", "Prado Veraniego", "Pasadena", "Mazurén",
