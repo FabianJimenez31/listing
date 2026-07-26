@@ -73,6 +73,7 @@ def sitemap_xml(db: DB):
     static_pages = [
         ("/", "1.0"),
         ("/propiedades", "0.9"),
+        ("/credito-hipotecario", "0.7"),
         ("/contacto", "0.5"),
     ]
     for path, priority in static_pages:

@@ -6,6 +6,7 @@ import CategoryPills from '../components/home/CategoryPills'
 import FeaturedListings from '../components/home/FeaturedListings'
 import CitiesSection from '../components/home/CitiesSection'
 import ValueSection from '../components/home/ValueSection'
+import MortgageSection from '../components/home/MortgageSection'
 import AlliesSection from '../components/home/AlliesSection'
 import AppPromoSection from '../components/home/AppPromoSection'
 
@@ -24,10 +25,10 @@ export default function HomePage() {
   return (
     <>
       <Helmet>
-        <title>Proppietario — Venta, Arriendo y Proyectos en Colombia y USA</title>
+        <title>Proppia — Venta, Arriendo, Proyectos en Colombia y USA</title>
         <meta
           name="description"
-          content="Venta, arriendo y proyectos en Colombia y Estados Unidos. Encuentra propiedades de inversión en Bogotá, Medellín, Miami, Austin y más ciudades."
+          content="Venta, arriendo, proyectos en Colombia y Estados Unidos. Encuentra propiedades de inversión en Bogotá, Medellín, Miami, Austin y más ciudades."
         />
       </Helmet>
 
@@ -35,6 +36,7 @@ export default function HomePage() {
       <CategoryPills />
       <FeaturedListings items={properties} loading={loading} />
       <CitiesSection />
+      <MortgageSection />
       <ValueSection />
       <AlliesSection />
       <AppPromoSection />

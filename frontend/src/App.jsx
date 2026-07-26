@@ -3,6 +3,7 @@ import { HelmetProvider } from 'react-helmet-async'
 import { AuthProvider } from './contexts/AuthContext'
 import { SettingsProvider } from './contexts/SettingsContext'
 import Layout from './components/layout/Layout'
+import ScrollToTop from './components/layout/ScrollToTop'
 import PanelLayout from './components/panel/PanelLayout'
 
 // Pages — public
@@ -14,6 +15,7 @@ import ProjectDetailPage from './pages/ProjectDetailPage'
 import AgenciesPage from './pages/AgenciesPage'
 import AgencyDetailPage from './pages/AgencyDetailPage'
 import BlogPage from './pages/BlogPage'
+import MortgagePage from './pages/MortgagePage'
 import PostPage from './pages/PostPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
@@ -35,6 +37,7 @@ import BannersPage from './pages/admin/BannersPage'
 import UsersPage from './pages/admin/UsersPage'
 import FeaturedPage from './pages/admin/FeaturedPage'
 import AdminAgenciesPage from './pages/admin/AgenciesPage'
+import CitiesPage from './pages/admin/CitiesPage'
 import AdminPartnersPage from './pages/admin/PartnersPage'
 import AdminBlogPage from './pages/admin/BlogPage'
 import BrandingPage from './pages/admin/BrandingPage'
@@ -63,6 +66,7 @@ export default function App() {
       <AuthProvider>
         <SettingsProvider>
         <BrowserRouter>
+          <ScrollToTop />
           <Routes>
             {/* Back-office — single sidebar shell for agents & admins.
                 Sections inside the sidebar are gated by permission. */}
@@ -83,6 +87,7 @@ export default function App() {
               <Route path="/admin/usuarios" element={<UsersPage />} />
               <Route path="/admin/destacados" element={<FeaturedPage />} />
               <Route path="/admin/inmobiliarias" element={<AdminAgenciesPage />} />
+              <Route path="/admin/ciudades" element={<CitiesPage />} />
               <Route path="/admin/aliados" element={<AdminPartnersPage />} />
               <Route path="/admin/blog" element={<AdminBlogPage />} />
               <Route path="/admin/marca" element={<BrandingPage />} />
@@ -102,6 +107,7 @@ export default function App() {
               <Route path="/proyectos/:slug" element={<ProjectDetailPage />} />
               <Route path="/inmobiliarias" element={<AgenciesPage />} />
               <Route path="/inmobiliarias/:slug" element={<AgencyDetailPage />} />
+              <Route path="/credito-hipotecario" element={<MortgagePage />} />
               <Route path="/blog" element={<BlogPage />} />
               <Route path="/blog/:slug" element={<PostPage />} />
               <Route path="/login" element={<LoginPage />} />

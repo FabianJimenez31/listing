@@ -9,6 +9,7 @@ const NAV = [
   { label: 'Venta', to: '/propiedades?operation_type=sale' },
   { label: 'Arriendo', to: '/propiedades?operation_type=rent' },
   { label: 'Mercado USA', to: '/usa' },
+  { label: 'Crédito hipotecario', to: '/credito-hipotecario' },
   { label: 'Inmobiliarias', to: '/inmobiliarias' },
   { label: 'Blog', to: '/blog' },
 ]

@@ -1,4 +1,4 @@
-/* Proppietario portal — section styles (ported from the reference portal).
+/* Proppia portal — section styles (ported from the reference portal).
    Tokens live in index.css. Components in src/components consume these classes. */
 
 .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
@@ -235,6 +235,16 @@
 .spec-grid .sp .v { font-size: 18px; font-weight: 800; color: var(--ink); margin-top: 2px; }
 .prose { color: var(--text); line-height: 1.8; font-size: 16px; }
 .prose p { margin-bottom: 1rem; }
+
+/* property description — preserves the agent's line breaks, bullets & **bold** */
+.pdp-desc { color: var(--text); font-size: 15.5px; }
+.pdp-desc-block { margin-bottom: 16px; }
+.pdp-desc-block:last-child { margin-bottom: 0; }
+.pdp-desc-line { line-height: 1.6; margin: 3px 0; }
+.pdp-desc-line.bullet { padding-left: 1.7em; text-indent: -1.7em; }
+.pdp-desc-line.head { margin-top: 12px; font-size: 16.5px; color: var(--ink); }
+.pdp-desc-line strong { color: var(--ink); font-weight: 700; }
+.pdp-desc-line.head strong { font-weight: 800; }
 .detail-cols { display: grid; grid-template-columns: 1fr 320px; gap: 32px; margin-top: 28px; }
 .agency-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 18px; }
 
@@ -378,8 +388,61 @@
   .pdp-facts { grid-template-columns: 1fr; }
 }
 
+/* ── Crédito hipotecario ──────────────────────────────────────── */
+.mtg-kicker { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--blue); background: var(--blue-50); padding: 7px 13px; border-radius: 999px; }
+
+.mtg-hero { background: linear-gradient(135deg, #0d1b33 0%, #14264a 60%, #1b3a6b 100%); color: #fff; padding: 66px 0 58px; }
+.mtg-hero .mtg-kicker { color: #d7e6ff; background: rgba(255, 255, 255, .12); }
+.mtg-hero h1 { font-size: clamp(27px, 4vw, 42px); font-weight: 800; letter-spacing: -.02em; line-height: 1.14; margin: 16px 0 14px; max-width: 720px; }
+.mtg-hero p { font-size: 16.5px; opacity: .9; max-width: 620px; line-height: 1.65; }
+.mtg-benefits { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 26px; margin-top: 26px; max-width: 760px; list-style: none; }
+.mtg-benefits li { display: flex; align-items: center; gap: 9px; font-size: 14.5px; font-weight: 600; opacity: .95; }
+.mtg-benefits li svg { color: #4ade80; flex: none; }
+
+.mtg-body { background: var(--bg-soft); }
+.mtg-cols { display: grid; grid-template-columns: .85fr 1.15fr; gap: 34px; align-items: start; }
+
+.mtg-steps h2 { font-size: clamp(21px, 2.6vw, 27px); font-weight: 800; color: var(--ink); letter-spacing: -.02em; margin-bottom: 22px; }
+.mtg-step { display: flex; gap: 14px; margin-bottom: 22px; }
+.mtg-step .sn { width: 34px; height: 34px; border-radius: 10px; background: var(--blue); color: #fff; font-weight: 800; display: grid; place-items: center; flex: none; }
+.mtg-step h4 { font-size: 15.5px; font-weight: 800; color: var(--ink); margin-bottom: 4px; }
+.mtg-step p { font-size: 14px; color: var(--muted); line-height: 1.6; }
+.mtg-direct { background: #fff; border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 18px; }
+.mtg-direct p { font-size: 14px; color: var(--muted); font-weight: 600; margin-bottom: 12px; }
+.mtg-direct .btn { width: 100%; justify-content: center; }
+
+.mtg-form { background: #fff; border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 26px; box-shadow: var(--shadow-sm); }
+.mtg-form h2 { font-size: 21px; font-weight: 800; color: var(--ink); letter-spacing: -.02em; }
+.mtg-hint { font-size: 13.5px; color: var(--muted); margin-top: 6px; line-height: 1.6; }
+.mtg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 20px; }
+.mtg-fg.full { grid-column: 1 / -1; }
+.mtg-fg label { display: block; font-size: 12.5px; font-weight: 700; color: var(--ink); margin-bottom: 6px; }
+.mtg-fg input, .mtg-fg select, .mtg-fg textarea { width: 100%; padding: 11px 13px; border: 1.5px solid var(--line); border-radius: 10px; font-size: 14px; color: var(--text); outline: none; font-family: inherit; background: #fff; }
+.mtg-fg textarea { resize: vertical; }
+.mtg-fg input:focus, .mtg-fg select:focus, .mtg-fg textarea:focus { border-color: var(--blue); }
+.mtg-finance { margin-top: 16px; background: var(--blue-50); color: var(--ink); font-size: 14px; font-weight: 600; padding: 12px 14px; border-radius: 10px; }
+.mtg-consent { display: flex; gap: 9px; align-items: flex-start; font-size: 12.5px; color: var(--muted); line-height: 1.55; margin: 18px 0 16px; }
+.mtg-consent input { width: auto; margin: 2px 0 0; flex: none; }
+.mtg-submit { width: 100%; justify-content: center; font-size: 15px; padding: 13px; }
+
+.mtg-sent-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+.mtg-preview { margin-top: 18px; background: var(--bg-soft); border: 1px solid var(--line); border-radius: 12px; padding: 16px; font-size: 12.5px; line-height: 1.65; color: var(--text); white-space: pre-wrap; word-break: break-word; font-family: inherit; }
+
+/* Bloque promocional en la home */
+.mtg-promo .wrap { display: grid; grid-template-columns: 1.05fr .95fr; gap: 40px; align-items: center; }
+.mtg-promo h2 { font-size: clamp(23px, 3vw, 31px); font-weight: 800; color: var(--ink); letter-spacing: -.02em; margin: 14px 0 12px; }
+.mtg-promo p.lead { font-size: 15.5px; color: var(--muted); line-height: 1.7; max-width: 480px; }
+.mtg-promo-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 22px; }
+.mtg-promo-points { display: grid; gap: 14px; }
+.mtg-point { display: flex; gap: 14px; background: #fff; border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 16px 18px; box-shadow: var(--shadow-sm); }
+.mtg-point .pi { width: 42px; height: 42px; border-radius: 12px; background: var(--blue-50); color: var(--blue); display: grid; place-items: center; flex: none; }
+.mtg-point h4 { font-size: 15px; font-weight: 800; color: var(--ink); margin-bottom: 3px; }
+.mtg-point p { font-size: 13.5px; color: var(--muted); line-height: 1.55; }
+
 /* ── Responsive ───────────────────────────────────────────────── */
 @media (max-width: 980px) {
+  .mtg-cols, .mtg-promo .wrap { grid-template-columns: 1fr; }
+  .mtg-benefits { grid-template-columns: 1fr; }
   .nav-links, .nav-right .publish { display: none; }
   .grid-list, .grid-blog { grid-template-columns: 1fr 1fr; }
   .grid-cities, .grid-val { grid-template-columns: 1fr 1fr; }
@@ -394,6 +457,8 @@
   .searchrow { flex-wrap: wrap; }
   .selectwrap { width: 100%; }
   .app-feats { grid-template-columns: 1fr; }
+  .mtg-grid { grid-template-columns: 1fr; }
+  .mtg-form { padding: 20px; }
   .section { padding: 56px 0; }
   .foot-grid { grid-template-columns: 1fr; }
 }
