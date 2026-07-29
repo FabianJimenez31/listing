@@ -1,6 +1,4 @@
-import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getPropertyTypes } from '../../api/catalog'
 
 const I = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round' }
 
@@ -10,33 +8,22 @@ const PROY = <svg width="20" height="20" viewBox="0 0 24 24" {...I}><path d="M3 
 const OFIC = <svg width="20" height="20" viewBox="0 0 24 24" {...I}><rect x="3" y="8" width="18" height="13" rx="2" /><path d="M8 8V5a4 4 0 0 1 8 0v3" /></svg>
 const USA = <svg width="20" height="20" viewBox="0 0 24 24" {...I}><circle cx="12" cy="12" r="9" /><path d="M2 12h20M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" /></svg>
 
+const cats = [
+  { icon: CASA, label: 'Casas', to: '/propiedades?property_kind=house' },
+  { icon: APTO, label: 'Apartamentos', to: '/propiedades?property_kind=apartment' },
+  { icon: PROY, label: 'Proyectos nuevos', to: '/proyectos' },
+  { icon: OFIC, label: 'Oficinas y locales', to: '/propiedades?property_kind=office' },
+  { icon: USA, label: 'Mercado USA', to: '/usa' },
+]
+
 export default function CategoryPills() {
-  const [counts, setCounts] = useState({})
-
-  useEffect(() => {
-    getPropertyTypes()
-      .then((types) => setCounts(Object.fromEntries((types || []).map((t) => [t.code, t.property_count]))))
-      .catch(() => setCounts({}))
-  }, [])
-
-  const cats = [
-    { icon: CASA, label: 'Casas', to: '/propiedades?property_kind=house', count: counts.house },
-    { icon: APTO, label: 'Apartamentos', to: '/propiedades?property_kind=apartment', count: counts.apartment },
-    { icon: PROY, label: 'Proyectos nuevos', to: '/proyectos' },
-    { icon: OFIC, label: 'Oficinas y locales', to: '/propiedades?property_kind=office', count: (counts.office || 0) + (counts.commercial || 0) || undefined },
-    { icon: USA, label: 'Mercado USA', to: '/usa' },
-  ]
-
   return (
     <div className="wrap">
       <div className="cats">
         {cats.map((c) => (
           <Link className="cat" to={c.to} key={c.label}>
             <span className="ci">{c.icon}</span>
-            <span>
-              {c.label}
-              {c.count != null && <span className="cn"> · {c.count}</span>}
-            </span>
+            <span>{c.label}</span>
           </Link>
         ))}
       </div>
