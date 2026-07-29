@@ -1,0 +1,28 @@
+temp/debug/
+temp/patches/
+temp/testing/
+*.log
+__pycache__/
+node_modules/
+frontend/dist/
+
+# Secrets & local config
+.env
+.env.local
+
+# Test & coverage artifacts
+.pytest_cache/
+coverage.xml
+.coverage
+htmlcov/
+
+# Sonar scanner working dir
+.scannerwork/
+dev.db
+
+# Local file uploads (use S3 in production)
+temp/uploads/
+temp/*.png
+temp/*.mjs
+temp/*.db
+temp/*.log

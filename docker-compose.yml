@@ -1,0 +1,84 @@
+version: "3.9"
+
+services:
+  # PostgreSQL + PostGIS database
+  db:
+    image: postgis/postgis:16-3.4
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: listing
+      POSTGRES_USER: listing
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-listing_dev}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U listing"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Redis for rate limiting and caching
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # FastAPI backend
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg2://listing:${DB_PASSWORD:-listing_dev}@db:5432/listing
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:?JWT_SECRET_KEY is required}
+      JWT_ACCESS_EXPIRE_MINUTES: ${JWT_ACCESS_EXPIRE_MINUTES:-30}
+      JWT_REFRESH_EXPIRE_DAYS: ${JWT_REFRESH_EXPIRE_DAYS:-7}
+      METRICS_HMAC_KEY: ${METRICS_HMAC_KEY:-changeme-metrics-key}
+      SITE_URL: ${SITE_URL:-http://localhost}
+      CDN_BASE_URL: ${CDN_BASE_URL:-http://localhost/static}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@proppietario.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-Admin1234!}
+      # Email 2FA (off by default — turn on only once SMTP is configured & tested)
+      OTP_2FA_ENABLED: ${OTP_2FA_ENABLED:-false}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+      SMTP_STARTTLS: ${SMTP_STARTTLS:-true}
+      SMTP_SSL: ${SMTP_SSL:-false}
+    volumes:
+      - uploads:/app/temp/uploads
+    ports:
+      - "8010:8000"
+
+  # Nginx + React SPA frontend
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "8090:80"
+    volumes:
+      - uploads:/app/temp/uploads:ro
+
+volumes:
+  pgdata:
+  redisdata:
+  uploads:
