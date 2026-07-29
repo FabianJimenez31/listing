@@ -11,7 +11,7 @@ export default function AppPromoSection() {
   return (
     <section className="section app">
       <div className="wrap">
-        <div>
+        <div className="app-copy">
           <h2>Tu próxima inversión, a una descarga</h2>
           <p className="lead">Recibe alertas de nuevas oportunidades, guarda favoritos y contacta directamente desde la app de Proppia.</p>
           <div className="app-feats">
@@ -20,25 +20,6 @@ export default function AppPromoSection() {
                 <span className="fi">{f.icon}</span>{f.text}
               </div>
             ))}
-          </div>
-          <div className="stores">
-            <a className="store" href="#" onClick={(e) => e.preventDefault()}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3 2.5 13.5 12 3 21.5c-.3-.2-.5-.6-.5-1V3.5c0-.4.2-.8.5-1zM15 13.5l3.7 3.4-4.2 2.4L11.5 16zm0-3L11.5 8l3-1.7 4.2 2.4zm1.8.9 2.6 1.5c.6.4.6 1.2 0 1.6l-2.6 1.5L18.4 12z" /></svg>
-              <span><span className="s1">Disponible en</span><span className="s2">Google Play</span></span>
-            </a>
-            <a className="store" href="#" onClick={(e) => e.preventDefault()}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M16.4 1.6c.1 1-.3 2-1 2.8-.7.8-1.7 1.4-2.7 1.3-.1-1 .4-2 1-2.7.7-.8 1.8-1.3 2.7-1.4zM19.6 17c-.5 1.2-.8 1.7-1.5 2.7-.9 1.4-2.2 3.1-3.8 3.1-1.4 0-1.8-.9-3.7-.9s-2.3.9-3.7.9c-1.6 0-2.8-1.5-3.7-2.9C-1 16.4-1.4 11 .6 8.1 1.9 6.2 4 5 6 5c1.6 0 2.7 1 4 1 1.3 0 2-1 4-1 1.7 0 3.5 1 4.8 2.6-4.2 2.3-3.5 8.2.8 9.4z" /></svg>
-              <span><span className="s1">Descárgala en</span><span className="s2">App Store</span></span>
-            </a>
-          </div>
-        </div>
-        <div className="phone-wrap">
-          <div className="phone">
-            <div className="screen">
-              <div className="ph-top">Proppia</div>
-              <div className="qr"><div className="qrbox" /></div>
-              <div className="ph-cap">Escanea para descargar</div>
-            </div>
           </div>
         </div>
       </div>

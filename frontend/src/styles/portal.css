@@ -152,28 +152,15 @@
 
 /* ── App promo ────────────────────────────────────────────────── */
 .app { position: relative; overflow: hidden; background: linear-gradient(120deg, var(--blue) 0%, #3D7BFF 60%, #5C93FF 100%); color: #fff; }
-.app .wrap { display: grid; grid-template-columns: 1.1fr .9fr; gap: 40px; align-items: center; position: relative; z-index: 2; }
+.app .wrap { position: relative; z-index: 2; }
+/* single centred column — the phone/QR mockup this used to sit beside is gone */
+.app-copy { max-width: 760px; margin: 0 auto; text-align: center; }
 .app h2 { font-size: clamp(26px, 3.4vw, 38px); font-weight: 800; letter-spacing: -.02em; line-height: 1.1; }
-.app p.lead { font-size: 16px; opacity: .92; margin: 14px 0 26px; max-width: 420px; }
-.app-feats { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 22px; margin-bottom: 28px; }
+.app p.lead { font-size: 16px; opacity: .92; margin: 14px auto 26px; max-width: 460px; }
+.app-feats { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 22px; margin-bottom: 28px; text-align: left; }
+.app-feats:last-child { margin-bottom: 0; }
 .app-feat { display: flex; gap: 11px; align-items: flex-start; font-size: 14px; opacity: .95; }
 .app-feat .fi { flex: none; width: 30px; height: 30px; border-radius: 9px; background: rgba(255, 255, 255, .18); display: grid; place-items: center; }
-.stores { display: flex; gap: 12px; flex-wrap: wrap; }
-.store { display: flex; align-items: center; gap: 9px; background: #0c1322; color: #fff; border-radius: 12px; padding: 9px 16px; font-size: 13px; transition: transform .2s var(--ease); }
-.store:hover { transform: translateY(-2px); }
-.store .s1 { font-size: 10px; opacity: .7; line-height: 1; }
-.store .s2 { font-size: 14px; font-weight: 700; line-height: 1.1; }
-.phone-wrap { display: flex; justify-content: center; }
-.phone { width: 230px; background: #fff; border-radius: 30px; padding: 14px; box-shadow: 0 40px 80px -30px rgba(0, 0, 0, .55); }
-.phone .screen { border-radius: 20px; overflow: hidden; border: 1px solid var(--line); }
-.phone .ph-top { background: var(--blue); color: #fff; padding: 14px 14px 10px; font-weight: 800; font-size: 15px; text-align: center; }
-.phone .qr { padding: 18px; display: grid; place-items: center; }
-.phone .qr .qrbox {
-  width: 130px; height: 130px; border-radius: 10px;
-  background: repeating-linear-gradient(0deg, #16202e 0 6px, #fff 6px 12px), repeating-linear-gradient(90deg, #16202e 0 6px, transparent 6px 12px);
-  background-blend-mode: multiply; border: 6px solid #fff; box-shadow: 0 0 0 1px var(--line);
-}
-.phone .ph-cap { text-align: center; font-size: 12px; color: var(--muted); padding: 0 14px 16px; }
 
 /* ── Footer ───────────────────────────────────────────────────── */
 .site-footer { background: #0E1726; color: #9aa6b6; padding: 64px 0 28px; }
@@ -446,8 +433,6 @@
   .nav-links, .nav-right .publish { display: none; }
   .grid-list, .grid-blog { grid-template-columns: 1fr 1fr; }
   .grid-cities, .grid-val { grid-template-columns: 1fr 1fr; }
-  .app .wrap { grid-template-columns: 1fr; gap: 30px; }
-  .phone-wrap { order: -1; }
   .foot-grid { grid-template-columns: 1fr 1fr; }
   .nav-burger { display: block; }
 }
