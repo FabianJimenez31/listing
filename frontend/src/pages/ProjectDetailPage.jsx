@@ -5,6 +5,7 @@ import { getProject } from '../api/projects'
 import Spinner from '../components/ui/Spinner'
 import { formatPrice } from '../components/property/PropertyCard'
 import ImageCarousel from '../components/ui/ImageCarousel'
+import PropertyDescription from '../components/property/PropertyDescription'
 import { IconPin } from '../components/ui/icons'
 
 const STAGE = { preventa: 'Preventa', construccion: 'En construcción', entrega_inmediata: 'Entrega inmediata' }
@@ -75,10 +76,10 @@ export default function ProjectDetailPage() {
             {specs.map(([k, v]) => <div className="sp" key={k}><div className="k">{k}</div><div className="v">{v}</div></div>)}
           </div>
           {project.description && (
-            <>
-              <h3 style={{ fontWeight: 800, color: 'var(--ink)', margin: '10px 0' }}>Descripción</h3>
-              <div className="prose"><p>{project.description}</p></div>
-            </>
+            <section className="pdp-section">
+              <h2>Descripción</h2>
+              <PropertyDescription text={project.description} />
+            </section>
           )}
         </div>
         <aside>

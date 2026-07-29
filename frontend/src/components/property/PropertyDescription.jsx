@@ -11,7 +11,11 @@ import { Fragment } from 'react'
  *   - turn `**bold**` into real <strong> (no dangerouslySetInnerHTML — we build
  *     React nodes, so author text can never inject markup),
  *   - hang-indent emoji/dash bullet lines so wrapped text aligns,
- *   - give bold-only lines (e.g. "**Zonas comunes:**") a light heading look.
+ *   - give title lines a heading look, whether written bold ("**Zonas
+ *     comunes:**") or in caps ("✨ PRIMER NIVEL") — agents use both.
+ *
+ * Shared by the property and the project detail pages so a description reads
+ * the same everywhere.
  */
 
 const BOLD = /\*\*([^*]+)\*\*/g
@@ -37,10 +41,25 @@ function renderInline(line, keyBase) {
   return nodes
 }
 
-// A line that is essentially just a bold title (optionally emoji-prefixed).
-function isHeading(line) {
+// A short all-caps line is a section title too: agents use it interchangeably
+// with bold ("✨ PRIMER NIVEL" vs "🔹 **Primer nivel**"), so both must render
+// alike. Listing codes ("🆔 BOG-100157") must not qualify — digits are allowed
+// only once the line has enough words to read as a title.
+function isCapsTitle(rest) {
+  const text = rest.replace(/:$/, '').trim()
+  if (!text || text.length > 70) return false
+  if (/\p{Ll}/u.test(text)) return false
+  if ((text.match(/\p{L}/gu) || []).length < 4) return false
+  return !/\d/.test(text) || text.split(/\s+/).length >= 3
+}
+
+// A line that is essentially just a title (optionally emoji-prefixed), written
+// either as bold or in caps. A title-looking line directly under a bullet is an
+// emphasised list item, not a new section — promoting it would split the list.
+function isHeading(line, prevWasBullet) {
+  if (prevWasBullet) return false
   const rest = line.replace(LEAD_EMOJI, '').trim()
-  return /^\*\*[^*]+\*\*:?$/.test(rest)
+  return /^\*\*[^*]+\*\*:?$/.test(rest) || isCapsTitle(rest)
 }
 
 export default function PropertyDescription({ text }) {
@@ -55,7 +74,8 @@ export default function PropertyDescription({ text }) {
         return (
           <div className="pdp-desc-block" key={bi}>
             {lines.map((line, li) => {
-              const cls = isHeading(line) ? 'head' : (BULLET_START.test(line) ? 'bullet' : '')
+              const prevWasBullet = li > 0 && BULLET_START.test(lines[li - 1]) && !isHeading(lines[li - 1], false)
+              const cls = isHeading(line, prevWasBullet) ? 'head' : (BULLET_START.test(line) ? 'bullet' : '')
               return (
                 <p className={`pdp-desc-line${cls ? ` ${cls}` : ''}`} key={li}>
                   {renderInline(line, `${bi}-${li}`)}

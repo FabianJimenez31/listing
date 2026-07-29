@@ -241,9 +241,10 @@
 .pdp-desc-block:last-child { margin-bottom: 0; }
 .pdp-desc-line { line-height: 1.6; margin: 3px 0; }
 .pdp-desc-line.bullet { padding-left: 1.7em; text-indent: -1.7em; }
-.pdp-desc-line.head { margin-top: 12px; font-size: 16.5px; color: var(--ink); }
+/* headings weigh the same whether the agent wrote them bold or in caps */
+.pdp-desc-line.head { margin-top: 12px; font-size: 16.5px; color: var(--ink); font-weight: 800; }
+.pdp-desc-line.head:first-child { margin-top: 0; }
 .pdp-desc-line strong { color: var(--ink); font-weight: 700; }
-.pdp-desc-line.head strong { font-weight: 800; }
 .detail-cols { display: grid; grid-template-columns: 1fr 320px; gap: 32px; margin-top: 28px; }
 .agency-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 18px; }
 
