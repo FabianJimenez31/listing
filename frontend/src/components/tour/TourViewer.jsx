@@ -69,7 +69,7 @@ export default function TourViewer({ tour }) {
     }))
     const viewer = new Viewer({
       container: containerRef.current,
-      navbar: ['zoom', 'move', 'autorotate'],
+      navbar: ['zoom', 'move', 'fullscreen'],
       plugins: [
         MarkersPlugin,
         GalleryPlugin.withConfig({ thumbnailSize: { width: 120, height: 70 } }),
@@ -82,11 +82,12 @@ export default function TourViewer({ tour }) {
           preload: true,
           // Llegar mirando hacia adentro: opuesto al hotspot de retorno de la
           // escena destino (la entrada queda a la espalda), como Matterport.
+          // PSV exige yaw y pitch completos en rotateTo.
           transitionOptions: (node, fromNode) => {
             if (!fromNode) return {}
             const backLink = node.links.find((link) => link.nodeId === fromNode.id)
             if (!backLink) return {}
-            return { rotateTo: { yaw: backLink.position.yaw + Math.PI } }
+            return { rotateTo: { yaw: backLink.position.yaw + Math.PI, pitch: 0 } }
           },
         }),
       ],

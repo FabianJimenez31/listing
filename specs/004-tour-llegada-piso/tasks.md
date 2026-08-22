@@ -24,3 +24,8 @@ Convencion: `[x]` hecho · `[/]` en curso · `[ ]` pendiente.
 - [x] T-302 `npm run build` verde.
 - [x] T-303 Deploy backend+frontend y verificacion de bundle.
 - [ ] T-304 Validacion visual del usuario en produccion.
+- [x] T-305 Hotfix validacion visual: `rotateTo` exige yaw+pitch completos en PSV
+      (crasheaba cada transicion con "Position is missing 'yaw' or 'pitch'"); llegada
+      ahora con pitch 0. Boton autorotate retirado del navbar (warning, plugin ausente).
+      Aclarado: los 404 de `/tour` en consola son normales (fichas sin tour publicado,
+      se manejan en silencio).
