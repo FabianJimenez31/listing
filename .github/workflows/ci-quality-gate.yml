@@ -25,7 +25,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        pip install jq pytest pytest-cov
+        pip install jq pytest pytest-cov pytest-timeout
 
     - name: Run File Size Enforcement Check
       run: |
@@ -37,7 +37,12 @@ jobs:
           fi
         done
 
+    # Only meaningful on pull requests, where there is a source branch to
+    # validate. On a push to main the merge commit has already landed, so the
+    # protected-branch rule reports "direct commits to main are forbidden" and
+    # the step can never pass by construction.
     - name: Run Commit Convention Compliance
+      if: github.event_name == 'pull_request'
       run: |
         chmod +x .claude/hooks/pre-commit.sh
         bash .claude/hooks/pre-commit.sh
@@ -45,11 +50,53 @@ jobs:
     - name: Run Test Suite with Coverage
       run: |
         if [ -f "pytest.ini" ] || [ -d "tests" ]; then
+          set +e
           pytest --cov=src --cov-report=xml
+          status=$?
+          set -e
+          # Exit code 5 is "no tests were collected". A freshly installed
+          # boilerplate has none, and that must not fail the quality gate —
+          # otherwise every new project starts with a red pipeline.
+          if [ "$status" -eq 5 ]; then
+            echo "::notice::No tests collected yet; emitting an empty coverage report."
+            status=0
+          fi
+          if [ ! -f coverage.xml ]; then
+            echo '<?xml version="1.0" ?><coverage version="1.0"></coverage>' > coverage.xml
+          fi
+          exit $status
         else
           echo "No tests found. Generating dummy coverage.xml..."
           echo '<?xml version="1.0" ?><coverage version="1.0"></coverage>' > coverage.xml
         fi
+
+    # The runner has no Engram store and cannot reach the daemon, which binds to
+    # 127.0.0.1. The outcome is emitted as an artifact and folded into memory
+    # locally with 'make mem-ingest'.
+    - name: Emit Memory Outcome Artifact
+      if: always()
+      run: |
+        BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
+        SLUG="${BRANCH##*/}"
+        mkdir -p temp
+        jq -n \
+          --arg slug    "$SLUG" \
+          --arg branch  "$BRANCH" \
+          --arg commit  "${GITHUB_SHA}" \
+          --arg status  "${{ job.status }}" \
+          --arg run_url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+          --arg detail  "CI quality gate on ${GITHUB_WORKFLOW}" \
+          '{slug:$slug, branch:$branch, commit:$commit, status:$status, run_url:$run_url, detail:$detail}' \
+          > temp/ci-outcome.json
+        cat temp/ci-outcome.json
+
+    - name: Upload Memory Outcome Artifact
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: ci-outcome
+        path: temp/ci-outcome.json
+        if-no-files-found: warn
 
     - name: Check SonarQube Secrets Presence
       id: sonar-secrets

@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "engram": {
+      "command": "engram",
+      "args": ["mcp"],
+      "disabled": false,
+      "autoApprove": [
+        "mem_search",
+        "mem_context",
+        "mem_timeline",
+        "mem_get_observation",
+        "mem_current_project",
+        "mem_stats"
+      ]
+    }
+  }
+}

@@ -1,6 +1,10 @@
 temp/debug/
 temp/patches/
 temp/testing/
+temp/logs/
+temp/.harness_emergency
+temp/.engram_session
+temp/ci-outcome.json
 *.log
 __pycache__/
 node_modules/

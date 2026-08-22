@@ -1,6 +1,9 @@
 # Makefile for IA-Framework Quality Gate Harness
 
-.PHONY: init-harness dev-check spec-new test clean sonar-check sonar-up sonar-down lint-nginx smoke-test validate-enums hotfix rollback help
+# Stage evaluated by 'make mem-check'. Override with: make mem-check STAGE=merge
+STAGE ?= push
+
+.PHONY: init-harness dev-check spec-new test clean sonar-check sonar-up sonar-down lint-nginx smoke-test validate-enums hotfix emergency-clear rollback mem-context mem-check mem-capture mem-doctor mem-ingest help
 
 help:
 	@echo "======================================================================"
@@ -14,7 +17,13 @@ help:
 	@echo "  make smoke-test     - [NEW] Run SPA deployment atomicity smoke tests"
 	@echo "  make validate-enums - [NEW] Run code enums vs database values validator"
 	@echo "  make hotfix         - [NEW] Declare and organize structured emergency hotfix"
+	@echo "  make emergency-clear- [NEW] Clear the emergency bypass and re-arm all gates"
 	@echo "  make rollback       - [NEW] List rollback safe points or revert changes"
+	@echo "  make mem-context    - [NEW] Show what the project already remembers"
+	@echo "  make mem-check      - [NEW] Verify the memory quota for the current branch"
+	@echo "  make mem-capture    - [NEW] Capture the memory states derivable right now"
+	@echo "  make mem-doctor     - [NEW] Diagnose the Engram memory subsystem"
+	@echo "  make mem-ingest     - [NEW] Ingest a CI outcome artifact into local memory"
 	@echo "  make sonar-up       - Start local Dockerized SonarQube + write token to .env.local"
 	@echo "  make sonar-down     - Stop and remove the local SonarQube container"
 	@echo "  make sonar-check    - Execute local SonarQube scanner & Quality Gate check"
@@ -54,6 +63,29 @@ validate-enums:
 hotfix:
 	@chmod +x scripts/deployment/emergency_hotfix.sh
 	@bash scripts/deployment/emergency_hotfix.sh crear
+
+emergency-clear:
+	@chmod +x scripts/deployment/emergency_hotfix.sh
+	@bash scripts/deployment/emergency_hotfix.sh limpiar
+
+mem-context:
+	@bash -c 'source scripts/memory/engram_client.sh && mem_ensure_daemon && mem_context | jq .'
+
+mem-check:
+	@bash scripts/memory/memory_gate.sh $(STAGE)
+
+mem-capture:
+	@bash scripts/memory/capture_stage.sh session-open >/dev/null
+	@bash scripts/memory/capture_stage.sh semantic   || true
+	@bash scripts/memory/capture_stage.sh procedural || true
+	@bash scripts/memory/capture_stage.sh decision   || true
+	@echo "Captured every memory state derivable from the current working tree."
+
+mem-doctor:
+	@bash -c 'source scripts/memory/engram_client.sh && mem_ensure_daemon && mem_doctor | jq .'
+
+mem-ingest:
+	@bash scripts/memory/ingest_ci_outcome.sh $(ARTIFACT)
 
 rollback:
 	@chmod +x scripts/deployment/rollback.sh

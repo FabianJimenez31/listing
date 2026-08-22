@@ -12,10 +12,49 @@ Gate (see "Tooling" below).
 
 - `File Line Limit (1000 lines)`: **Strict Rule**. No single file may exceed 1000 lines. When approaching 800 lines, stop, modularize, and divide functionality. The hook `.claude/hooks/check-file-size.sh` blocks writes that violate this.
 - `Zero Temporary Files in Root`: All temporary, scratch, and debug scripts must reside in `temp/` subdirectories. The pre-commit hook blocks any violation of this.
-- `Feature Branch Convention`: All development must be done on branches starting with standard prefixes: `(feature|fix|hotfix|chore|claude|codex|test)/[name]`. Direct push/commit to `main`, `master`, `staging`, or `develop` is strictly blocked — changes land on `main` only via reviewed Pull Requests.
+- `Feature Branch Convention`: All development must be done on branches starting with standard prefixes: `(feature|fix|hotfix|chore|claude|codex|kiro|test)/[name]`. Direct push/commit to `main`, `master`, `staging`, or `develop` is strictly blocked — changes land on `main` only via reviewed Pull Requests.
 - `Specification-Driven Development`: Feature branches must have their corresponding design specifications before development. The pre-commit hook verifies that `specs/<slug>/{spec.md,plan.md,tasks.md}` exist and are filled out.
 - `No Generic Dump Modules`: Files named `utils.py`, `helpers.py`, `common.py`, `misc.py`, `temp_*.py`, `new_*.py` are blocked by `scripts/validation/validate_structure.py`. Create focused, named modules instead (e.g. `listing_catalog.py`, `price_formatter.py`).
 - `No Hardcoded Secrets`: Committing api keys, tokens, or credentials will be blocked by the secret scanner. Use `.env.local` (git-ignored); see `.env.example`.
+
+## 🧠 Memory Protocol
+
+This project has persistent memory through [Engram](https://github.com/Gentleman-Programming/engram).
+Memory is written by the **harness**, not by the agent: git hooks and agent hooks
+persist it over Engram's local HTTP API (`127.0.0.1:7437`). Do not rely on
+remembering to call `mem_save` — that path is not what keeps this memory alive.
+
+**Reading it is your responsibility.** Before drafting a plan, changing
+architecture, or proposing an approach, search memory for the task slug and for
+the components you are about to touch. The project has already decided things;
+re-deciding them is the failure mode this exists to prevent.
+
+Seven classes are tracked per task:
+
+| Class | Key | Written when |
+|---|---|---|
+| Contextual | Engram session | `make spec-new` |
+| Episodic | Session timeline | Automatically |
+| Semantic | `spec/<slug>/semantic` | `plan.md` is completed |
+| Procedural | `spec/<slug>/procedural` | `tasks.md` is completed |
+| Decision | `spec/<slug>/decision` | Every commit |
+| Preferences | `user/preferences` | The user states a constraint |
+| Outcome | `spec/<slug>/outcome` | Push, CI, or hotfix |
+
+Quotas scale with the branch prefix: `feature/` requires all seven, `fix/` and
+`hotfix/` require three (decision, outcome, semantic recorded as `bugfix`), and
+`chore/` requires one (decision). The gate runs at push time and blocks,
+exactly like the Spec-Kit Gate.
+
+When the user states a working constraint that should outlive the session,
+record it explicitly:
+
+```bash
+bash scripts/memory/capture_stage.sh preferences "<the constraint>"
+```
+
+Inspect memory with `make mem-context`, verify the quota with `make mem-check`,
+and diagnose the subsystem with `make mem-doctor`.
 
 ## 🏗️ Architecture Summary
 
@@ -26,7 +65,7 @@ Current layout (kept flat and focused — grow by **domain capability**, not by 
   - As the codebase grows, group related modules by capability (e.g. `catalog/`, `pricing/`, `inventory/`). Do **not** introduce `models/`/`services/`/`api/` shells until there is real code to fill them.
 - **`tests/`**: Pytest suite. Markers: `unit`, `integration`, `critical` (see `pytest.ini`). Mirrors `src/` module names (`test_<module>.py`).
 - **`specs/`**: One folder per feature (`specs/<slug>/{spec.md,plan.md,tasks.md}`).
-- **`scripts/`**: `validation/` (structure, enums), `harness/` (sonar server, nginx lint, SPA smoke), `deployment/` (hotfix, rollback).
+- **`scripts/`**: `validation/` (structure, enums), `harness/` (sonar server, nginx lint, SPA smoke), `memory/` (Engram client, stage capture, memory gate), `deployment/` (hotfix, rollback).
 - **`temp/`**: Scratch, logs, backups, emergency logs (git-ignored subdirs).
 
 ## 🛠️ Developer Workflow
@@ -48,7 +87,7 @@ Current layout (kept flat and focused — grow by **domain capability**, not by 
 - **Database-Code Enum Sync:** `make validate-enums` checks DB records vs code Enums. ⚠️ Currently a **generic demo** and the pre-commit enum gate is **disabled** until the database schema and domain Enums are defined (wire `scripts/validation/validate_enums.py` to the real DB, then re-enable the hook in `.pre-commit-config.yaml`).
 - **Nginx Config Sanity Gate:** `make lint-nginx` — only relevant once an Nginx/proxy layer exists.
 - **Frontend SPA Smoke Tester:** `make smoke-test` — only relevant once a deployed SPA frontend exists.
-- **Incident & Emergency Hotfixes:** `make hotfix` generates docs in `temp/emergency_logs/`, snapshots state in `temp/backup/`, and uses the `HARNESS_EMERGENCY=1` bypass.
+- **Incident & Emergency Hotfixes:** `make hotfix` generates docs in `temp/emergency_logs/`, snapshots state in `temp/backup/`, and arms the emergency bypass (persisted to `temp/.harness_emergency` with a 2-hour TTL, or forced ad hoc with `HARNESS_EMERGENCY=1`). The bypass suspends **workflow gates only**; hardcoded-secret scanning and file-size limits are never skipped. Re-arm every gate with `make emergency-clear`.
 - **Atomic Rollback & Recovery:** `make rollback` lists git safety tags and patches; `scripts/deployment/rollback.sh apply <target>` restores state.
 
 ## 🚀 Deployment (Docker Compose)
@@ -92,3 +131,12 @@ curl -s "http://localhost:8090$css" | grep -o admin-sidebar   # → match means 
 ```
 
 **Config:** runtime env comes from `.env` (git-ignored) — `DB_PASSWORD`, `JWT_SECRET_KEY` (**required**), `ADMIN_EMAIL` / `ADMIN_PASSWORD`, `SITE_URL`, etc. See `.env.example`. A local `npm run build` inside `frontend/` is useful to catch compile/lint errors fast before paying for the full Docker rebuild.
+
+## Virtual tours
+
+Properties and projects can have one draft/published virtual tour composed of ordered 2:1
+equirectangular scenes and directional hotspots. Manual upload is always available. Optional AI
+generation uses `OPENAI_API_KEY` and the `TOUR_PANO_*` variables documented in `.env.example`;
+generated scenes remain drafts and display a permanent public disclaimer. Panorama assets are
+stored under `tours/<tour_id>/` and optimized to WebP. The public Photo Sphere Viewer bundle is
+loaded only after the visitor opens the **Tour 360** tab.
