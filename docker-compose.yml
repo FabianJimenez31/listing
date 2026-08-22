@@ -56,6 +56,12 @@ services:
       TOUR_PANO_SIZE: ${TOUR_PANO_SIZE:-2048x1024}
       TOUR_PANO_TIMEOUT_SECONDS: ${TOUR_PANO_TIMEOUT_SECONDS:-300}
       TOUR_PANO_ESTIMATED_COST_USD: ${TOUR_PANO_ESTIMATED_COST_USD:-0.06000}
+      # Tour payments via Wompi (empty keys keep tour creation open, FR-608).
+      WOMPI_PUBLIC_KEY: ${WOMPI_PUBLIC_KEY:-}
+      WOMPI_INTEGRITY_SECRET: ${WOMPI_INTEGRITY_SECRET:-}
+      WOMPI_EVENTS_SECRET: ${WOMPI_EVENTS_SECRET:-}
+      WOMPI_ENV: ${WOMPI_ENV:-production}
+      TOUR_PRICE_COP: ${TOUR_PRICE_COP:-50000}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@proppietario.com}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-Admin1234!}
       # Email 2FA (off by default — turn on only once SMTP is configured & tested)
