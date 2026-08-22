@@ -47,7 +47,8 @@ export default function TourEditor({ entity, entityId, galleryImages = [] }) {
   const [seamPass, setSeamPass] = useState(false)
   const [ack, setAck] = useState(false)
   const [billing, setBilling] = useState(null)
-  const [creditActive, setCreditActive] = useState(true)
+  // null = verificando; solo se muestra el editor cuando hay credito confirmado.
+  const [creditActive, setCreditActive] = useState(null)
 
   const load = () => getAdminTour(entity, entityId)
     .then((data) => { setTour(data); setAck(data.ai_disclaimer_ack) })
@@ -60,8 +61,13 @@ export default function TourEditor({ entity, entityId, galleryImages = [] }) {
   }, [entity, entityId])
 
   useEffect(() => {
-    if (!billing?.enabled) return
-    getCreditStatus(entity, entityId).then((r) => setCreditActive(r.active)).catch(() => {})
+    if (!billing?.enabled) { setCreditActive(true); return }
+    let cancelled = false
+    const check = () => getCreditStatus(entity, entityId)
+      .then((r) => { if (!cancelled) setCreditActive(r.active) })
+      .catch(() => { if (!cancelled) setTimeout(check, 1500) })
+    check()
+    return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [billing?.enabled, entity, entityId])
 
@@ -75,7 +81,11 @@ export default function TourEditor({ entity, entityId, galleryImages = [] }) {
   const run = async (action) => {
     setBusy(true)
     setError(null)
-    try { await action(); await load() } catch (err) { setError(apiMessage(err)) } finally { setBusy(false) }
+    try { await action(); await load() } catch (err) {
+      // Defensa en profundidad: un 402 del backend bloquea la UI al instante.
+      if (err?.response?.status === 402) setCreditActive(false)
+      setError(apiMessage(err))
+    } finally { setBusy(false) }
   }
 
   const startTour = () => run(async () => setTour(await createTour(entity, entityId)))
@@ -169,6 +179,10 @@ export default function TourEditor({ entity, entityId, galleryImages = [] }) {
 
   if (loading) return <div className="tour-editor admin-card">Cargando Tour 360…</div>
   const price = billing?.amount_in_cents ? formatCop(billing.amount_in_cents) : '$50.000'
+
+  if (tour && billing?.enabled && creditActive === null) {
+    return <div className="tour-editor admin-card">Verificando activación del tour…</div>
+  }
 
   if (tour && billing?.enabled && !creditActive) {
     return (
