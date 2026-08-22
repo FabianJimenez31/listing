@@ -17,6 +17,7 @@ from src.api.routers import (
     banners,
     blog,
     catalog,
+    exports,
     favorites,
     images,
     leads,
@@ -95,6 +96,7 @@ def create_app() -> FastAPI:
     # Admin & metrics
     app.include_router(admin.router, prefix=_API_PREFIX)
     app.include_router(metrics.router, prefix=_API_PREFIX)
+    app.include_router(exports.router, prefix=_API_PREFIX)
 
     app.include_router(settings.router, prefix=_API_PREFIX)
 

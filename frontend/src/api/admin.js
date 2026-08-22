@@ -27,5 +27,10 @@ export const createFeatured = (data) =>
 export const deleteFeatured = (id) =>
   api.delete(`/featured/${id}`)
 
+// Inventory spreadsheet (xlsx | csv). Returns the full axios response so the
+// caller can read the server's filename from Content-Disposition.
+export const exportProperties = (params) =>
+  api.get('/exports/properties', { params, responseType: 'blob' })
+
 export const trackEvent = (eventType, propertyId, sessionHash) =>
   api.post('/metrics/event', { event_type: eventType, entity_id: propertyId, session_hash: sessionHash })

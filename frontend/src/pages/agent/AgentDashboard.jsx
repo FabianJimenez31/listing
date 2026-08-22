@@ -3,8 +3,10 @@ import { Link } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { useAuth } from '../../contexts/AuthContext'
 import { searchProperties, submitProperty, pauseProperty, reactivateProperty } from '../../api/properties'
+import { exportProperties } from '../../api/admin'
+import { saveResponse } from '../../lib/download'
 import AdminPageHeader from '../../components/admin/AdminPageHeader'
-import { IconHome } from '../../components/admin/adminIcons'
+import { IconDownload, IconHome } from '../../components/admin/adminIcons'
 import Spinner from '../../components/ui/Spinner'
 import Pagination from '../../components/ui/Pagination'
 
@@ -31,23 +33,42 @@ export default function AgentDashboard() {
   const [scope, setScope] = useState('mine')     // 'all' | 'mine'
   useEffect(() => { if (isAdmin) setScope('all') }, [isAdmin])
 
+  const [exporting, setExporting] = useState(null)   // 'xlsx' | 'csv' while downloading
+
   const showingAll = isAdmin && scope === 'all'
+
+  // The committed search term as API params — shared by the list and the export
+  // so the downloaded file matches what's on screen. A pure number is treated as
+  // a Record ID (NID); anything else as text.
+  const searchParams = () => {
+    const term = search.trim()
+    if (!term) return {}
+    return /^\d+$/.test(term) ? { nid: Number(term) } : { q: term }
+  }
 
   const loadProperties = () => {
     setLoading(true)
     const params = showingAll
-      ? { all: true, page, page_size: 10 }
-      : { owner_id: user?.id, include_own: true, page, page_size: 10 }
-    const term = search.trim()
-    if (term) {
-      // A pure number is treated as a Record ID (NID); anything else as text.
-      if (/^\d+$/.test(term)) params.nid = Number(term)
-      else params.q = term
-    }
+      ? { all: true, page, page_size: 10, ...searchParams() }
+      : { owner_id: user?.id, include_own: true, page, page_size: 10, ...searchParams() }
     searchProperties(params)
       .then(setResult)
       .catch(() => null)
       .finally(() => setLoading(false))
+  }
+
+  // Download the inventory as a spreadsheet (Excel or CSV).
+  const downloadInventory = async (format) => {
+    setExporting(format)
+    try {
+      const params = { format, ...searchParams() }
+      if (showingAll) params.all = true
+      saveResponse(await exportProperties(params), `inventario.${format}`)
+    } catch {
+      alert('No se pudo generar el archivo. Intenta de nuevo.')
+    } finally {
+      setExporting(null)
+    }
   }
 
   useEffect(() => { if (user) loadProperties() }, [user, page, search, scope])
@@ -71,7 +92,30 @@ export default function AgentDashboard() {
         title={showingAll ? 'Propiedades' : 'Mis propiedades'}
         subtitle={showingAll ? 'Todas las propiedades del portal' : 'Gestiona tus publicaciones'}
         count={result?.meta?.total ?? props.length}
-        actions={<Link to="/agente/nueva" className="btn btn-blue">+ Nueva propiedad</Link>}
+        actions={(
+          <>
+            <button
+              type="button"
+              className="btn btn-outline btn-sm"
+              onClick={() => downloadInventory('xlsx')}
+              disabled={!!exporting || props.length === 0}
+              title="Descargar el inventario en Excel"
+            >
+              <IconDownload size={16} />
+              {exporting === 'xlsx' ? 'Generando…' : 'Excel'}
+            </button>
+            <button
+              type="button"
+              className="btn btn-outline btn-sm"
+              onClick={() => downloadInventory('csv')}
+              disabled={!!exporting || props.length === 0}
+              title="Descargar el inventario en CSV"
+            >
+              {exporting === 'csv' ? 'Generando…' : 'CSV'}
+            </button>
+            <Link to="/agente/nueva" className="btn btn-blue">+ Nueva propiedad</Link>
+          </>
+        )}
       />
 
       {isAdmin && (

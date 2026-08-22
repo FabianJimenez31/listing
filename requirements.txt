@@ -18,6 +18,10 @@ bcrypt==4.0.1
 pydantic>=2.0
 pydantic[email]>=2.0
 python-multipart>=0.0.9
+Pillow>=10.0
+
+# Spreadsheet exports (inventory download)
+openpyxl>=3.1
 
 # Cache / Rate limiting
 redis>=5.0

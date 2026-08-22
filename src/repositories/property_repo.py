@@ -82,6 +82,7 @@ class PropertyRepository(BaseRepository[PropertyORM]):
         text: str | None = None,
         nid: int | None = None,
         owner_id: str | None = None,
+        load_owner: bool = False,
         page: int = 1,
         page_size: int = 20,
     ) -> tuple[list[PropertyORM], int]:
@@ -135,13 +136,19 @@ class PropertyRepository(BaseRepository[PropertyORM]):
         base_stmt = select(PropertyORM).where(and_(*filters))
         total = self.db.scalar(select(func.count()).select_from(base_stmt.subquery())) or 0
 
+        options = [
+            joinedload(PropertyORM.images),
+            joinedload(PropertyORM.location),
+            joinedload(PropertyORM.agency),
+        ]
+        if load_owner:
+            # Only the export needs the owner; eager-loading it here keeps a
+            # multi-thousand-row download from firing one query per property.
+            options.append(joinedload(PropertyORM.owner))
+
         stmt = (
             base_stmt
-            .options(
-                joinedload(PropertyORM.images),
-                joinedload(PropertyORM.location),
-                joinedload(PropertyORM.agency),
-            )
+            .options(*options)
             .order_by(PropertyORM.created_at.desc())
             .offset((page - 1) * page_size)
             .limit(page_size)

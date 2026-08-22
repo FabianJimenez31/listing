@@ -102,6 +102,29 @@ class LocationRepository(BaseRepository[LocationORM]):
                 stack.append(child_id)
         return out
 
+    def city_name_by_location(self) -> dict[str, str]:
+        """``location_id`` → name of its nearest ``city`` ancestor (itself included).
+
+        Properties hang off mixed levels (barrio, localidad, city). The inventory
+        export rolls every row up to its city with this single lookup instead of
+        walking ``parent`` per property.
+        """
+        rows = self.db.execute(
+            select(LocationORM.id, LocationORM.parent_id, LocationORM.level, LocationORM.name)
+        ).all()
+        by_id = {row.id: row for row in rows}
+
+        cities: dict[str, str] = {}
+        for row in rows:
+            node = row
+            seen: set[str] = set()
+            while node is not None and node.level != "city" and node.id not in seen:
+                seen.add(node.id)
+                node = by_id.get(node.parent_id)
+            if node is not None and node.level == "city":
+                cities[row.id] = node.name
+        return cities
+
     def featured_cities(self, limit: int = 8) -> list[tuple[LocationORM, int, str | None]]:
         """City-level locations ranked by published-property count (subtree), each
         with a representative cover image.
