@@ -44,6 +44,8 @@ from src.virtual_tour import (
 
 router = APIRouter(tags=["virtual-tours"])
 
+from src.api.routers.tour_billing import require_active_credit  # noqa: E402
+
 # Tope duro de escenas por tour (006: el producto vendido es un tour de hasta 10 escenas).
 MAX_SCENES_PER_TOUR = 10
 
@@ -240,6 +242,7 @@ def update_tour(
     tour = repo.get_for_entity(entity, entity_id)
     if not tour:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Tour not found")
+    require_active_credit(db, entity, entity_id, tour)
     if body.ai_disclaimer_ack is not None:
         tour.ai_disclaimer_ack = body.ai_disclaimer_ack
     if "start_scene_id" in body.model_fields_set:
@@ -280,6 +283,7 @@ async def upload_scene(
     tour = repo.get_for_entity(entity, entity_id)
     if not tour:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Tour not found")
+    require_active_credit(db, entity, entity_id, tour)
     _assert_scene_capacity(tour)
     raw = await file.read(MAX_PANO_BYTES + 1)
     try:
@@ -323,6 +327,7 @@ def update_scene(
     entity = "properties" if scene.tour.property_id else "projects"
     entity_id = scene.tour.property_id or scene.tour.project_id
     _guard_parent(entity, entity_id, current_user, db)
+    require_active_credit(db, entity, entity_id, scene.tour)
     for key, value in body.model_dump(exclude_unset=True).items():
         setattr(scene, key, value)
     scene.tour.status = "draft"
@@ -339,6 +344,7 @@ def delete_scene(scene_id: str, current_user: CurrentUser, db: DB):
     tour = scene.tour
     entity = "properties" if tour.property_id else "projects"
     _guard_parent(entity, tour.property_id or tour.project_id, current_user, db)
+    require_active_credit(db, entity, tour.property_id or tour.project_id, tour)
     db.query(VirtualTourHotspotORM).filter(
         (VirtualTourHotspotORM.from_scene_id == scene_id)
         | (VirtualTourHotspotORM.to_scene_id == scene_id)
@@ -368,6 +374,7 @@ def reorder_scenes(
     tour = repo.get_for_entity(entity, entity_id)
     if not tour:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Tour not found")
+    require_active_credit(db, entity, entity_id, tour)
     scene_map = {scene.id: scene for scene in tour.scenes}
     if set(body.ordered_ids) != set(scene_map) or len(body.ordered_ids) != len(scene_map):
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "ordered_ids must contain every scene once")
@@ -392,6 +399,7 @@ def replace_hotspots(
     tour = scene.tour
     entity = "properties" if tour.property_id else "projects"
     _guard_parent(entity, tour.property_id or tour.project_id, current_user, db)
+    require_active_credit(db, entity, tour.property_id or tour.project_id, tour)
     valid_ids = {item.id for item in tour.scenes if item.id != scene_id}
     for hotspot in body.hotspots:
         if hotspot.to_scene_id not in valid_ids:
@@ -442,6 +450,7 @@ def generate_scene(
     tour = repo.get_for_entity(entity, entity_id)
     if not tour:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Tour not found")
+    require_active_credit(db, entity, entity_id, tour)
     _assert_scene_capacity(tour)
     _validate_source_images(entity, entity_id, body.source_image_ids, db)
     seam_pass = body.seam_pass or os.getenv("TOUR_SEAM_PASS", "0") == "1"

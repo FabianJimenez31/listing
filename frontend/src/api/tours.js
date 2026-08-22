@@ -53,6 +53,10 @@ export const confirmBillingPayment = (reference, transactionId) =>
   api.post('/tour-billing/confirm', { reference, transaction_id: transactionId })
     .then((r) => r.data)
 
+export const getCreditStatus = (entity, entityId) =>
+  api.get('/tour-billing/credit-status', { params: { entity_type: entity, entity_id: entityId } })
+    .then((r) => r.data)
+
 export function openWompiWidget(intent) {
   return new Promise((resolve, reject) => {
     const attach = () => {

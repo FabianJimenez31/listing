@@ -38,6 +38,11 @@ antes del lanzamiento quedan como estan (abuelados).
   deshabilitada con aviso claro y los pagos no se ofrecen (rollout seguro).
 - **FR-609**: Pagos pendientes pueden pagarse despues (misma referencia); pagos rechazados
   permiten reintentar con nueva referencia.
+- **FR-610** (decision del dueno, 2026-08-22): con facturacion activa, TODA mutacion de
+  un tour (subir/editar/borrar/reordenar escenas, hotspots, publicar) exige credito
+  aprobado vigente para la entidad — incluidos los tours pre-existentes al lanzamiento,
+  que dejan de estar abuelados. Lectura permanece abierta. Un pago unico cubre creacion
+  y las hasta 10 escenas del tour.
 
 ## Non-functional
 

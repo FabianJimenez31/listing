@@ -14,11 +14,13 @@ from datetime import datetime, timezone
 
 import httpx
 from fastapi import APIRouter, Header, HTTPException, Request, status
+from sqlalchemy import or_
 
 from src.api.deps import CurrentUser, DB
 from src.db.models.project_models import ProjectORM
 from src.db.models.property_models import PropertyORM
 from src.db.models.tour_payment_models import TourPaymentORM
+from src.repositories.virtual_tour_repo import VirtualTourRepository
 
 router = APIRouter(tags=["tour-billing"])
 
@@ -76,6 +78,43 @@ def _unconsumed_payment(db, entity_type: str, entity_id: str):
         )
         .first()
     )
+
+
+def active_credit_exists(db, entity_type: str, entity_id: str, tour_id: str | None) -> bool:
+    """Credito vigente para la entidad: aprobado y sin gastar o ligado a su tour."""
+    if not billing_enabled():
+        return True
+    return (
+        db.query(TourPaymentORM)
+        .filter(
+            TourPaymentORM.entity_type == entity_type,
+            TourPaymentORM.entity_id == entity_id,
+            TourPaymentORM.status == "approved",
+            or_(TourPaymentORM.tour_id.is_(None), TourPaymentORM.tour_id == tour_id),
+        )
+        .first()
+        is not None
+    )
+
+
+def require_active_credit(db, entity_type: str, entity_id: str, tour) -> None:
+    """FR-610: toda mutacion de un tour exige credito activo (viejos incluidos)."""
+    tour_id = getattr(tour, "id", None)
+    if not active_credit_exists(db, entity_type, entity_id, tour_id):
+        raise HTTPException(
+            status.HTTP_402_PAYMENT_REQUIRED,
+            "Este tour requiere activacion ($50.000 COP)",
+        )
+
+
+@router.get("/tour-billing/credit-status")
+def credit_status(entity_type: str, entity_id: str, current_user: CurrentUser, db: DB):
+    _guard_entity(entity_type, entity_id, current_user, db)
+    repo_tour = VirtualTourRepository(db).get_for_entity(entity_type, entity_id)
+    active = active_credit_exists(
+        db, entity_type, entity_id, repo_tour.id if repo_tour else None
+    )
+    return {"active": active}
 
 
 @router.get("/tour-billing/config")

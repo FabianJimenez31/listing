@@ -1,12 +1,15 @@
 """Tests for Wompi-backed tour billing and the paid-tour gate."""
 from __future__ import annotations
 
+import asyncio
 import hashlib
+import io
 import uuid
 from types import SimpleNamespace
 
 import pytest
 from fastapi import HTTPException
+from PIL import Image
 
 from src.api.routers.tour_billing import (
     event_signature_valid,
@@ -20,6 +23,20 @@ from src.api.routers.virtual_tours import (
 )
 from src.db.models.property_models import PropertyORM
 from src.db.models.tour_payment_models import TourPaymentORM
+
+
+class _MemoryUpload:
+    def __init__(self, content: bytes) -> None:
+        self._content = content
+
+    async def read(self, size: int = -1) -> bytes:
+        return self._content if size < 0 else self._content[:size]
+
+
+def _pano() -> bytes:
+    output = io.BytesIO()
+    Image.new("RGB", (800, 400), (20, 80, 140)).save(output, format="JPEG")
+    return output.getvalue()
 
 
 def test_price_defaults_to_50k_cop_in_cents(monkeypatch):
@@ -127,3 +144,80 @@ def test_scene_capacity_rejects_the_eleventh_scene():
     with pytest.raises(HTTPException) as exc:
         _assert_scene_capacity(tour)
     assert exc.value.status_code == 422
+
+
+def _legacy_tour(db, prop) -> str:
+    from src.db.models.virtual_tour_models import VirtualTourORM
+
+    tour_id = str(uuid.uuid4())
+    db.add(VirtualTourORM(
+        id=tour_id, property_id=prop.id, project_id=None, status="draft",
+    ))
+    db.commit()
+    return tour_id
+
+
+def _approve_credit(db, user, prop, tour_id=None):
+    db.add(TourPaymentORM(
+        id=str(uuid.uuid4()), user_id=user.id, entity_type="properties",
+        entity_id=prop.id, amount_in_cents=5_000_000, currency="COP",
+        status="approved", reference=f"tour-{uuid.uuid4().hex[:16]}",
+        tour_id=tour_id,
+    ))
+    db.commit()
+
+
+def test_legacy_tour_blocks_upload_until_paid(db_session, agent_user, monkeypatch):
+    _enable_billing(monkeypatch)
+    from src.api.routers.virtual_tours import upload_scene
+
+    prop = _make_property(db_session, agent_user.id)
+    tour_id = _legacy_tour(db_session, prop)
+
+    with pytest.raises(HTTPException) as exc:
+        asyncio.run(upload_scene(
+            "properties", prop.id, agent_user, db_session,
+            file=_MemoryUpload(_pano()), title="Sala", hfov_deg=360, vfov_deg=180,
+        ))
+    assert exc.value.status_code == 402
+
+    _approve_credit(db_session, agent_user, prop)
+    scene = asyncio.run(upload_scene(
+        "properties", prop.id, agent_user, db_session,
+        file=_MemoryUpload(_pano()), title="Sala", hfov_deg=360, vfov_deg=180,
+    ))
+    assert scene.state == "ready"
+    assert tour_id  # el tour sigue intacto
+
+
+def test_publish_blocked_without_credit(db_session, agent_user, monkeypatch):
+    _enable_billing(monkeypatch)
+    from src.api.routers.virtual_tours import update_tour
+    from src.db.models.virtual_tour_models import VirtualTourSceneORM
+    from src.schemas.virtual_tour_schemas import TourUpdateRequest
+
+    prop = _make_property(db_session, agent_user.id)
+    tour_id = _legacy_tour(db_session, prop)
+    with pytest.raises(HTTPException) as exc:
+        update_tour("properties", prop.id, TourUpdateRequest(status="published"), agent_user, db_session)
+    assert exc.value.status_code == 402
+
+    _approve_credit(db_session, agent_user, prop, tour_id=tour_id)
+    db_session.add(VirtualTourSceneORM(
+        id=str(uuid.uuid4()), tour_id=tour_id, title="Sala", position=0,
+        source="upload", state="ready", width=800, height=400,
+        hfov_deg=360, vfov_deg=180, pano_url="https://cdn.test/sala.webp",
+    ))
+    db_session.commit()
+    published = update_tour("properties", prop.id, TourUpdateRequest(status="published"), agent_user, db_session)
+    assert published.status == "published"
+
+
+def test_active_credit_exists_states(db_session, agent_user, monkeypatch):
+    _enable_billing(monkeypatch)
+    from src.api.routers.tour_billing import active_credit_exists
+
+    prop = _make_property(db_session, agent_user.id)
+    assert active_credit_exists(db_session, "properties", prop.id, None) is False
+    _approve_credit(db_session, agent_user, prop)
+    assert active_credit_exists(db_session, "properties", prop.id, None) is True

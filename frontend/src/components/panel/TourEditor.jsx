@@ -7,6 +7,7 @@ import {
   generateTourScene,
   getAdminTour,
   getBillingConfig,
+  getCreditStatus,
   getTourProvider,
   openWompiWidget,
   reorderTourScenes,
@@ -46,6 +47,7 @@ export default function TourEditor({ entity, entityId, galleryImages = [] }) {
   const [seamPass, setSeamPass] = useState(false)
   const [ack, setAck] = useState(false)
   const [billing, setBilling] = useState(null)
+  const [creditActive, setCreditActive] = useState(true)
 
   const load = () => getAdminTour(entity, entityId)
     .then((data) => { setTour(data); setAck(data.ai_disclaimer_ack) })
@@ -56,6 +58,12 @@ export default function TourEditor({ entity, entityId, galleryImages = [] }) {
       .finally(() => setLoading(false))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entity, entityId])
+
+  useEffect(() => {
+    if (!billing?.enabled) return
+    getCreditStatus(entity, entityId).then((r) => setCreditActive(r.active)).catch(() => {})
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [billing?.enabled, entity, entityId])
 
   useEffect(() => {
     if (!tour?.scenes?.some((scene) => scene.state === 'pending')) return undefined
@@ -72,7 +80,8 @@ export default function TourEditor({ entity, entityId, galleryImages = [] }) {
 
   const startTour = () => run(async () => setTour(await createTour(entity, entityId)))
 
-  // Flujo de pago (006): intent -> widget Wompi -> confirmacion -> crear tour.
+  // Flujo de pago (006): intent -> widget Wompi -> confirmacion. Sirve tanto para
+  // crear un tour nuevo como para activar uno existente sin credito.
   const payAndCreate = async () => {
     setBusy(true)
     setError(null)
@@ -80,11 +89,14 @@ export default function TourEditor({ entity, entityId, galleryImages = [] }) {
       const intent = await createBillingIntent(entity, entityId)
       if (intent.already_paid) {
         setTour(await createTour(entity, entityId))
+        setCreditActive(true)
         return
       }
       const transaction = await openWompiWidget(intent)
       await confirmBillingPayment(intent.reference, transaction?.id)
-      setTour(await createTour(entity, entityId))
+      if (!tour) setTour(await createTour(entity, entityId))
+      else await load()
+      setCreditActive(true)
     } catch (err) {
       setError(err?.message || apiMessage(err))
     } finally {
@@ -156,8 +168,32 @@ export default function TourEditor({ entity, entityId, galleryImages = [] }) {
   }))
 
   if (loading) return <div className="tour-editor admin-card">Cargando Tour 360…</div>
+  const price = billing?.amount_in_cents ? formatCop(billing.amount_in_cents) : '$50.000'
+
+  if (tour && billing?.enabled && !creditActive) {
+    return (
+      <section className="tour-editor admin-card">
+        <h3>Tour 360</h3>
+        {error && <p className="tour-error">{error}</p>}
+        <div className="tour-paywall">
+          <div className="tour-paywall-price">
+            <strong>{price}</strong>
+            <span> activación única de este tour</span>
+          </div>
+          <ul>
+            <li>{tour.scenes.length} escenas actuales · hasta 10</li>
+            <li>Desbloquea edición, IA y publicación</li>
+          </ul>
+          <button type="button" className="btn btn-blue" disabled={busy} onClick={payAndCreate}>
+            {busy ? 'Abriendo pasarela…' : `Activar por ${price}`}
+          </button>
+          <small>Pago seguro procesado por Wompi · PSE, tarjetas, Nequi</small>
+        </div>
+      </section>
+    )
+  }
+
   if (!tour) {
-    const price = billing?.amount_in_cents ? formatCop(billing.amount_in_cents) : '$50.000'
     if (billing?.enabled) {
       return (
         <section className="tour-editor admin-card">
