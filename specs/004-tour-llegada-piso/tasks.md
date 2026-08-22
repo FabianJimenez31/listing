@@ -24,6 +24,11 @@ Convencion: `[x]` hecho · `[/]` en curso · `[ ]` pendiente.
       4 escenas quedaban sin flecha).
 - [x] T-206 `TourViewer.jsx`: fallback anti-escena-sin-flecha — sin enlace al siguiente,
       se sintetiza "continuar derecho" (opuesto a la puerta de llegada).
+- [x] T-207 UI renovada (FR-408): pestañas segmented control, visor con esquinas,
+      sombra y scrim inferior, controles glassmorphism con contador de escena (n/total),
+      boton fullscreen circular, navbar PSV integrada, hover states en el editor.
+- [x] T-208 Aviso publico "generado con IA" retirado del visor (decision de producto
+      que sustituye FR-223 de 002); el acuse interno previo a publicar se mantiene.
 
 ## Fase 3 — Cierre
 

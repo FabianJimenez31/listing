@@ -7,7 +7,6 @@ import '@photo-sphere-viewer/core/index.css'
 import '@photo-sphere-viewer/gallery-plugin/index.css'
 import '@photo-sphere-viewer/markers-plugin/index.css'
 import '@photo-sphere-viewer/virtual-tour-plugin/index.css'
-import TourAiNotice from './TourAiNotice'
 import '../../styles/tour.css'
 
 function panoData(scene) {
@@ -153,13 +152,16 @@ export default function TourViewer({ tour }) {
   return (
     <div ref={shellRef} className="tour-viewer-shell">
       <div ref={containerRef} className="tour-viewer" />
-      {current?.source === 'ai' && <TourAiNotice />}
-      <button type="button" className="tour-fullscreen" onClick={enterFullscreen}>⛶ Pantalla completa</button>
+      <div className="tour-scrim" aria-hidden="true" />
+      <button type="button" className="tour-fullscreen" onClick={enterFullscreen} title="Pantalla completa" aria-label="Pantalla completa">⛶</button>
       {ordered.length > 1 && (
         <div className="tour-step-controls">
-          <button type="button" onClick={() => move(-1)}>← Anterior</button>
-          <strong>{current?.title}</strong>
-          <button type="button" onClick={() => move(1)}>Siguiente →</button>
+          <button type="button" className="tour-step-btn" onClick={() => move(-1)} aria-label="Anterior">←</button>
+          <div className="tour-step-meta">
+            <strong>{current?.title}</strong>
+            <span>{ordered.findIndex((scene) => scene.id === currentId) + 1} / {ordered.length}</span>
+          </div>
+          <button type="button" className="tour-step-btn" onClick={() => move(1)} aria-label="Siguiente">→</button>
         </div>
       )}
     </div>

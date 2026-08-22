@@ -77,6 +77,10 @@ la misma altura (banda de piso) y difieren en yaw.
   siguiente en el orden definido (posicion+1, con vuelta al inicio en la ultima). Las demas
   conexiones siguen navegables via botones Anterior/Siguiente y galeria. La orientacion de
   llegada sigue usando el grafo completo de hotspots, no el subconjunto mostrado.
+- **FR-408**: La UI del visor DEBE renovarse (controles glassmorphism, contador de escena,
+  pestañas tipo segmented control, scrim inferior) y el aviso publico "contenido generado por
+  IA" se RETIRA. Esta decision de producto sustituye el aviso permanente de 002 (FR-223);
+  el acuse interno previo a publicacion (FR-216 de 002) se mantiene.
 
 ## Open Questions
 
