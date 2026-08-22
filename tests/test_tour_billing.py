@@ -221,3 +221,24 @@ def test_active_credit_exists_states(db_session, agent_user, monkeypatch):
     assert active_credit_exists(db_session, "properties", prop.id, None) is False
     _approve_credit(db_session, agent_user, prop)
     assert active_credit_exists(db_session, "properties", prop.id, None) is True
+
+
+def test_credit_status_allows_staff_with_permission_not_owner(db_session, monkeypatch):
+    """Regression FR-610: staff con permiso pero sin ser dueno no debe recibir 403."""
+    _enable_billing(monkeypatch)
+    from src.api.routers.tour_billing import credit_status
+    from tests.conftest import _make_role, _make_user
+
+    other_owner = _make_user(db_session, "owner-billing@test.local")
+    prop = _make_property(db_session, other_owner.id)
+    tour_id = _legacy_tour(db_session, prop)
+
+    role = _make_role(db_session, "moderator", ["property:moderate"])
+    staff = _make_user(db_session, "staff-billing@test.local", roles=[role])
+
+    result = credit_status("properties", prop.id, staff, db_session)
+    assert result["active"] is False
+
+    _approve_credit(db_session, other_owner, prop, tour_id=tour_id)
+    result = credit_status("properties", prop.id, staff, db_session)
+    assert result["active"] is True

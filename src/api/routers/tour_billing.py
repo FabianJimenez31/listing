@@ -17,8 +17,6 @@ from fastapi import APIRouter, Header, HTTPException, Request, status
 from sqlalchemy import or_
 
 from src.api.deps import CurrentUser, DB
-from src.db.models.project_models import ProjectORM
-from src.db.models.property_models import PropertyORM
 from src.db.models.tour_payment_models import TourPaymentORM
 from src.repositories.virtual_tour_repo import VirtualTourRepository
 
@@ -57,14 +55,15 @@ def integrity_signature(reference: str, amount_in_cents: int, currency: str) -> 
 
 
 def _guard_entity(entity_type: str, entity_id: str, current_user: CurrentUser, db) -> None:
-    model = PropertyORM if entity_type == "properties" else ProjectORM
-    owner_column = model.owner_id if hasattr(model, "owner_id") else model.agency_id
-    obj = db.query(model).filter(model.id == entity_id).first()
-    if not obj:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Entidad no encontrada")
-    is_staff = getattr(current_user, "role", None) in ("admin", "staff")
-    if not is_staff and getattr(obj, owner_column.key, None) != current_user.id:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, "No autorizado")
+    """Autorizacion unificada con el resto del modulo de tours.
+
+    Import diferido a proposito: virtual_tours ya importa require_active_credit
+    desde aqui a nivel de modulo, y delegar en _guard_parent reutiliza la misma
+    logica de dueno/permisos que funciona en todo el editor.
+    """
+    from src.api.routers.virtual_tours import _guard_parent
+
+    _guard_parent(entity_type, entity_id, current_user, db)
 
 
 def _unconsumed_payment(db, entity_type: str, entity_id: str):
