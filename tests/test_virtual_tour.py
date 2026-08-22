@@ -1,4 +1,7 @@
 """Unit tests for virtual-tour domain invariants."""
+import math
+
+from pydantic import ValidationError
 import pytest
 
 from src.virtual_tour import (
@@ -48,3 +51,26 @@ def test_valid_equirectangular_aspects(width, height):
 def test_invalid_equirectangular_aspect():
     with pytest.raises(TourValidationError, match="2:1"):
         validate_equirectangular_aspect(1920, 1080)
+
+
+def test_hotspot_input_accepts_angles_in_range():
+    from src.schemas.virtual_tour_schemas import HotspotInput
+
+    spot = HotspotInput(to_scene_id="sala", yaw=3.0, pitch=-1.4)
+    assert spot.yaw == 3.0
+    assert spot.pitch == -1.4
+
+
+@pytest.mark.parametrize("field,value", [
+    ("yaw", math.pi + 0.01),
+    ("yaw", -math.pi - 0.01),
+    ("pitch", math.pi / 2 + 0.01),
+    ("pitch", -math.pi / 2 - 0.01),
+])
+def test_hotspot_input_rejects_angles_out_of_range(field, value):
+    from src.schemas.virtual_tour_schemas import HotspotInput
+
+    payload = {"to_scene_id": "sala", "yaw": 0.0, "pitch": 0.0}
+    payload[field] = value
+    with pytest.raises(ValidationError):
+        HotspotInput(**payload)

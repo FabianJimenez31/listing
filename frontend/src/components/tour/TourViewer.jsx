@@ -35,6 +35,19 @@ export default function TourViewer({ tour }) {
   const current = ordered.find((scene) => scene.id === currentId) || ordered[0]
 
   useEffect(() => {
+    if (!ordered.length) return undefined
+    // Precarga total del tour: todas las panoramicas se piden al montar para que
+    // la navegacion posterior no descargue nada en vivo (FR-301/FR-302 del spec).
+    const warm = ordered.map((scene) => {
+      const img = new Image()
+      img.decoding = 'async'
+      img.src = scene.pano_url
+      return img
+    })
+    return () => { warm.length = 0 }
+  }, [ordered])
+
+  useEffect(() => {
     if (!containerRef.current || !ordered.length) return undefined
     const nodes = ordered.map((scene) => ({
       id: scene.id,
@@ -47,6 +60,7 @@ export default function TourViewer({ tour }) {
       links: scene.hotspots.map((spot) => ({
         nodeId: spot.to_scene_id,
         position: { yaw: spot.yaw, pitch: spot.pitch },
+        preload: true,
         data: { label: spot.label },
       })),
     }))

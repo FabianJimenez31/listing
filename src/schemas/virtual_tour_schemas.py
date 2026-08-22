@@ -1,6 +1,7 @@
 """Pydantic contracts for the virtual-tour API."""
 from __future__ import annotations
 
+import math
 from decimal import Decimal
 from typing import Literal
 
@@ -68,8 +69,8 @@ class SceneReorderRequest(BaseModel):
 
 class HotspotInput(BaseModel):
     to_scene_id: str
-    yaw: float
-    pitch: float
+    yaw: float = Field(ge=-math.pi, le=math.pi)
+    pitch: float = Field(ge=-math.pi / 2, le=math.pi / 2)
     label: str | None = Field(None, max_length=120)
 
 
