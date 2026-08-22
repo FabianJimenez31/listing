@@ -31,6 +31,6 @@ Convencion: `[x]` hecho · `[/]` en curso · `[ ]` pendiente.
 
 - [x] T-401 `npm run build` verde en `frontend/`.
 - [x] T-402 Suite pytest completa verde (unit + integration).
-- [/] T-403 Verificacion manual AC-1/AC-2 con el tour demo publicado.
-- [ ] T-404 Deploy: `docker compose build frontend backend` → `up -d frontend backend`.
-- [ ] T-405 Verificar el bundle servido segun CLAUDE.md.
+- [ ] T-403 Verificacion manual AC-1/AC-2 con el tour demo publicado.
+- [x] T-404 Deploy: `docker compose build frontend backend` → `up -d frontend backend`.
+- [x] T-405 Verificar el bundle servido segun CLAUDE.md.
