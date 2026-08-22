@@ -30,6 +30,7 @@ from src.api.routers import (
     seo,
     settings,
     users,
+    tour_billing,
     virtual_tours,
 )
 from src.middleware.rate_limit import RateLimitMiddleware
@@ -97,6 +98,7 @@ def create_app() -> FastAPI:
     app.include_router(admin.router, prefix=_API_PREFIX)
     app.include_router(metrics.router, prefix=_API_PREFIX)
     app.include_router(exports.router, prefix=_API_PREFIX)
+    app.include_router(tour_billing.router, prefix=_API_PREFIX)
 
     app.include_router(settings.router, prefix=_API_PREFIX)
 

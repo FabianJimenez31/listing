@@ -1,10 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import {
+  confirmBillingPayment,
+  createBillingIntent,
   createTour,
   deleteTourScene,
   generateTourScene,
   getAdminTour,
+  getBillingConfig,
   getTourProvider,
+  openWompiWidget,
   reorderTourScenes,
   replaceTourHotspots,
   updateTour,
@@ -41,13 +45,14 @@ export default function TourEditor({ entity, entityId, galleryImages = [] }) {
   const [selectedImages, setSelectedImages] = useState([])
   const [seamPass, setSeamPass] = useState(false)
   const [ack, setAck] = useState(false)
+  const [billing, setBilling] = useState(null)
 
   const load = () => getAdminTour(entity, entityId)
     .then((data) => { setTour(data); setAck(data.ai_disclaimer_ack) })
     .catch((err) => { if (err.response?.status !== 404) setError(apiMessage(err)) })
 
   useEffect(() => {
-    Promise.all([load(), getTourProvider().then(setProvider).catch(() => null)])
+    Promise.all([load(), getTourProvider().then(setProvider).catch(() => null), getBillingConfig().then(setBilling).catch(() => null)])
       .finally(() => setLoading(false))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entity, entityId])
@@ -66,6 +71,28 @@ export default function TourEditor({ entity, entityId, galleryImages = [] }) {
   }
 
   const startTour = () => run(async () => setTour(await createTour(entity, entityId)))
+
+  // Flujo de pago (006): intent -> widget Wompi -> confirmacion -> crear tour.
+  const payAndCreate = async () => {
+    setBusy(true)
+    setError(null)
+    try {
+      const intent = await createBillingIntent(entity, entityId)
+      if (intent.already_paid) {
+        setTour(await createTour(entity, entityId))
+        return
+      }
+      const transaction = await openWompiWidget(intent)
+      await confirmBillingPayment(intent.reference, transaction?.id)
+      setTour(await createTour(entity, entityId))
+    } catch (err) {
+      setError(err?.message || apiMessage(err))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const formatCop = (cents) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(cents / 100)
 
   const upload = async (event) => {
     const file = event.target.files?.[0]
@@ -131,12 +158,38 @@ export default function TourEditor({ entity, entityId, galleryImages = [] }) {
 
   if (loading) return <div className="tour-editor admin-card">Cargando Tour 360…</div>
   if (!tour) {
+    const price = billing?.amount_in_cents ? formatCop(billing.amount_in_cents) : '$50.000'
+    if (billing?.enabled) {
+      return (
+        <section className="tour-editor admin-card">
+          <h3>Tour 360</h3>
+          <p>Recorrido 360 por ambientes con flechas de navegación. Hasta 10 escenas; cada una puede subirse en 2:1 o generarse con IA.</p>
+          {error && <p className="tour-error">{error}</p>}
+          <div className="tour-paywall">
+            <div className="tour-paywall-price">
+              <strong>{price}</strong>
+              <span> pago único por tour</span>
+            </div>
+            <ul>
+              <li>Hasta 10 escenas 360°</li>
+              <li>Flechas de navegación estilo Matterport</li>
+              <li>Publicación directa en tu ficha</li>
+            </ul>
+            <button type="button" className="btn btn-blue" disabled={busy} onClick={payAndCreate}>
+              {busy ? 'Abriendo pasarela…' : `Pagar ${price} y crear tour`}
+            </button>
+            <small>Pago seguro procesado por Wompi · PSE, tarjetas, Nequi</small>
+          </div>
+        </section>
+      )
+    }
     return (
       <section className="tour-editor admin-card">
         <h3>Tour 360</h3>
         <p>Crea recorridos por ambientes con panorámicas y hotspots.</p>
         {error && <p className="tour-error">{error}</p>}
         <button type="button" className="btn btn-blue btn-sm" disabled={busy} onClick={startTour}>Crear tour</button>
+        {!billing && <small style={{ display: 'block', marginTop: 8, color: 'var(--muted)' }}>La creación de tours está temporalmente limitada mientras se activa la pasarela de pagos.</small>}
       </section>
     )
   }

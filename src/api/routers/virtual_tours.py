@@ -44,6 +44,17 @@ from src.virtual_tour import (
 
 router = APIRouter(tags=["virtual-tours"])
 
+# Tope duro de escenas por tour (006: el producto vendido es un tour de hasta 10 escenas).
+MAX_SCENES_PER_TOUR = 10
+
+
+def _assert_scene_capacity(tour: VirtualTourORM) -> None:
+    if len(tour.scenes) >= MAX_SCENES_PER_TOUR:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
+            f"El tour alcanzo su maximo de {MAX_SCENES_PER_TOUR} escenas",
+        )
+
 
 def _entity_or_404(entity: str) -> str:
     if entity not in {"properties", "projects"}:
@@ -189,6 +200,19 @@ def create_tour(entity: str, entity_id: str, current_user: CurrentUser, db: DB):
     existing = repo.get_for_entity(entity, entity_id)
     if existing:
         return _tour_response(existing)
+
+    # Monetizacion (006): todo tour nuevo requiere un pago aprobado sin consumir.
+    from src.api.routers.tour_billing import _unconsumed_payment, billing_enabled
+
+    payment = None
+    if billing_enabled():
+        payment = _unconsumed_payment(db, entity, entity_id)
+        if not payment:
+            raise HTTPException(
+                status.HTTP_402_PAYMENT_REQUIRED,
+                "Este tour requiere el pago de creacion ($50.000 COP)",
+            )
+
     tour = VirtualTourORM(
         id=str(uuid.uuid4()),
         property_id=entity_id if entity == "properties" else None,
@@ -196,6 +220,8 @@ def create_tour(entity: str, entity_id: str, current_user: CurrentUser, db: DB):
         status="draft",
     )
     db.add(tour)
+    if payment is not None:
+        payment.tour_id = tour.id
     db.commit()
     return _tour_response(repo.get_for_entity(entity, entity_id))
 
@@ -253,6 +279,7 @@ async def upload_scene(
     tour = repo.get_for_entity(entity, entity_id)
     if not tour:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Tour not found")
+    _assert_scene_capacity(tour)
     raw = await file.read(MAX_PANO_BYTES + 1)
     try:
         assets = build_pano_assets(raw)
@@ -414,6 +441,7 @@ def generate_scene(
     tour = repo.get_for_entity(entity, entity_id)
     if not tour:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Tour not found")
+    _assert_scene_capacity(tour)
     _validate_source_images(entity, entity_id, body.source_image_ids, db)
     seam_pass = body.seam_pass or os.getenv("TOUR_SEAM_PASS", "0") == "1"
     scene_id = str(uuid.uuid4())

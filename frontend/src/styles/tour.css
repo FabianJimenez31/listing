@@ -74,6 +74,13 @@
 .hotspot-warning { margin: 8px 0 0 !important; color: #b91c1c; font-size: 12px; font-weight: 700; }
 .hotspot-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
 
+/* ── Paywall de creacion de tours (006) ───────────────────────────────── */
+.tour-paywall { margin-top: 14px; padding: 18px; border: 1px solid var(--line); border-radius: 14px; background: linear-gradient(180deg, #fff, var(--bg-soft, #f5f7fb)); display: flex; flex-direction: column; gap: 12px; max-width: 420px; }
+.tour-paywall-price strong { font-size: 30px; font-weight: 800; letter-spacing: -.02em; }
+.tour-paywall-price span { color: var(--muted); font-size: 13px; }
+.tour-paywall ul { margin: 0; padding-left: 18px; color: var(--muted); font-size: 13px; display: grid; gap: 4px; }
+.tour-paywall small { color: var(--muted); }
+
 @media (max-width: 760px) {
   .tour-viewer { min-height: 330px; height: 55vh; }
   .tour-step-controls { width: calc(100% - 24px); justify-content: space-between; }

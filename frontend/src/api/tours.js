@@ -42,3 +42,37 @@ export const getTourProvider = () => api.get('/tour/provider').then((r) => r.dat
 
 export const getTourSceneStatus = (sceneId) =>
   api.get(`/tour/scenes/${sceneId}/status`).then((r) => r.data)
+
+// ── Billing (006) ────────────────────────────────────────────────────────
+export const getBillingConfig = () => api.get('/tour-billing/config').then((r) => r.data)
+
+export const createBillingIntent = (entity, entityId) =>
+  api.post('/tour-billing/intent', { entity_type: entity, entity_id: entityId }).then((r) => r.data)
+
+export const confirmBillingPayment = (reference, transactionId) =>
+  api.post('/tour-billing/confirm', { reference, transaction_id: transactionId })
+    .then((r) => r.data)
+
+export function openWompiWidget(intent) {
+  return new Promise((resolve, reject) => {
+    const attach = () => {
+      try {
+        const checkout = new window.WidgetCheckoutCheckout({
+          currency: intent.currency,
+          amountInCents: String(intent.amount_in_cents),
+          reference: intent.reference,
+          publicKey: intent.public_key,
+          integrity: intent.integrity,
+          redirectUrl: `${window.location.origin}${window.location.pathname}`,
+        })
+        checkout.open((result) => resolve(result?.transaction || null))
+      } catch (error) { reject(error) }
+    }
+    if (window.WidgetCheckoutCheckout) { attach(); return }
+    const script = document.createElement('script')
+    script.src = 'https://cdn.wompi.co/widget/js/v2.js'
+    script.onload = attach
+    script.onerror = () => reject(new Error('No se pudo cargar el widget de pagos'))
+    document.head.appendChild(script)
+  })
+}
