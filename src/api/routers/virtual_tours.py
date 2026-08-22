@@ -205,10 +205,10 @@ def create_tour(entity: str, entity_id: str, current_user: CurrentUser, db: DB):
         return _tour_response(existing)
 
     # Monetizacion (006): todo tour nuevo requiere un pago aprobado sin consumir.
-    from src.api.routers.tour_billing import _unconsumed_payment, billing_enabled
+    from src.api.routers.tour_billing import _unconsumed_payment, billing_enabled, entity_exempt
 
     payment = None
-    if billing_enabled():
+    if billing_enabled() and not entity_exempt(entity_id):
         payment = _unconsumed_payment(db, entity, entity_id)
         if not payment:
             raise HTTPException(

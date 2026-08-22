@@ -242,3 +242,16 @@ def test_credit_status_allows_staff_with_permission_not_owner(db_session, monkey
     _approve_credit(db_session, other_owner, prop, tour_id=tour_id)
     result = credit_status("properties", prop.id, staff, db_session)
     assert result["active"] is True
+
+
+def test_exempt_entity_creates_tour_without_payment(db_session, agent_user, monkeypatch):
+    _enable_billing(monkeypatch)
+    from src.api.routers.tour_billing import entity_exempt
+
+    prop = _make_property(db_session, agent_user.id)
+    monkeypatch.setenv("TOUR_BILLING_EXEMPT_IDS", prop.id)
+    assert entity_exempt(prop.id) is True
+    assert entity_exempt("otro-id") is False
+
+    tour = create_tour("properties", prop.id, agent_user, db_session)
+    assert tour.status == "draft"

@@ -43,6 +43,14 @@ def billing_enabled() -> bool:
     return bool(_env("WOMPI_PUBLIC_KEY")) and bool(_env("WOMPI_INTEGRITY_SECRET"))
 
 
+def entity_exempt(entity_id: str | None) -> bool:
+    """Entidades de vitrina/demo excluidas del cobro (TOUR_BILLING_EXEMPT_IDS)."""
+    if not entity_id:
+        return False
+    exempt = {item.strip() for item in _env("TOUR_BILLING_EXEMPT_IDS").split(",") if item.strip()}
+    return entity_id in exempt
+
+
 def wompi_base() -> str:
     return WOMPI_API.get(_env("WOMPI_ENV", "production"), WOMPI_API["production"])
 
@@ -81,7 +89,7 @@ def _unconsumed_payment(db, entity_type: str, entity_id: str):
 
 def active_credit_exists(db, entity_type: str, entity_id: str, tour_id: str | None) -> bool:
     """Credito vigente para la entidad: aprobado y sin gastar o ligado a su tour."""
-    if not billing_enabled():
+    if not billing_enabled() or entity_exempt(entity_id):
         return True
     return (
         db.query(TourPaymentORM)

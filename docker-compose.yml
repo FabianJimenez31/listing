@@ -62,6 +62,7 @@ services:
       WOMPI_EVENTS_SECRET: ${WOMPI_EVENTS_SECRET:-}
       WOMPI_ENV: ${WOMPI_ENV:-production}
       TOUR_PRICE_COP: ${TOUR_PRICE_COP:-50000}
+      TOUR_BILLING_EXEMPT_IDS: ${TOUR_BILLING_EXEMPT_IDS:-}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@proppietario.com}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-Admin1234!}
       # Email 2FA (off by default — turn on only once SMTP is configured & tested)
