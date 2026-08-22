@@ -61,20 +61,22 @@ export function openWompiWidget(intent) {
   return new Promise((resolve, reject) => {
     const attach = () => {
       try {
-        const checkout = new window.WidgetCheckoutCheckout({
+        // Integracion oficial Widget Checkout (docs.wompi.co/widget-checkout-web):
+        // clase WidgetCheckout, firma como objeto y monto en centavos numerico.
+        const checkout = new window.WidgetCheckout({
           currency: intent.currency,
-          amountInCents: String(intent.amount_in_cents),
+          amountInCents: intent.amount_in_cents,
           reference: intent.reference,
           publicKey: intent.public_key,
-          integrity: intent.integrity,
+          signature: { integrity: intent.integrity },
           redirectUrl: `${window.location.origin}${window.location.pathname}`,
         })
         checkout.open((result) => resolve(result?.transaction || null))
       } catch (error) { reject(error) }
     }
-    if (window.WidgetCheckoutCheckout) { attach(); return }
+    if (window.WidgetCheckout) { attach(); return }
     const script = document.createElement('script')
-    script.src = 'https://cdn.wompi.co/widget/js/v2.js'
+    script.src = 'https://checkout.wompi.co/widget.js'
     script.onload = attach
     script.onerror = () => reject(new Error('No se pudo cargar el widget de pagos'))
     document.head.appendChild(script)
