@@ -26,12 +26,17 @@ function panoData(scene) {
 const DEG = Math.PI / 180
 // Todas las flechas se proyectan a esta altura del piso, como Matterport.
 const FLOOR_LINK_PITCH = -72 * DEG
+// Efecto caminar (FR-409): giro+zoom antes del cruce, asentamiento despues.
+const WALK_TURN_SPEED = '13rpm'
+const WALK_SETTLE_SPEED = '9rpm'
+const WALK_ZOOM_PULSE = 22
 
 export default function TourViewer({ tour }) {
   const shellRef = useRef(null)
   const containerRef = useRef(null)
   const viewerRef = useRef(null)
   const pluginRef = useRef(null)
+  const pendingArrive = useRef(null)
   const ordered = useMemo(() => [...tour.scenes].sort((a, b) => a.position - b.position), [tour])
   // Grafo completo de hotspots por escena: la orientacion de llegada lo usa
   // aunque el visor solo muestre una flecha por escena (FR-407).
@@ -109,23 +114,49 @@ export default function TourViewer({ tour }) {
           // Solo desvanecer flechas realmente superpuestas (45 por defecto
           // ocultaba salidas legitimas cercanas).
           arrowsPosition: { linkOverlapAngle: Math.PI / 8 },
-          // Llegar mirando hacia adentro: opuesto al hotspot de retorno de la
-          // escena destino (la entrada queda a la espalda), como Matterport.
-          // PSV exige yaw y pitch completos en rotateTo. Se busca en el grafo
-          // completo, no en las flechas visibles (solo hay una por escena).
-          transitionOptions: (node, fromNode) => {
-            if (!fromNode) return {}
+          // Efecto caminar (FR-409). Por flecha: (1) giro animado hacia la
+          // salida con pulso de zoom, (2) cruce manteniendo rumbo/zoom,
+          // (3) asentamiento tras node-changed hacia la orientacion final.
+          // Por botones o galeria: fundido simple.
+          transitionOptions: (node, fromNode, fromLink) => {
+            const baseZoom = viewerRef.current?.getZoomLevel() ?? 0
+            if (!fromNode || !fromLink) {
+              return { effect: 'fade', rotation: false, speed: 'slow', zoomTo: null }
+            }
             const backSpot = (hotspotsByScene[node.id] || []).find(
               (spot) => spot.to_scene_id === fromNode.id,
             )
-            if (!backSpot) return {}
-            return { rotateTo: { yaw: backSpot.yaw + Math.PI, pitch: 0 } }
+            pendingArrive.current = backSpot
+              ? { yaw: backSpot.yaw + Math.PI, zoom: baseZoom }
+              : null
+            return {
+              effect: 'none',
+              rotation: true,
+              speed: WALK_TURN_SPEED,
+              rotateTo: { yaw: fromLink.position.yaw, pitch: 0 },
+              zoomTo: Math.min(baseZoom + WALK_ZOOM_PULSE, 100),
+            }
           },
         }),
       ],
     })
     const plugin = viewer.getPlugin(VirtualTourPlugin)
-    const onChange = ({ node }) => setCurrentId(node.id)
+    const onChange = ({ node }) => {
+      setCurrentId(node.id)
+      // Fase 3 del efecto caminar: asentar la vista en la orientacion final
+      // (opuesto a la puerta de entrada) devolviendo el zoom al nivel base.
+      const arrive = pendingArrive.current
+      pendingArrive.current = null
+      if (arrive) {
+        viewerRef.current?.animate({
+          yaw: arrive.yaw,
+          pitch: 0,
+          zoom: arrive.zoom,
+          speed: WALK_SETTLE_SPEED,
+          allowUserInterrupt: true,
+        })
+      }
+    }
     plugin.addEventListener('node-changed', onChange)
     viewerRef.current = viewer
     pluginRef.current = plugin

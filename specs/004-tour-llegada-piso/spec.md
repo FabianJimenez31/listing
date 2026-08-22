@@ -81,6 +81,11 @@ la misma altura (banda de piso) y difieren en yaw.
   pestañas tipo segmented control, scrim inferior) y el aviso publico "contenido generado por
   IA" se RETIRA. Esta decision de producto sustituye el aviso permanente de 002 (FR-223);
   el acuse interno previo a publicacion (FR-216 de 002) se mantiene.
+- **FR-409**: La transicion por flecha DEBE sentirse como caminar, no como cambio de imagen:
+  (1) giro animado hacia la salida con acercamiento de zoom, (2) cruce de escena manteniendo
+  rumbo y zoom, (3) llegada con animacion de asentamiento hacia la orientacion final
+  (opuesto a la puerta de entrada) devolviendo el zoom. Navegacion por botones/galeria usa
+  fundido simple.
 
 ## Open Questions
 

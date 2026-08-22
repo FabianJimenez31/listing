@@ -29,6 +29,10 @@ Convencion: `[x]` hecho · `[/]` en curso · `[ ]` pendiente.
       boton fullscreen circular, navbar PSV integrada, hover states en el editor.
 - [x] T-208 Aviso publico "generado con IA" retirado del visor (decision de producto
       que sustituye FR-223 de 002); el acuse interno previo a publicar se mantiene.
+- [x] T-209 Efecto caminar (FR-409): por flecha gira hacia la salida con pulso de zoom
+      (13rpm), cruza escena manteniendo rumbo/zoom y asienta con animacion a la orientacion
+      final devolviendo el zoom (9rpm, interrumpible por el usuario). Botones/galeria:
+      fundido simple.
 
 ## Fase 3 — Cierre
 
