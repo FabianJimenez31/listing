@@ -73,6 +73,10 @@ la misma altura (banda de piso) y difieren en yaw.
   `virtual_tour_hotspots`.
 - **FR-406**: La precarga DEBE usar `preload` del config del plugin (el per-link no existe en
   PSV v5), ademas del calentamiento ya existente.
+- **FR-407**: El visor DEBE mostrar **una sola flecha por escena**: la que conduce a la escena
+  siguiente en el orden definido (posicion+1, con vuelta al inicio en la ultima). Las demas
+  conexiones siguen navegables via botones Anterior/Siguiente y galeria. La orientacion de
+  llegada sigue usando el grafo completo de hotspots, no el subconjunto mostrado.
 
 ## Open Questions
 

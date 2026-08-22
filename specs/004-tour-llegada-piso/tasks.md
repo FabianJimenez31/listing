@@ -17,6 +17,8 @@ Convencion: `[x]` hecho · `[/]` en curso · `[ ]` pendiente.
 - [x] T-202 `TourViewer.jsx`: links proyectados a pitch de piso −72°; `preload: true` en config
       del plugin; quitar preload per-link (FR-402, FR-406).
 - [x] T-203 `TourHotspotPicker.jsx`: preview WYSIWYG (yaw envuelto, pitch clampado) (FR-403).
+- [ ] T-204 `TourViewer.jsx`: modo flecha unica — solo el enlace a la escena siguiente
+      (posicion+1, wrap al inicio); llegada orientada via grafo completo (FR-407).
 
 ## Fase 3 — Cierre
 
@@ -24,6 +26,7 @@ Convencion: `[x]` hecho · `[/]` en curso · `[ ]` pendiente.
 - [x] T-302 `npm run build` verde.
 - [x] T-303 Deploy backend+frontend y verificacion de bundle.
 - [ ] T-304 Validacion visual del usuario en produccion.
+- [x] T-306 Flechas de Sala principal redistribuidas uniformemente (72 grados entre cada una) y linkOverlapAngle bajado a 22.5 para no desvanecer salidas legitimas; separacion minima del editor subida a 25 grados.
 - [x] T-305 Hotfix validacion visual: `rotateTo` exige yaw+pitch completos en PSV
       (crasheaba cada transicion con "Position is missing 'yaw' or 'pitch'"); llegada
       ahora con pitch 0. Boton autorotate retirado del navbar (warning, plugin ausente).

@@ -34,6 +34,12 @@ export default function TourViewer({ tour }) {
   const viewerRef = useRef(null)
   const pluginRef = useRef(null)
   const ordered = useMemo(() => [...tour.scenes].sort((a, b) => a.position - b.position), [tour])
+  // Grafo completo de hotspots por escena: la orientacion de llegada lo usa
+  // aunque el visor solo muestre una flecha por escena (FR-407).
+  const hotspotsByScene = useMemo(
+    () => Object.fromEntries(ordered.map((scene) => [scene.id, scene.hotspots])),
+    [ordered],
+  )
   const initialId = tour.start_scene_id || ordered[0]?.id
   const [currentId, setCurrentId] = useState(initialId)
   const current = ordered.find((scene) => scene.id === currentId) || ordered[0]
@@ -53,20 +59,27 @@ export default function TourViewer({ tour }) {
 
   useEffect(() => {
     if (!containerRef.current || !ordered.length) return undefined
-    const nodes = ordered.map((scene) => ({
-      id: scene.id,
-      panorama: scene.pano_url,
-      thumbnail: scene.thumb_url || scene.pano_url,
-      name: scene.title,
-      caption: scene.title,
-      panoData: panoData(scene),
-      sphereCorrection: { pan: scene.initial_yaw || 0, tilt: scene.initial_pitch || 0 },
-      links: scene.hotspots.map((spot) => ({
-        nodeId: spot.to_scene_id,
-        position: { yaw: spot.yaw, pitch: FLOOR_LINK_PITCH },
-        data: { label: spot.label },
-      })),
-    }))
+    // Modo flecha unica (FR-407): cada escena solo muestra la flecha hacia la
+    // escena siguiente en el orden definido; el resto de conexiones sigue
+    // disponible via botones Anterior/Siguiente y la galeria.
+    const nodes = ordered.map((scene, index) => {
+      const next = ordered[(index + 1) % ordered.length]
+      const nextSpot = scene.hotspots.find((spot) => spot.to_scene_id === next.id)
+      return {
+        id: scene.id,
+        panorama: scene.pano_url,
+        thumbnail: scene.thumb_url || scene.pano_url,
+        name: scene.title,
+        caption: scene.title,
+        panoData: panoData(scene),
+        sphereCorrection: { pan: scene.initial_yaw || 0, tilt: scene.initial_pitch || 0 },
+        links: nextSpot ? [{
+          nodeId: nextSpot.to_scene_id,
+          position: { yaw: nextSpot.yaw, pitch: FLOOR_LINK_PITCH },
+          data: { label: nextSpot.label },
+        }] : [],
+      }
+    })
     const viewer = new Viewer({
       container: containerRef.current,
       navbar: ['zoom', 'move', 'fullscreen'],
@@ -85,12 +98,15 @@ export default function TourViewer({ tour }) {
           arrowsPosition: { linkOverlapAngle: Math.PI / 8 },
           // Llegar mirando hacia adentro: opuesto al hotspot de retorno de la
           // escena destino (la entrada queda a la espalda), como Matterport.
-          // PSV exige yaw y pitch completos en rotateTo.
+          // PSV exige yaw y pitch completos en rotateTo. Se busca en el grafo
+          // completo, no en las flechas visibles (solo hay una por escena).
           transitionOptions: (node, fromNode) => {
             if (!fromNode) return {}
-            const backLink = node.links.find((link) => link.nodeId === fromNode.id)
-            if (!backLink) return {}
-            return { rotateTo: { yaw: backLink.position.yaw + Math.PI, pitch: 0 } }
+            const backSpot = (hotspotsByScene[node.id] || []).find(
+              (spot) => spot.to_scene_id === fromNode.id,
+            )
+            if (!backSpot) return {}
+            return { rotateTo: { yaw: backSpot.yaw + Math.PI, pitch: 0 } }
           },
         }),
       ],
@@ -106,7 +122,7 @@ export default function TourViewer({ tour }) {
       viewerRef.current = null
       pluginRef.current = null
     }
-  }, [ordered, initialId])
+  }, [ordered, initialId, hotspotsByScene])
 
   const move = (direction) => {
     const index = ordered.findIndex((scene) => scene.id === currentId)
