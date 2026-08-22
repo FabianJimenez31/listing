@@ -80,6 +80,9 @@ export default function TourViewer({ tour }) {
           renderMode: '3d',
           showLinkTooltip: true,
           preload: true,
+          // Solo desvanecer flechas realmente superpuestas (45 por defecto
+          // ocultaba salidas legitimas cercanas).
+          arrowsPosition: { linkOverlapAngle: Math.PI / 8 },
           // Llegar mirando hacia adentro: opuesto al hotspot de retorno de la
           // escena destino (la entrada queda a la espalda), como Matterport.
           // PSV exige yaw y pitch completos en rotateTo.

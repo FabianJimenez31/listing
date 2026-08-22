@@ -6,8 +6,9 @@ const DEG = Math.PI / 180
 // horizonte inferior de la esfera, no a media pared (FR-304).
 const FLOOR_PITCH_LOW = -85 * DEG
 const FLOOR_PITCH_HIGH = -60 * DEG
-// Separacion minima entre hotspots para que no se amontonen visualmente (FR-305).
-const MIN_YAW_SEPARATION = 10 * DEG
+// Separacion minima entre hotspots: debe superar el umbral de desvanecido
+// del visor (linkOverlapAngle = 22.5) para que nunca se tapen entre si.
+const MIN_YAW_SEPARATION = 25 * DEG
 const MIN_PITCH_SEPARATION = 15 * DEG
 
 function yawDelta(a, b) {
@@ -37,7 +38,7 @@ export default function TourHotspotPicker({ scene, scenes, onSave, onClose }) {
     const crowded = hotspots.find((spot) =>
       yawDelta(spot.yaw, yaw) < MIN_YAW_SEPARATION && Math.abs(spot.pitch - pitch) < MIN_PITCH_SEPARATION)
     if (crowded) {
-      setWarning('Demasiado cerca de otro hotspot: sepáralo al menos 10° a la izquierda o derecha.')
+      setWarning('Demasiado cerca de otro hotspot: sepáralo al menos 25° a la izquierda o derecha.')
       return
     }
     setWarning('')
