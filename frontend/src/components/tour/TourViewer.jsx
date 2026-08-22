@@ -59,12 +59,23 @@ export default function TourViewer({ tour }) {
 
   useEffect(() => {
     if (!containerRef.current || !ordered.length) return undefined
-    // Modo flecha unica (FR-407): cada escena solo muestra la flecha hacia la
-    // escena siguiente en el orden definido; el resto de conexiones sigue
-    // disponible via botones Anterior/Siguiente y la galeria.
+    // Modo flecha unica (FR-407): cada escena muestra la flecha hacia la
+    // escena siguiente del recorrido. Si el operador no creo ese enlace,
+    // se sintetiza "continuar derecho": sale por el opuesto de la puerta de
+    // llegada. Nunca queda una escena sin flecha.
+    const straightYaw = (sceneId, fallback) => {
+      const spots = hotspotsByScene[sceneId] || []
+      if (!spots.length) return fallback
+      const back = Math.atan2(Math.sin(spots[0].yaw), Math.cos(spots[0].yaw))
+      return back + Math.PI
+    }
     const nodes = ordered.map((scene, index) => {
+      const prev = ordered[(index - 1 + ordered.length) % ordered.length]
       const next = ordered[(index + 1) % ordered.length]
       const nextSpot = scene.hotspots.find((spot) => spot.to_scene_id === next.id)
+      const yaw = nextSpot
+        ? nextSpot.yaw
+        : straightYaw(scene.id, 0)
       return {
         id: scene.id,
         panorama: scene.pano_url,
@@ -73,11 +84,14 @@ export default function TourViewer({ tour }) {
         caption: scene.title,
         panoData: panoData(scene),
         sphereCorrection: { pan: scene.initial_yaw || 0, tilt: scene.initial_pitch || 0 },
-        links: nextSpot ? [{
-          nodeId: nextSpot.to_scene_id,
-          position: { yaw: nextSpot.yaw, pitch: FLOOR_LINK_PITCH },
-          data: { label: nextSpot.label },
-        }] : [],
+        links: [{
+          nodeId: next.id,
+          position: {
+            yaw: Math.atan2(Math.sin(yaw), Math.cos(yaw)),
+            pitch: FLOOR_LINK_PITCH,
+          },
+          data: { label: nextSpot?.label || `Ir a ${next.title}` },
+        }],
       }
     })
     const viewer = new Viewer({

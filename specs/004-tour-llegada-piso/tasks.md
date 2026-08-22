@@ -17,8 +17,13 @@ Convencion: `[x]` hecho · `[/]` en curso · `[ ]` pendiente.
 - [x] T-202 `TourViewer.jsx`: links proyectados a pitch de piso −72°; `preload: true` en config
       del plugin; quitar preload per-link (FR-402, FR-406).
 - [x] T-203 `TourHotspotPicker.jsx`: preview WYSIWYG (yaw envuelto, pitch clampado) (FR-403).
-- [ ] T-204 `TourViewer.jsx`: modo flecha unica — solo el enlace a la escena siguiente
+- [x] T-204 `TourViewer.jsx`: modo flecha unica — solo el enlace a la escena siguiente
       (posicion+1, wrap al inicio); llegada orientada via grafo completo (FR-407).
+- [x] T-205 Cadena del tour demo completada: inserts Comedor→Cocina, Cocina→Hab principal,
+      Baño→Hab auxiliar, Hab auxiliar→Terraza (solo existian retornos a Sala; por eso
+      4 escenas quedaban sin flecha).
+- [x] T-206 `TourViewer.jsx`: fallback anti-escena-sin-flecha — sin enlace al siguiente,
+      se sintetiza "continuar derecho" (opuesto a la puerta de llegada).
 
 ## Fase 3 — Cierre
 
