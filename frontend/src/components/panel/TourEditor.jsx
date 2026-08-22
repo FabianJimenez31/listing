@@ -140,8 +140,7 @@ export default function TourEditor({ entity, entityId, galleryImages = [] }) {
 
   const generate = () => {
     if (!aiTitle.trim() || !selectedImages.length) { setError('Indica el ambiente y selecciona al menos una foto'); return }
-    const cost = seamPass ? provider?.estimated_seam_cost_usd : provider?.estimated_cost_usd
-    if (!window.confirm(`Generar con ${provider?.model} (${provider?.quality}), costo estimado USD ${cost || 'por calcular'}?`)) return
+    if (!window.confirm(`¿Generar la escena “${aiTitle.trim()}” con IA a partir de ${selectedImages.length} foto(s)?`)) return
     run(async () => {
       await generateTourScene(entity, entityId, {
         title: aiTitle.trim(), source_image_ids: selectedImages, seam_pass: seamPass,
@@ -244,14 +243,21 @@ export default function TourEditor({ entity, entityId, galleryImages = [] }) {
           <input value={aiTitle} onChange={(e) => setAiTitle(e.target.value)} placeholder="Ej. Cocina" />
           <div className="tour-reference-grid">
             {galleryImages.map((image) => (
-              <button type="button" key={image.id} className={selectedImages.includes(image.id) ? 'selected' : ''} onClick={() => toggleReference(image.id)}>
+              <button
+                type="button"
+                key={image.id}
+                className={selectedImages.includes(image.id) ? 'selected' : ''}
+                disabled={!selectedImages.includes(image.id) && selectedImages.length >= 10}
+                onClick={() => toggleReference(image.id)}
+              >
                 <img src={image.thumb_url || image.cdn_url} alt="" />
               </button>
             ))}
           </div>
-          <label className="tour-check"><input type="checkbox" checked={seamPass} onChange={(e) => setSeamPass(e.target.checked)} /> Reparar costura para 360 completo (doble costo)</label>
+          <small>{selectedImages.length}/10 fotos seleccionadas · máximo por escena</small>
+          <label className="tour-check"><input type="checkbox" checked={seamPass} onChange={(e) => setSeamPass(e.target.checked)} /> Reparar costura para 360 completo</label>
           <button type="button" className="btn btn-blue btn-sm" disabled={busy || !provider?.available || !galleryImages.length} onClick={generate}>Generar con IA</button>
-          <small>{provider?.available ? `${provider.model} · ${provider.quality} · ${provider.size}` : provider?.reason || 'Proveedor no configurado'}</small>
+          <small>{provider?.available ? 'La escena se genera en segundos y queda en borrador para tu revisión' : provider?.reason || 'Proveedor no configurado'}</small>
         </div>
       </div>
 

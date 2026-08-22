@@ -157,14 +157,15 @@ def get_provider_info(current_user: CurrentUser):
             available=False,
             reason="Configura OPENAI_API_KEY para habilitar la generación con IA",
         )
+    # Costos internos: nunca salen por la API (el cliente paga por tour, no por escena).
     return ProviderInfoResponse(
         available=provider.is_available(),
         provider=provider.name,
         model=provider.model,
         quality=provider.quality,
         size=provider.size,
-        estimated_cost_usd=provider.estimate_cost_usd(2, False),
-        estimated_seam_cost_usd=provider.estimate_cost_usd(2, True),
+        estimated_cost_usd=None,
+        estimated_seam_cost_usd=None,
     )
 
 
