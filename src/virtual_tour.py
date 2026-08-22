@@ -1,8 +1,24 @@
 """Pure domain rules for virtual tours, scenes, and navigation hotspots."""
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from enum import Enum
+
+# Banda de piso estilo Matterport: las flechas de navegacion viven cerca del
+# horizonte inferior, nunca a media pared ni mas alla de los polos.
+FLOOR_PITCH_LOW = math.radians(-85)
+FLOOR_PITCH_HIGH = math.radians(-60)
+
+
+def normalize_yaw(yaw: float) -> float:
+    """Wrap any yaw angle into (-pi, pi]."""
+    return math.atan2(math.sin(yaw), math.cos(yaw))
+
+
+def normalize_floor_pitch(pitch: float) -> float:
+    """Clamp any pitch angle into the floor band."""
+    return max(FLOOR_PITCH_LOW, min(FLOOR_PITCH_HIGH, pitch))
 
 
 class TourStatus(str, Enum):

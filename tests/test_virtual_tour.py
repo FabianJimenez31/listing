@@ -1,7 +1,6 @@
 """Unit tests for virtual-tour domain invariants."""
 import math
 
-from pydantic import ValidationError
 import pytest
 
 from src.virtual_tour import (
@@ -53,24 +52,32 @@ def test_invalid_equirectangular_aspect():
         validate_equirectangular_aspect(1920, 1080)
 
 
-def test_hotspot_input_accepts_angles_in_range():
+def test_hotspot_input_accepts_any_angle():
     from src.schemas.virtual_tour_schemas import HotspotInput
 
-    spot = HotspotInput(to_scene_id="sala", yaw=3.0, pitch=-1.4)
-    assert spot.yaw == 3.0
-    assert spot.pitch == -1.4
+    spot = HotspotInput(to_scene_id="sala", yaw=10313.2, pitch=-229.2)
+    assert spot.yaw == 10313.2
+    assert spot.pitch == -229.2
 
 
-@pytest.mark.parametrize("field,value", [
-    ("yaw", math.pi + 0.01),
-    ("yaw", -math.pi - 0.01),
-    ("pitch", math.pi / 2 + 0.01),
-    ("pitch", -math.pi / 2 - 0.01),
-])
-def test_hotspot_input_rejects_angles_out_of_range(field, value):
-    from src.schemas.virtual_tour_schemas import HotspotInput
+def test_normalize_yaw_wraps_full_turns():
+    from src.virtual_tour import normalize_yaw
 
-    payload = {"to_scene_id": "sala", "yaw": 0.0, "pitch": 0.0}
-    payload[field] = value
-    with pytest.raises(ValidationError):
-        HotspotInput(**payload)
+    wrapped = normalize_yaw(math.radians(10313.2))
+    assert math.degrees(wrapped) == pytest.approx(-126.8, abs=0.1)
+    assert -math.pi < wrapped <= math.pi
+
+
+@pytest.mark.parametrize("yaw_deg", [0, 190, -190, 720, -2578.3, 10313.2])
+def test_normalize_yaw_stays_in_range(yaw_deg):
+    from src.virtual_tour import normalize_yaw
+
+    assert -math.pi < normalize_yaw(math.radians(yaw_deg)) <= math.pi
+
+
+@pytest.mark.parametrize("pitch_deg", [0, 30, -45, -120, -229.2, 500])
+def test_normalize_floor_pitch_clamps_to_band(pitch_deg):
+    from src.virtual_tour import FLOOR_PITCH_HIGH, FLOOR_PITCH_LOW, normalize_floor_pitch
+
+    clamped = normalize_floor_pitch(math.radians(pitch_deg))
+    assert FLOOR_PITCH_LOW <= clamped <= FLOOR_PITCH_HIGH

@@ -69,12 +69,15 @@ export default function TourHotspotPicker({ scene, scenes, onSave, onClose }) {
         {hotspots.map((spot, index) => {
           const hfov = (scene.hfov_deg || 360) * Math.PI / 180
           const vfov = (scene.vfov_deg || 180) * Math.PI / 180
+          // WYSIWYG: mismo yaw envuelto y misma banda de piso que el visor.
+          const yaw = Math.atan2(Math.sin(spot.yaw), Math.cos(spot.yaw))
+          const pitch = clampFloorPitch(spot.pitch)
           return (
             <button
               type="button"
               key={`${spot.to_scene_id}-${index}`}
               className="hotspot-dot"
-              style={{ left: `${(spot.yaw / hfov + 0.5) * 100}%`, top: `${(0.5 - spot.pitch / vfov) * 100}%` }}
+              style={{ left: `${(yaw / hfov + 0.5) * 100}%`, top: `${(0.5 - pitch / vfov) * 100}%` }}
               title={`Ir a ${spot.label || 'el ambiente'} — clic para quitar`}
               onClick={(event) => { event.stopPropagation(); setHotspots((items) => items.filter((_, i) => i !== index)) }}
             >{index + 1}</button>

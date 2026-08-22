@@ -24,6 +24,10 @@ function panoData(scene) {
   }
 }
 
+const DEG = Math.PI / 180
+// Todas las flechas se proyectan a esta altura del piso, como Matterport.
+const FLOOR_LINK_PITCH = -72 * DEG
+
 export default function TourViewer({ tour }) {
   const shellRef = useRef(null)
   const containerRef = useRef(null)
@@ -59,8 +63,7 @@ export default function TourViewer({ tour }) {
       sphereCorrection: { pan: scene.initial_yaw || 0, tilt: scene.initial_pitch || 0 },
       links: scene.hotspots.map((spot) => ({
         nodeId: spot.to_scene_id,
-        position: { yaw: spot.yaw, pitch: spot.pitch },
-        preload: true,
+        position: { yaw: spot.yaw, pitch: FLOOR_LINK_PITCH },
         data: { label: spot.label },
       })),
     }))
@@ -76,6 +79,15 @@ export default function TourViewer({ tour }) {
           positionMode: 'manual',
           renderMode: '3d',
           showLinkTooltip: true,
+          preload: true,
+          // Llegar mirando hacia adentro: opuesto al hotspot de retorno de la
+          // escena destino (la entrada queda a la espalda), como Matterport.
+          transitionOptions: (node, fromNode) => {
+            if (!fromNode) return {}
+            const backLink = node.links.find((link) => link.nodeId === fromNode.id)
+            if (!backLink) return {}
+            return { rotateTo: { yaw: backLink.position.yaw + Math.PI } }
+          },
         }),
       ],
     })

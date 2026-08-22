@@ -38,6 +38,8 @@ from src.virtual_tour import (
     TourScene,
     TourValidationError,
     VirtualTour,
+    normalize_floor_pitch,
+    normalize_yaw,
 )
 
 router = APIRouter(tags=["virtual-tours"])
@@ -372,7 +374,10 @@ def replace_hotspots(
             VirtualTourHotspotORM(
                 id=str(uuid.uuid4()),
                 from_scene_id=scene_id,
-                **hotspot.model_dump(),
+                yaw=normalize_yaw(hotspot.yaw),
+                pitch=normalize_floor_pitch(hotspot.pitch),
+                to_scene_id=hotspot.to_scene_id,
+                label=hotspot.label,
             )
         )
     tour.status = "draft"
