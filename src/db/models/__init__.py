@@ -24,6 +24,12 @@ from src.db.models.partner_models import PartnerORM  # noqa: F401
 from src.db.models.blog_models import PostORM  # noqa: F401
 from src.db.models.seo_models import SeoMetadataORM  # noqa: F401
 from src.db.models.site_settings_models import SiteSettingsORM  # noqa: F401
+from src.db.models.virtual_tour_models import (  # noqa: F401
+    VirtualTourGenerationAttemptORM,
+    VirtualTourHotspotORM,
+    VirtualTourORM,
+    VirtualTourSceneORM,
+)
 
 __all__ = [
     "UserORM", "RoleORM", "PermissionORM",
@@ -39,4 +45,6 @@ __all__ = [
     "PartnerORM", "PostORM",
     "SeoMetadataORM",
     "SiteSettingsORM",
+    "VirtualTourORM", "VirtualTourSceneORM", "VirtualTourHotspotORM",
+    "VirtualTourGenerationAttemptORM",
 ]

@@ -10,6 +10,8 @@ import PropertyDescription from '../components/property/PropertyDescription'
 import { formatPrice } from '../components/property/PropertyCard'
 import ImageCarousel from '../components/ui/ImageCarousel'
 import Spinner from '../components/ui/Spinner'
+import TourTab from '../components/tour/TourTab'
+import { getPublishedTour } from '../api/tours'
 import {
   IconArea, IconBath, IconBed, IconCar, IconCheck, IconHeart, IconPhone, IconPin, IconShare, IconWhatsapp,
 } from '../components/ui/icons'
@@ -52,12 +54,14 @@ export default function PropertyDetailPage() {
   const [isFav, setIsFav] = useState(false)
   const [favLoading, setFavLoading] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [tour, setTour] = useState(null)
 
   useEffect(() => {
     setLoading(true)
     getProperty(slug)
       .then((data) => {
         setProperty(data)
+        getPublishedTour('properties', data.id).then(setTour).catch(() => setTour(null))
         trackEvent('view', data.id, null).catch(() => null)
       })
       .catch(() => navigate('/404', { replace: true }))
@@ -148,25 +152,24 @@ export default function PropertyDetailPage() {
           .map((c) => <span key={c.id}> · {c.name}</span>)}
       </div>
 
-      {/* Gallery carousel */}
-      <div className="pdp-hero">
-        <div className="badges">
-          {isUSA && <span className="badge usa">USA</span>}
-          <span className={`badge ${opClass}`}>{opLabel}</span>
-          {STATUS_LABEL[property.status] && <span className="badge proyecto">{STATUS_LABEL[property.status]}</span>}
+      <TourTab tour={tour} renderPhotos={(
+        <div className="pdp-hero">
+          <div className="badges">
+            {isUSA && <span className="badge usa">USA</span>}
+            <span className={`badge ${opClass}`}>{opLabel}</span>
+            {STATUS_LABEL[property.status] && <span className="badge proyecto">{STATUS_LABEL[property.status]}</span>}
+          </div>
+          <div className="pdp-gtools">
+            {user && (
+              <button className={`pdp-gtool fav ${isFav ? 'on' : ''}`} disabled={favLoading} onClick={toggleFav} aria-label="Guardar en favoritos">
+                <IconHeart />
+              </button>
+            )}
+            <button className="pdp-gtool" onClick={handleShare} aria-label="Compartir"><IconShare /></button>
+          </div>
+          <ImageCarousel key={property.nid} images={images} alt={property.title} />
         </div>
-        <div className="pdp-gtools">
-          {user && (
-            <button className={`pdp-gtool fav ${isFav ? 'on' : ''}`} disabled={favLoading} onClick={toggleFav} aria-label="Guardar en favoritos">
-              <IconHeart />
-            </button>
-          )}
-          <button className="pdp-gtool" onClick={handleShare} aria-label="Compartir">
-            <IconShare />
-          </button>
-        </div>
-        <ImageCarousel key={property.nid} images={images} alt={property.title} />
-      </div>
+      )} />
 
       <div className="detail-cols">
         {/* Main column */}

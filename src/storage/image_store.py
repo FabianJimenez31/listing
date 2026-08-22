@@ -47,6 +47,21 @@ def store(file_bytes: bytes, storage_key: str) -> str:
     return _save_local(file_bytes, storage_key)
 
 
+def read(storage_key: str) -> bytes:
+    """Read an object by key for AI reference-image workflows."""
+    if _STORAGE_BACKEND == "s3":
+        try:
+            import boto3  # type: ignore
+
+            response = boto3.client("s3").get_object(
+                Bucket=os.environ["S3_BUCKET"], Key=storage_key
+            )
+            return response["Body"].read()
+        except ImportError as exc:
+            raise RuntimeError("boto3 not installed; cannot read S3 object") from exc
+    return (_LOCAL_UPLOAD_DIR / storage_key).read_bytes()
+
+
 def remove(storage_key: str) -> None:
     if _STORAGE_BACKEND != "s3":
         _delete_local(storage_key)

@@ -16,6 +16,8 @@
 .btn-white:hover { transform: translateY(-1px); box-shadow: var(--shadow); }
 .btn-outline { background: transparent; border-color: var(--line); color: var(--text); }
 .btn-outline:hover { border-color: var(--blue); color: var(--blue); }
+.btn:disabled { opacity: .55; cursor: not-allowed; }
+.btn:disabled:hover { transform: none; box-shadow: none; border-color: var(--line); color: inherit; }
 
 /* ── Header / nav ─────────────────────────────────────────────── */
 .site-header {

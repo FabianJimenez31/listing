@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { useAuth } from '../../contexts/AuthContext'
@@ -29,6 +29,7 @@ const EMPTY = {
 
 const num = (v) => (v === '' || v == null ? null : parseInt(v, 10))
 const flt = (v) => (v === '' || v == null ? null : parseFloat(v))
+const TourEditor = lazy(() => import('../../components/panel/TourEditor'))
 
 export default function ProjectFormPage() {
   const { slug } = useParams()
@@ -247,6 +248,11 @@ export default function ProjectFormPage() {
             Sube varias fotos a la vez. La marcada como <b>portada</b> se usa en la tarjeta del listado y como primera del carrusel.
           </p>
         </div>
+      )}
+      {editing && projectId && (
+        <Suspense fallback={<div className="admin-card">Cargando Tour 360…</div>}>
+          <TourEditor entity="projects" entityId={projectId} galleryImages={images} />
+        </Suspense>
       )}
     </>
   )

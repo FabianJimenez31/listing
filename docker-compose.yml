@@ -49,6 +49,13 @@ services:
       METRICS_HMAC_KEY: ${METRICS_HMAC_KEY:-changeme-metrics-key}
       SITE_URL: ${SITE_URL:-http://localhost}
       CDN_BASE_URL: ${CDN_BASE_URL:-http://localhost/static}
+      # Virtual-tour AI provider (empty key keeps manual panorama upload enabled).
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      TOUR_PANO_MODEL: ${TOUR_PANO_MODEL:-gpt-image-2}
+      TOUR_PANO_QUALITY: ${TOUR_PANO_QUALITY:-medium}
+      TOUR_PANO_SIZE: ${TOUR_PANO_SIZE:-2048x1024}
+      TOUR_PANO_TIMEOUT_SECONDS: ${TOUR_PANO_TIMEOUT_SECONDS:-300}
+      TOUR_PANO_ESTIMATED_COST_USD: ${TOUR_PANO_ESTIMATED_COST_USD:-0.06000}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@proppietario.com}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-Admin1234!}
       # Email 2FA (off by default — turn on only once SMTP is configured & tested)

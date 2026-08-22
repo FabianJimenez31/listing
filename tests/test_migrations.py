@@ -51,6 +51,10 @@ class TestAlembicMigrations:
             "alembic_version",
         }
         assert expected.issubset(tables), f"Missing tables: {expected - tables}"
+        assert {
+            "virtual_tours", "virtual_tour_scenes", "virtual_tour_hotspots",
+            "virtual_tour_generation_attempts",
+        }.issubset(tables)
 
     def test_alembic_version_recorded(self, alembic_cfg):
         engine = create_engine(_TEST_DB_URL)

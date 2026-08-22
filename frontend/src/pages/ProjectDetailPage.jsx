@@ -7,6 +7,8 @@ import { formatPrice } from '../components/property/PropertyCard'
 import ImageCarousel from '../components/ui/ImageCarousel'
 import PropertyDescription from '../components/property/PropertyDescription'
 import { IconPin } from '../components/ui/icons'
+import TourTab from '../components/tour/TourTab'
+import { getPublishedTour } from '../api/tours'
 
 const STAGE = { preventa: 'Preventa', construccion: 'En construcción', entrega_inmediata: 'Entrega inmediata' }
 
@@ -17,11 +19,15 @@ export default function ProjectDetailPage() {
   const [project, setProject] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
+  const [tour, setTour] = useState(null)
 
   useEffect(() => {
     setLoading(true)
     setError(false)
-    getProject(slug).then(setProject).catch(() => setError(true)).finally(() => setLoading(false))
+    getProject(slug).then((data) => {
+      setProject(data)
+      getPublishedTour('projects', data.id).then(setTour).catch(() => setTour(null))
+    }).catch(() => setError(true)).finally(() => setLoading(false))
   }, [slug])
 
   if (loading) return <div className="page-wrap"><Spinner /></div>
@@ -59,13 +65,15 @@ export default function ProjectDetailPage() {
         <Link to="/proyectos">Proyectos</Link>{project.location?.name ? ` · ${project.location.name}` : ''}
       </div>
 
-      <div className="pdp-hero">
-        <div className="badges">
-          {project.currency === 'USD' && <span className="badge usa">USA</span>}
-          <span className="badge proyecto">{STAGE[project.stage] || 'Proyecto'}</span>
+      <TourTab tour={tour} renderPhotos={(
+        <div className="pdp-hero">
+          <div className="badges">
+            {project.currency === 'USD' && <span className="badge usa">USA</span>}
+            <span className="badge proyecto">{STAGE[project.stage] || 'Proyecto'}</span>
+          </div>
+          <ImageCarousel images={images} alt={project.title} />
         </div>
-        <ImageCarousel images={images} alt={project.title} />
-      </div>
+      )} />
 
       <div className="detail-cols">
         <div>

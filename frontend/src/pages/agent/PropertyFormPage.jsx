@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import {
@@ -53,6 +53,7 @@ const EMPTY = {
 const STRATUM_OPTS = [['', '—'], ['1', '1'], ['2', '2'], ['3', '3'], ['4', '4'], ['5', '5'], ['6', '6']]
 const VIEW_OPTS = [['', '—'], ['internal', 'Interna'], ['external', 'Externa']]
 const SECURITY_OPTS = [['', '—'], ['none', 'Sin vigilancia'], ['private', 'Privada (portería)'], ['automated', 'Automatizada']]
+const TourEditor = lazy(() => import('../../components/panel/TourEditor'))
 
 // Defined at module scope (NOT inside the page component) so their identity is
 // stable across renders — otherwise React remounts the input on every keystroke
@@ -434,6 +435,11 @@ export default function PropertyFormPage() {
           </aside>
         )}
       </div>
+      {isEdit && (
+        <Suspense fallback={<div className="admin-card">Cargando Tour 360…</div>}>
+          <TourEditor entity="properties" entityId={id} galleryImages={images} />
+        </Suspense>
+      )}
     </>
   )
 }
