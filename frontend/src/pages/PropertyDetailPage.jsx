@@ -7,11 +7,13 @@ import { trackEvent } from '../api/admin'
 import { useAuth } from '../contexts/AuthContext'
 import LeadForm from '../components/property/LeadForm'
 import PropertyDescription from '../components/property/PropertyDescription'
-import { formatPrice } from '../components/property/PropertyCard'
+import { formatPrice } from '../lib/priceDisplay'
 import ImageCarousel from '../components/ui/ImageCarousel'
 import Spinner from '../components/ui/Spinner'
 import TourTab from '../components/tour/TourTab'
 import { getPublishedTour } from '../api/tours'
+import { prioritizeMainImage } from '../lib/imageOrder'
+import { shareContent } from '../lib/shareContent'
 import {
   IconArea, IconBath, IconBed, IconCar, IconCheck, IconHeart, IconPhone, IconPin, IconShare, IconWhatsapp,
 } from '../components/ui/icons'
@@ -37,14 +39,6 @@ function buildWhatsappUrl(phone, title, url) {
   return `https://wa.me/${clean}?text=${text}`
 }
 
-async function shareProperty(title, url) {
-  if (navigator.share) {
-    try { await navigator.share({ title, url }); return } catch (_) { /* cancelled */ }
-  }
-  await navigator.clipboard.writeText(url)
-  return 'copied'
-}
-
 export default function PropertyDetailPage() {
   const { slug } = useParams()
   const navigate = useNavigate()
@@ -62,7 +56,7 @@ export default function PropertyDetailPage() {
       .then((data) => {
         setProperty(data)
         getPublishedTour('properties', data.id).then(setTour).catch(() => setTour(null))
-        trackEvent('view', data.id, null).catch(() => null)
+        trackEvent('view', data.id).catch(() => null)
       })
       .catch(() => navigate('/404', { replace: true }))
       .finally(() => setLoading(false))
@@ -71,7 +65,7 @@ export default function PropertyDetailPage() {
   if (loading) return <div className="page-wrap"><Spinner /></div>
   if (!property) return null
 
-  const images = property.images || []
+  const images = prioritizeMainImage(property.images || [])
   const main = images[0]
 
   const pageUrl = window.location.href
@@ -124,9 +118,9 @@ export default function PropertyDetailPage() {
     ['Código', property.nid],
   ].filter(Boolean)
 
-  const trackCta = () => trackEvent('cta_click', property.id, null).catch(() => null)
+  const trackCta = () => trackEvent('cta_click', property.id).catch(() => null)
   const handleShare = async () => {
-    const result = await shareProperty(property.title, pageUrl)
+    const result = await shareContent({ title: property.title, url: pageUrl })
     if (result === 'copied') { setCopied(true); setTimeout(() => setCopied(false), 2500) }
     trackCta()
   }
@@ -165,7 +159,6 @@ export default function PropertyDetailPage() {
                 <IconHeart />
               </button>
             )}
-            <button className="pdp-gtool" onClick={handleShare} aria-label="Compartir"><IconShare /></button>
           </div>
           <ImageCarousel key={property.nid} images={images} alt={property.title} />
         </div>

@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session, joinedload
 from src.db.models.property_models import PropertyImageORM, PropertyORM
 from src.repositories.base import BaseRepository
 from src.repositories.location_repo import LocationRepository
+from src.text.search_normalization import normalized_sql, search_like_pattern
 
 
 class PropertyRepository(BaseRepository[PropertyORM]):
@@ -75,6 +76,7 @@ class PropertyRepository(BaseRepository[PropertyORM]):
         on_home: bool = False,
         min_price: int | None = None,
         max_price: int | None = None,
+        currency: str | None = None,
         min_bedrooms: int | None = None,
         max_bedrooms: int | None = None,
         min_area: float | None = None,
@@ -116,6 +118,8 @@ class PropertyRepository(BaseRepository[PropertyORM]):
             filters.append(PropertyORM.price_amount >= min_price)
         if max_price is not None:
             filters.append(PropertyORM.price_amount <= max_price)
+        if currency:
+            filters.append(PropertyORM.currency == currency.upper())
         if min_bedrooms is not None:
             filters.append(PropertyORM.bedrooms >= min_bedrooms)
         if max_bedrooms is not None:
@@ -127,11 +131,14 @@ class PropertyRepository(BaseRepository[PropertyORM]):
         if owner_id:
             filters.append(PropertyORM.owner_id == owner_id)
         if text:
-            pattern = f"%{text}%"
-            filters.append(or_(
-                PropertyORM.title.ilike(pattern),
-                PropertyORM.description.ilike(pattern),
-            ))
+            pattern = search_like_pattern(text)
+            location_ids = LocationRepository(self.db).searchable_subtree_ids(text)
+            if pattern:
+                filters.append(or_(
+                    normalized_sql(PropertyORM.title).like(pattern),
+                    normalized_sql(PropertyORM.description).like(pattern),
+                    PropertyORM.location_id.in_(location_ids or ["__none__"]),
+                ))
 
         base_stmt = select(PropertyORM).where(and_(*filters))
         total = self.db.scalar(select(func.count()).select_from(base_stmt.subquery())) or 0

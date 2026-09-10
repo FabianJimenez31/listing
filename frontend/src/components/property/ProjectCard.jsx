@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { IconArea, IconBed, IconPin } from '../ui/icons'
-import { formatPrice } from './PropertyCard'
+import { formatPrice } from '../../lib/priceDisplay'
 
 const STAGE = {
   preventa: 'Preventa',

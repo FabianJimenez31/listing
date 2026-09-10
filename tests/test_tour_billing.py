@@ -10,6 +10,7 @@ from types import SimpleNamespace
 import pytest
 from fastapi import HTTPException
 from PIL import Image
+from sqlalchemy import text
 
 from src.api.routers.tour_billing import (
     event_signature_valid,
@@ -137,6 +138,28 @@ def test_create_tour_consumes_paid_credit_once(db_session, agent_user, monkeypat
     with pytest.raises(HTTPException) as exc:
         create_tour("properties", prop.id, agent_user, db_session)
     assert exc.value.status_code == 402
+
+
+def test_create_tour_inserts_tour_before_linking_credit(
+    db_session, agent_user, monkeypatch,
+):
+    """Match PostgreSQL's FK enforcement for the paid-tour transaction."""
+    db_session.execute(text("PRAGMA foreign_keys=ON"))
+    db_session.commit()
+    _enable_billing(monkeypatch)
+    prop = _make_property(db_session, agent_user.id)
+    payment = TourPaymentORM(
+        id=str(uuid.uuid4()), user_id=agent_user.id, entity_type="properties",
+        entity_id=prop.id, amount_in_cents=5_000_000, currency="COP",
+        status="approved", reference=f"tour-{uuid.uuid4().hex[:16]}",
+    )
+    db_session.add(payment)
+    db_session.commit()
+
+    tour = create_tour("properties", prop.id, agent_user, db_session)
+
+    db_session.refresh(payment)
+    assert payment.tour_id == tour.id
 
 
 def test_scene_capacity_rejects_the_eleventh_scene():

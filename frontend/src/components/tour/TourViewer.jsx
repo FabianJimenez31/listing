@@ -3,29 +3,12 @@ import { Viewer } from '@photo-sphere-viewer/core'
 import { GalleryPlugin } from '@photo-sphere-viewer/gallery-plugin'
 import { MarkersPlugin } from '@photo-sphere-viewer/markers-plugin'
 import { VirtualTourPlugin } from '@photo-sphere-viewer/virtual-tour-plugin'
+import { buildTourNodes } from './tourNodes'
 import '@photo-sphere-viewer/core/index.css'
 import '@photo-sphere-viewer/gallery-plugin/index.css'
 import '@photo-sphere-viewer/markers-plugin/index.css'
 import '@photo-sphere-viewer/virtual-tour-plugin/index.css'
 import '../../styles/tour.css'
-
-function panoData(scene) {
-  if (!scene.width || !scene.height || (scene.hfov_deg === 360 && scene.vfov_deg === 180)) return undefined
-  const fullWidth = Math.round(scene.width * (360 / scene.hfov_deg))
-  const fullHeight = Math.round(scene.height * (180 / scene.vfov_deg))
-  return {
-    fullWidth,
-    fullHeight,
-    croppedWidth: scene.width,
-    croppedHeight: scene.height,
-    croppedX: Math.round((fullWidth - scene.width) / 2),
-    croppedY: Math.round((fullHeight - scene.height) / 2),
-  }
-}
-
-const DEG = Math.PI / 180
-// Todas las flechas se proyectan a esta altura del piso, como Matterport.
-const FLOOR_LINK_PITCH = -72 * DEG
 
 export default function TourViewer({ tour }) {
   const shellRef = useRef(null)
@@ -59,40 +42,9 @@ export default function TourViewer({ tour }) {
   useEffect(() => {
     if (!containerRef.current || !ordered.length) return undefined
     // Modo flecha unica (FR-407): cada escena muestra la flecha hacia la
-    // escena siguiente del recorrido. Si el operador no creo ese enlace,
-    // se sintetiza "continuar derecho": sale por el opuesto de la puerta de
-    // llegada. Nunca queda una escena sin flecha.
-    const straightYaw = (sceneId, fallback) => {
-      const spots = hotspotsByScene[sceneId] || []
-      if (!spots.length) return fallback
-      const back = Math.atan2(Math.sin(spots[0].yaw), Math.cos(spots[0].yaw))
-      return back + Math.PI
-    }
-    const nodes = ordered.map((scene, index) => {
-      const prev = ordered[(index - 1 + ordered.length) % ordered.length]
-      const next = ordered[(index + 1) % ordered.length]
-      const nextSpot = scene.hotspots.find((spot) => spot.to_scene_id === next.id)
-      const yaw = nextSpot
-        ? nextSpot.yaw
-        : straightYaw(scene.id, 0)
-      return {
-        id: scene.id,
-        panorama: scene.pano_url,
-        thumbnail: scene.thumb_url || scene.pano_url,
-        name: scene.title,
-        caption: scene.title,
-        panoData: panoData(scene),
-        sphereCorrection: { pan: scene.initial_yaw || 0, tilt: scene.initial_pitch || 0 },
-        links: [{
-          nodeId: next.id,
-          position: {
-            yaw: Math.atan2(Math.sin(yaw), Math.cos(yaw)),
-            pitch: FLOOR_LINK_PITCH,
-          },
-          data: { label: nextSpot?.label || `Ir a ${next.title}` },
-        }],
-      }
-    })
+    // siguiente. Un tour monoscena no crea links porque PSV rechaza enlaces
+    // de un nodo hacia si mismo.
+    const nodes = buildTourNodes(ordered, hotspotsByScene)
     const viewer = new Viewer({
       container: containerRef.current,
       navbar: ['zoom', 'move', 'fullscreen'],

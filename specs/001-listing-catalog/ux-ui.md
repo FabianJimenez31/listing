@@ -165,7 +165,7 @@ Objetivo: filtrar sin friccion. Patron responsive:
 | Amenidades           | Checkbox list      | `amenities` (Amenity.code)            |
 | Orden                | Select             | `sort` (relevancia/precio/recientes)  |
 
-- Inputs de precio operan en unidades mayores en pantalla pero envian/leen minor units; helper text con la `currency` activa.
+- Inputs de precio operan en unidades mayores, agrupan miles mientras se escribe y muestran la `currency` activa; envian/leen minor units. Si el usuario invierte minimo y maximo, la UI normaliza el rango antes de buscar.
 - "Sin resultados" tras filtrar → estado vacio con sugerencias (ver UX-R41).
 
 ## CTAs y jerarquia de acciones (UX-R50..R54)
@@ -279,9 +279,11 @@ Acciones que requieren confirmacion modal explicita (titulo + consecuencia + bot
 | UX-R13   | El catalogo publico lista SOLO `PublicationStatus=PUBLISHED`. En paneles de gestion el **badge de estado** es siempre visible con su color semantico. |
 | UX-R14   | El badge no depende solo del color: incluye texto/icono (no usar color como unico portador de informacion). |
 | UX-R15   | Toggle de **favorito** visible para REGISTERED_USER+; VISITOR es redirigido a `/ingresar` (no se oculta el control). |
+| UX-R16   | Las cards destacadas del home ofrecen compartir con un boton de 44x44 independiente del enlace que abre el detalle; usa Web Share y copia el enlace como fallback. |
 | UX-R20   | Navegacion simple y persistente: header (logo, buscador, menu, acceso/CTA segun RBAC) en todas las vistas publicas. |
 | UX-R21   | **Breadcrumbs** en detalle y resultados con `<nav aria-label="breadcrumb">`, `<ol>` y `aria-current="page"` en el ultimo item. |
 | UX-R22   | Buscador accesible desde el header en todos los breakpoints (inline en md+, overlay en mobile). |
+| UX-R25   | El buscador principal muestra sugerencias contextuales desde 2 caracteres, con debounce, resultados acordes a la pestaña activa y navegacion por teclado (`ArrowUp`, `ArrowDown`, `Enter`, `Esc`). La lista muestra hasta 3 filas y permite scroll interno; "Ver todos" permanece fijo al pie. |
 | UX-R23   | Items de navegacion no permitidos por RBAC se ocultan (no se muestran deshabilitados). |
 | UX-R24   | Filtros y orden se reflejan en la query string (compartible, back/forward-friendly). |
 | UX-R30   | Mobile/tablet: filtros en **drawer** off-canvas con foco atrapado, cierre por `Esc`/overlay y retorno de foco al disparador. |

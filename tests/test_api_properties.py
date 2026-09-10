@@ -369,6 +369,21 @@ class TestSearch:
         resp2 = client.get("/api/v1/properties?max_price=200000000")
         assert resp2.json()["meta"]["total"] == 1
 
+    def test_search_q_recognizes_nid_with_leading_slash(self, client, agent_user, agent_token, admin_user, admin_token):
+        prop_id = self._publish(client, agent_token, admin_token)
+        nid = client.get(f"/api/v1/properties/{prop_id}", headers=_auth(agent_token)).json()["nid"]
+        resp = client.get("/api/v1/properties", params={"q": f"/{nid}"})
+        assert resp.json()["meta"]["total"] == 1
+
+    def test_search_text_ignores_accents_and_matches_location(self, client, agent_user, agent_token, admin_user, admin_token):
+        country = self._mkloc(client, admin_token, "Colombia", "colombia", "country")
+        city = self._mkloc(client, admin_token, "Bogotá", "bogota", "city", country)
+        locality = self._mkloc(client, admin_token, "Suba", "suba", "locality", city)
+        barrio = self._mkloc(client, admin_token, "El Batán", "el-batan", "neighborhood", locality)
+        self._publish(client, agent_token, admin_token, {**_BASE_PAYLOAD, "title": "Hogar familiar", "location_id": barrio})
+        assert client.get("/api/v1/properties", params={"q": "batan"}).json()["meta"]["total"] == 1
+        assert client.get("/api/v1/properties", params={"q": "bogota"}).json()["meta"]["total"] == 1
+
     def _mkloc(self, client, admin_token, name, slug, level, parent=None):
         resp = client.post(
             "/api/v1/locations",

@@ -21,3 +21,14 @@ export const majorToMinor = (value) => {
 // Minor units from the API -> major-unit digit string for the input.
 export const minorToMajor = (minor) =>
   minor == null || minor === '' ? '' : String(Math.round(Number(minor) / 100))
+
+// Convert an optional major-unit range and make an accidentally inverted range
+// useful instead of silently returning zero results.
+export const normalizePriceRange = (min, max) => {
+  const first = majorToMinor(min)
+  const second = majorToMinor(max)
+  if (first != null && second != null && first > second) {
+    return { min_price: second, max_price: first }
+  }
+  return { min_price: first, max_price: second }
+}

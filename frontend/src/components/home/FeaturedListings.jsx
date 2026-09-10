@@ -19,7 +19,7 @@ export default function FeaturedListings({ items = [], loading }) {
             ? Array.from({ length: 6 }).map((_, i) => (
                 <div key={i} className="skeleton" style={{ height: 380 }} />
               ))
-            : items.map((p) => <PropertyCard key={p.id} property={p} />)}
+            : items.map((p) => <PropertyCard key={p.id} property={p} showShare />)}
         </div>
         {!loading && items.length === 0 && (
           <p style={{ color: 'var(--muted)' }}>Aún no hay propiedades destacadas.</p>

@@ -88,6 +88,8 @@ Backend FastAPI sobre PostgreSQL 16 + PostGIS + pg_trgm + Redis. Implementa FR-0
   - [ ] Upload a S3-compatible + CDN; thumbnails async (workers); constraint 1 sola MAIN
   - [ ] Recompactar `position` tras borrar/reemplazar (MEDIA-R13)
 - [ ] **Search / filtros / detalle** (FR-060..079; SEARCH-R*, DETAIL-R*)
+  - [x] Hotfix filtros: NID desde `q`, texto sin tildes/puntuacion, ciudad por subarbol y precio formateado con moneda
+  - [x] Autocompletado predictivo del buscador principal para propiedades y proyectos
   - [ ] Busqueda geoespacial PostGIS + full-text pg_trgm; filtros/orden/paginacion
         `?page=&page_size=`; params desconocidos ignorados (SEARCH-R13)
   - [ ] Endpoint de detalle publico (solo `PUBLISHED` -> 200; resto 404/301/410)
@@ -97,7 +99,10 @@ Backend FastAPI sobre PostgreSQL 16 + PostGIS + pg_trgm + Redis. Implementa FR-0
 - [ ] **SEO backend** (FR-100..109; SEO-R*): canonical, `redirect_from[]` 301 (SEO-R13),
       JSON-LD, sitemap; politica SOLD/RENTED 301/410
 - [ ] **Favoritos / compartir / reportar** (FR-110..119)
+  - [x] Compartir como accion secundaria fuera de la galeria en propiedades y proyectos
+  - [x] Compartir directamente desde las cards destacadas del home sin interferir con su enlace
 - [ ] **Admin / moderacion / metricas / audit** (FR-120..129)
+  - [x] Alta idempotente de departamentos/estados y validacion de su padre en el arbol de ubicaciones
   - [ ] Almacen de eventos `PropertyView` (MetricEventType/ViewSource) + contadores
         denormalizados async; `AuditLog` append-only
 - [ ] **Plataforma transversal**

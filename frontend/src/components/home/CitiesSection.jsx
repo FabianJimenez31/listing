@@ -26,7 +26,7 @@ export default function CitiesSection() {
           {cities.map((c, i) => {
             const wide = i === 0 || (cities.length >= 6 && i === cities.length - 1)
             return (
-              <Link className={`city ${wide ? 'wide' : ''}`} to={`/propiedades?country=${c.slug}`} key={c.id}>
+              <Link className={`city ${wide ? 'wide' : ''}`} to={`/propiedades?location=${c.slug}`} key={c.id}>
                 <img
                   src={c.image_url || `https://picsum.photos/seed/${c.slug}/800/400`}
                   alt={c.name}

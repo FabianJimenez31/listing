@@ -76,7 +76,8 @@ la misma altura (banda de piso) y difieren en yaw.
 - **FR-407**: El visor DEBE mostrar **una sola flecha por escena**: la que conduce a la escena
   siguiente en el orden definido (posicion+1, con vuelta al inicio en la ultima). Las demas
   conexiones siguen navegables via botones Anterior/Siguiente y galeria. La orientacion de
-  llegada sigue usando el grafo completo de hotspots, no el subconjunto mostrado.
+  llegada sigue usando el grafo completo de hotspots, no el subconjunto mostrado. Un tour de
+  una sola escena DEBE mostrar la panoramica sin links, nunca un enlace del nodo hacia si mismo.
 - **FR-408**: La UI del visor DEBE renovarse (controles glassmorphism, contador de escena,
   pestañas tipo segmented control, scrim inferior) y el aviso publico "contenido generado por
   IA" se RETIRA. Esta decision de producto sustituye el aviso permanente de 002 (FR-223);

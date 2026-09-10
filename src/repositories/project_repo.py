@@ -8,6 +8,8 @@ from sqlalchemy.orm import Session, joinedload
 
 from src.db.models.project_models import ProjectImageORM, ProjectORM
 from src.repositories.base import BaseRepository
+from src.repositories.location_repo import LocationRepository
+from src.text.search_normalization import normalized_sql, search_like_pattern
 
 
 class ProjectRepository(BaseRepository[ProjectORM]):
@@ -38,6 +40,7 @@ class ProjectRepository(BaseRepository[ProjectORM]):
         status: str | None = "published",
         stage: str | None = None,
         location_id: str | None = None,
+        location_ids: list[str] | None = None,
         country_ids: list[str] | None = None,
         property_type_id: str | None = None,
         min_price: int | None = None,
@@ -54,6 +57,8 @@ class ProjectRepository(BaseRepository[ProjectORM]):
             filters.append(ProjectORM.stage == stage)
         if location_id:
             filters.append(ProjectORM.location_id == location_id)
+        if location_ids is not None:
+            filters.append(ProjectORM.location_id.in_(location_ids or ["__none__"]))
         if country_ids is not None:
             filters.append(ProjectORM.location_id.in_(country_ids or ["__none__"]))
         if property_type_id:
@@ -66,14 +71,17 @@ class ProjectRepository(BaseRepository[ProjectORM]):
         if max_price is not None:
             filters.append(ProjectORM.price_from <= max_price)
         if text:
-            pattern = f"%{text}%"
-            filters.append(
-                or_(
-                    ProjectORM.title.ilike(pattern),
-                    ProjectORM.description.ilike(pattern),
-                    ProjectORM.developer_name.ilike(pattern),
+            pattern = search_like_pattern(text)
+            matching_locations = LocationRepository(self.db).searchable_subtree_ids(text)
+            if pattern:
+                filters.append(
+                    or_(
+                        normalized_sql(ProjectORM.title).like(pattern),
+                        normalized_sql(ProjectORM.description).like(pattern),
+                        normalized_sql(ProjectORM.developer_name).like(pattern),
+                        ProjectORM.location_id.in_(matching_locations or ["__none__"]),
+                    )
                 )
-            )
 
         base_stmt = select(ProjectORM).where(and_(*filters))
         total = self.db.scalar(select(func.count()).select_from(base_stmt.subquery())) or 0

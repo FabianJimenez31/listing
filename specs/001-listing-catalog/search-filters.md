@@ -53,7 +53,7 @@ Todos opcionales salvo donde se indique. Valores invalidos -> `422` (ver Validac
 
 | Param | Tipo | Descripcion | Notas |
 |---|---|---|---|
-| `q` | str | Busqueda libre sobre `title`, `description` y campos de ubicacion (`city`, `locality`, `neighborhood`, `address` solo si `address_is_public`) | Full-text (tsvector) + `pg_trgm` para *typo tolerance*; min 2 chars utiles |
+| `q` | str | Busqueda libre sobre `title`, `description` y la jerarquia de ubicacion; tambien acepta el NID numerico con o sin `/` inicial | Insensible a mayusculas, acentos y puntuacion |
 | `locality` | str | Slug de `Location` (locality). Filtra por `locality_id` resuelto | Acepta slug; resuelve a `locality_id` |
 | `city` | str | Coincidencia exacta (normalizada) sobre `city` | Case/acentos-insensible |
 | `neighborhood` | str | Coincidencia sobre `neighborhood` | Case/acentos-insensible |
@@ -173,6 +173,8 @@ El SPA mantiene los filtros en la URL (React Router `searchParams`). Reglas de m
 | SEARCH-R15 | La respuesta NO incluye campos privados (`address` si `!address_is_public`, `owner` PII, contadores internos sensibles); devuelve la proyeccion *ListingCard*. |
 | SEARCH-R16 | `featured` mezcla destacados arriba respetando `FeaturedProperty.priority`; un destacado vencido (`ends_at < now` o `is_active=false`) NO se trata como destacado. |
 | SEARCH-R17 | El endpoint es de solo lectura: no incrementa `views_count` ni emite `PropertyView` (eso ocurre en el detalle). |
+| SEARCH-R18 | Un `q` compuesto solo por NID, opcionalmente prefijado por `/`, `NID`, `ID` o `codigo`, se resuelve como coincidencia exacta de `Property.nid`. |
+| SEARCH-R19 | Los accesos por ciudad serializan `location=<slug>`; `country` queda reservado para mercados/paises. Ambos incluyen el subarbol de la ubicacion seleccionada. |
 
 ## Indices necesarios
 

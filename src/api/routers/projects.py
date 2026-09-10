@@ -41,6 +41,7 @@ def search_projects(
     q: str | None = Query(None, description="Free-text (title/description/developer)"),
     stage: str | None = Query(None, description="preventa | construccion | entrega_inmediata"),
     location_id: str | None = Query(None),
+    location: str | None = Query(None, description="Location slug and its subtree"),
     country: str | None = Query(None, description="Country slug or code (e.g. 'us')"),
     property_type_id: str | None = Query(None),
     min_price: int | None = Query(None, ge=0),
@@ -59,10 +60,12 @@ def search_projects(
         effective_status = None if status_filter in ("all", "*") else status_filter
 
     country_ids = LocationRepository(db).subtree_ids(country) if country else None
+    location_ids = LocationRepository(db).subtree_ids(location) if location else None
     items, total = repo.search(
         status=effective_status,
         stage=stage,
         location_id=location_id,
+        location_ids=location_ids,
         country_ids=country_ids,
         property_type_id=property_type_id,
         min_price=min_price,

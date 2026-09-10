@@ -92,6 +92,8 @@ Uso: clientes simples / panel agente sin JS para firma directa. Sujeto a las mis
 - `PUT /api/v1/properties/{id}/media/order` con `{ order: [image_id, ...] }` reordena en bloque (idempotente): el array debe contener exactamente los ids de imagenes de la propiedad; el backend reescribe `position` segun el indice del array (MEDIA-R12). Ids faltantes/extra -> 422 `media_order_mismatch`.
 - Al eliminar una imagen se **recompactan** las posiciones siguientes para mantener contigüidad (MEDIA-R13).
 - La `MAIN` no tiene `position` privilegiada (se ordena como cualquier galeria en su listado), pero la UI de detalle la muestra primero por `role`.
+- El administrador de fotos tambien antepone visualmente la `MAIN` tras seleccionarla, sin alterar
+  el orden relativo (`position`) de las demas imagenes.
 
 ## Reemplazo y eliminacion
 

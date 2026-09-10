@@ -1,5 +1,9 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { IconArea, IconBath, IconBed, IconHeart, IconPhotos, IconPin } from '../ui/icons'
+import { trackEvent } from '../../api/admin'
+import { formatPrice } from '../../lib/priceDisplay'
+import { shareContent } from '../../lib/shareContent'
+import { IconArea, IconBath, IconBed, IconHeart, IconPhotos, IconPin, IconShare } from '../ui/icons'
 
 const OPERATION = {
   sale: ['Venta', 'venta'],
@@ -7,19 +11,8 @@ const OPERATION = {
   temporary: ['Temporal', 'arriendo'],
 }
 
-export function formatPrice(amount, currency = 'COP') {
-  if (amount == null) return null
-  const locale = currency === 'USD' ? 'en-US' : 'es-CO'
-  const formatted = new Intl.NumberFormat(locale, {
-    style: 'currency',
-    currency,
-    maximumFractionDigits: 0,
-  }).format(amount / 100)
-  // USD already prefixes "$"; keep COP as plain "$" too (Intl gives "US$"/"$")
-  return formatted
-}
-
-export default function PropertyCard({ property }) {
+export default function PropertyCard({ property, showShare = false }) {
+  const [copied, setCopied] = useState(false)
   const mainImage =
     property.main_image || property.images?.find((i) => i.role === 'main') || property.images?.[0]
   const [opLabel, opClass] = OPERATION[property.operation_type] || ['Venta', 'venta']
@@ -29,15 +22,28 @@ export default function PropertyCard({ property }) {
   const city = property.location?.name
   const agency = property.agency
   const photoCount = property.images?.length
+  const href = `/propiedades/${property.nid}`
 
-  return (
-    <Link to={`/propiedades/${property.nid}`} className="listing" aria-label={property.title}>
+  const handleShare = async () => {
+    const result = await shareContent({
+      title: property.title,
+      url: `${window.location.origin}${href}`,
+    })
+    if (result === 'copied') {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2500)
+    }
+    if (result !== 'cancelled') trackEvent('share', property.id).catch(() => null)
+  }
+
+  const content = (
+    <>
       <div className="photo">
         <div className="badges">
           {isUSA && <span className="badge usa">USA</span>}
           <span className={`badge ${opClass}`}>{opLabel}</span>
         </div>
-        <span className="fav" aria-hidden="true"><IconHeart /></span>
+        {!showShare && <span className="fav" aria-hidden="true"><IconHeart /></span>}
         {photoCount ? (
           <span className="count"><IconPhotos /> {photoCount}</span>
         ) : null}
@@ -66,6 +72,27 @@ export default function PropertyCard({ property }) {
           </div>
         )}
       </div>
-    </Link>
+    </>
+  )
+
+  if (!showShare) {
+    return <Link to={href} className="listing" aria-label={property.title}>{content}</Link>
+  }
+
+  return (
+    <article className="listing listing-shareable">
+      <Link to={href} className="listing-hit" aria-label={`Ver ${property.title}`} />
+      {content}
+      <button
+        type="button"
+        className="card-share"
+        onClick={handleShare}
+        aria-label={copied ? 'Enlace copiado' : `Compartir ${property.title}`}
+        title={copied ? 'Enlace copiado' : 'Compartir propiedad'}
+      >
+        <IconShare />
+      </button>
+      {copied && <span className="card-share-status" role="status">Enlace copiado</span>}
+    </article>
   )
 }

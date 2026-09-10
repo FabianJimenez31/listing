@@ -223,6 +223,11 @@ def create_tour(entity: str, entity_id: str, current_user: CurrentUser, db: DB):
         status="draft",
     )
     db.add(tour)
+    # ``tour_payments.tour_id`` points at this row.  Flush the new tour first so
+    # PostgreSQL never sees the credit update before its referenced tour exists.
+    # Assigning only the scalar FK does not give SQLAlchemy a relationship from
+    # which it can infer the required INSERT-before-UPDATE order.
+    db.flush()
     if payment is not None:
         payment.tour_id = tour.id
     db.commit()

@@ -54,7 +54,7 @@ export default function SearchPage({ forced = {}, title, subtitle }) {
 
       <div className="search-layout">
         <aside>
-          <PropertyFilters basePath={location.pathname} />
+          <PropertyFilters basePath={location.pathname} defaultCurrency={forced.country === 'us' ? 'USD' : 'COP'} />
         </aside>
         <div>
           {loading ? (

@@ -256,6 +256,14 @@ bundle del visor ni su CSS entren en el chunk inicial de la ficha (FR-224, NFR-2
 | `frontend/src/components/tour/TourTab.jsx` | Carga diferida + estado vacio |
 | `frontend/src/components/panel/TourEditor.jsx` | Seccion "Tour 360" del formulario: lista de escenas, subir pano, generar con IA, reordenar, elegir inicial, publicar |
 | `frontend/src/components/panel/TourHotspotPicker.jsx` | Ubicar hotspots haciendo clic sobre la panoramica y elegir destino |
+
+### Flujo guiado del panel
+
+El editor se presenta como un asistente de tres pasos. Las escenas `ready` forman por orden un
+recorrido circular que el visor ya puede sintetizar sin filas de hotspot. La lista comunica cada
+conexion como `Ambiente A -> Ambiente B`; subir/bajar una escena cambia ese recorrido. La edicion
+angular queda bajo `Ajustar flecha (opcional)` y solo modifica la salida hacia el siguiente ambiente,
+eliminando la seleccion manual de destinos que podia divergir del visor publico.
 | `frontend/src/api/tours.js` | Cliente HTTP |
 
 El aviso de IA se renderiza **dentro del contenedor del visor**, no como hermano, porque la API de

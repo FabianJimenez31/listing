@@ -104,6 +104,12 @@ El visor es **Photo Sphere Viewer** (open source, MIT) con `VirtualTourPlugin`, 
   aceptado la advertencia de contenido generado con IA cuando el tour contiene escenas de origen `ai`.
 - **FR-217** — Si `OPENAI_API_KEY` no esta configurada, la accion de generar aparece deshabilitada
   con una explicacion, y la subida directa sigue disponible.
+- **FR-218** — El panel presenta el tour como un flujo guiado de tres pasos: crear ambientes,
+  ordenar el recorrido y publicar. La navegacion se crea automaticamente siguiendo el orden de las
+  escenas listas; configurar hotspots manualmente no es requisito para publicar ni recorrer.
+- **FR-219** — El ajuste angular manual se presenta como una opcion avanzada llamada "Ajustar
+  flecha". Solo permite posicionar la flecha hacia el siguiente ambiente del orden, que es la misma
+  conexion que renderiza el visor publico; nunca expone autoenlaces ni destinos que no se mostraran.
 
 ### Ficha publica
 

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { IconSearch } from '../ui/icons'
+import SearchAutocomplete from './SearchAutocomplete'
 
 const TABS = [
   { key: 'sale', label: 'Venta' },
@@ -21,11 +22,11 @@ const KINDS = [
 const HERO_IMG = 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1920&q=80'
 
 const QUICK = [
-  ['Apartamentos en Bogotá', '/propiedades?country=bogota'],
-  ['Casas en Medellín', '/propiedades?country=medellin'],
-  ['Proyectos en Cali', '/proyectos?country=cali'],
-  ['Condos en Miami', '/usa?country=miami'],
-  ['Oficinas Bogotá', '/propiedades?country=bogota&property_kind=office'],
+  ['Apartamentos en Bogotá', '/propiedades?location=bogota&property_kind=apartment'],
+  ['Casas en Medellín', '/propiedades?location=medellin&property_kind=house'],
+  ['Proyectos en Cali', '/proyectos?location=cali'],
+  ['Condos en Miami', '/usa?location=miami'],
+  ['Oficinas Bogotá', '/propiedades?location=bogota&property_kind=office'],
 ]
 
 export default function HeroSection() {
@@ -34,8 +35,7 @@ export default function HeroSection() {
   const [kind, setKind] = useState('')
   const [q, setQ] = useState('')
 
-  const submit = (e) => {
-    e.preventDefault()
+  const runSearch = () => {
     const params = new URLSearchParams()
     if (q.trim()) params.set('q', q.trim())
     if (kind) params.set('property_kind', kind)
@@ -47,6 +47,11 @@ export default function HeroSection() {
     } else {
       navigate(`/usa?${params}`)
     }
+  }
+
+  const submit = (e) => {
+    e.preventDefault()
+    runSearch()
   }
 
   return (
@@ -84,15 +89,13 @@ export default function HeroSection() {
                   ))}
                 </select>
               </div>
-              <div className="inputwrap">
-                <IconSearch />
-                <input
-                  type="text"
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                  placeholder="Busca por ciudad, barrio o palabra clave"
-                />
-              </div>
+              <SearchAutocomplete
+                value={q}
+                onChange={setQ}
+                tab={tab}
+                kind={kind}
+                onSearch={runSearch}
+              />
               <button className="searchbtn" type="submit" aria-label="Buscar">
                 <IconSearch size={20} />
               </button>

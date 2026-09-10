@@ -32,5 +32,5 @@ export const deleteFeatured = (id) =>
 export const exportProperties = (params) =>
   api.get('/exports/properties', { params, responseType: 'blob' })
 
-export const trackEvent = (eventType, propertyId, sessionHash) =>
-  api.post('/metrics/event', { event_type: eventType, entity_id: propertyId, session_hash: sessionHash })
+export const trackEvent = (eventType, propertyId) =>
+  api.post('/metrics/event', { event_type: eventType, property_id: propertyId })

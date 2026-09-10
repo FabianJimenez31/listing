@@ -83,6 +83,10 @@ Convencion: `[x]` hecho · `[/]` en curso · `[ ]` pendiente.
 - [x] T-508 Panel: seleccion multiple de fotos de galeria, costo estimado y confirmacion (FR-212,
       FR-214), estado de progreso, boton deshabilitado sin credencial.
 - [x] T-509 `tests/test_openai_pano_provider.py` con transporte falso: exito y errores del proveedor.
+- [x] T-510 Aclarar en el panel que las fotos seleccionadas son referencias de un solo ambiente y
+      que los hotspots requieren al menos dos escenas generadas por separado.
+- [x] T-511 Redisenar el panel como flujo plug-and-play de tres pasos, crear conexiones automaticas
+      por orden y relegar la posicion de la flecha siguiente a un ajuste opcional (FR-218/FR-219).
 
 ## Fase 6 — Cierre
 

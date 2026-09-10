@@ -84,6 +84,12 @@ class TestProjectSearch:
         assert resp.json()["meta"]["total"] == 1
         assert resp.json()["data"][0]["title"] == "Construccion"
 
+    def test_filter_by_location_subtree(self, client, agent_user, agent_token, admin_user, admin_token):
+        country = client.post("/api/v1/locations", json={"name": "Colombia", "level": "country"}, headers=_auth(admin_token)).json()
+        city = client.post("/api/v1/locations", json={"name": "Cali", "level": "city", "parent_id": country["id"]}, headers=_auth(admin_token)).json()
+        _publish(client, agent_token, admin_token, title="Proyecto Cali", location_id=city["id"])
+        assert client.get("/api/v1/projects?location=cali").json()["meta"]["total"] == 1
+
     def test_add_image(self, client, agent_user, agent_token):
         created = _create(client, agent_token).json()
         resp = client.post(

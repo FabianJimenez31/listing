@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from src.db.models.location_models import LocationORM
 from src.db.models.property_models import PropertyImageORM, PropertyORM
 from src.repositories.base import BaseRepository
+from src.text.search_normalization import normalize_search_text
 from src.text.slug import slugify
 
 # External stock/placeholder hosts seeded onto locations. Treated as "no curated
@@ -101,6 +102,44 @@ class LocationRepository(BaseRepository[LocationORM]):
                 out.append(child_id)
                 stack.append(child_id)
         return out
+
+    def searchable_subtree_ids(self, text: str) -> list[str]:
+        """IDs below locations whose name/slug contains all normalized words."""
+        tokens = normalize_search_text(text).split()
+        if not tokens:
+            return []
+
+        rows = self.db.execute(
+            select(LocationORM.id, LocationORM.parent_id, LocationORM.name, LocationORM.slug)
+        ).all()
+        children: dict[str | None, list[str]] = {}
+        by_id: dict[str, tuple[str | None, str, str]] = {}
+        for loc_id, parent_id, name, slug in rows:
+            children.setdefault(parent_id, []).append(loc_id)
+            by_id[loc_id] = (parent_id, name, slug)
+
+        matches: list[str] = []
+        for loc_id in by_id:
+            path_parts: list[str] = []
+            current_id: str | None = loc_id
+            seen: set[str] = set()
+            while current_id and current_id not in seen and current_id in by_id:
+                seen.add(current_id)
+                parent_id, name, slug = by_id[current_id]
+                path_parts.extend((normalize_search_text(name), normalize_search_text(slug)))
+                current_id = parent_id
+            searchable = " ".join(path_parts)
+            if all(token in searchable for token in tokens):
+                matches.append(loc_id)
+
+        found: set[str] = set(matches)
+        stack = list(matches)
+        while stack:
+            for child_id in children.get(stack.pop(), []):
+                if child_id not in found:
+                    found.add(child_id)
+                    stack.append(child_id)
+        return list(found)
 
     def city_name_by_location(self) -> dict[str, str]:
         """``location_id`` → name of its nearest ``city`` ancestor (itself included).

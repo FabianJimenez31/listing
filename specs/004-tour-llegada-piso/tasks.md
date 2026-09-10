@@ -49,3 +49,7 @@ Convencion: `[x]` hecho · `[/]` en curso · `[ ]` pendiente.
       ahora con pitch 0. Boton autorotate retirado del navbar (warning, plugin ausente).
       Aclarado: los 404 de `/tour` en consola son normales (fichas sin tour publicado,
       se manejan en silencio).
+- [x] T-307 Hotfix tour monoscena: no crear un link al mismo nodo; prueba de regresion
+      para monoscena y preservacion del ciclo en tours con varias escenas.
+- [x] T-308 Hotfix editor: remontar `TourHotspotPicker` al cambiar de escena para que destino y
+      hotspots locales no se reutilicen y nunca se envie accidentalmente un autoenlace.

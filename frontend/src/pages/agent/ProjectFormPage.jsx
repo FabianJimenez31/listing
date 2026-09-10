@@ -17,6 +17,7 @@ import LocationPicker from '../../components/property/LocationPicker'
 import AdminPageHeader from '../../components/admin/AdminPageHeader'
 import Spinner from '../../components/ui/Spinner'
 import { digitsOnly, groupThousands, majorToMinor, minorToMajor } from '../../lib/money'
+import { prioritizeMainImage } from '../../lib/imageOrder'
 
 const EMPTY = {
   title: '', developer_name: '', stage: 'preventa', currency: 'COP',
@@ -73,7 +74,7 @@ export default function ProjectFormPage() {
             price_from: minorToMajor(p.price_from),
             price_to: minorToMajor(p.price_to),
           })
-          setImages(p.images || [])
+          setImages(prioritizeMainImage(p.images || []))
         })
         .catch(() => setError('No se pudo cargar el proyecto'))
         .finally(() => setLoading(false))

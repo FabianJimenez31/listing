@@ -7,6 +7,7 @@ from src.api.deps import DB, OptionalUser
 from src.repositories.property_repo import PropertyRepository
 from src.schemas.pagination_schemas import make_page
 from src.schemas.property_schemas import PropertyListItem
+from src.text.search_normalization import extract_nid
 
 router = APIRouter(prefix="/properties", tags=["search"])
 
@@ -15,7 +16,7 @@ router = APIRouter(prefix="/properties", tags=["search"])
 def search_properties(
     db: DB,
     current_user: OptionalUser,
-    q: str | None = Query(None, description="Free-text search (title/description)"),
+    q: str | None = Query(None, description="Free text over content/location, or a numeric NID"),
     nid: int | None = Query(None, description="Filter by numeric Record ID (NID)"),
     operation_type: str | None = Query(None, description="sale | rent | temporary"),
     property_kind: str | None = Query(None, description="house | apartment | lot | …"),
@@ -29,6 +30,7 @@ def search_properties(
     on_home: bool = Query(False, description="Only properties flagged to show on the home page"),
     min_price: int | None = Query(None, ge=0, description="Min price in minor units"),
     max_price: int | None = Query(None, ge=0, description="Max price in minor units"),
+    currency: str | None = Query(None, min_length=3, max_length=3, description="ISO 4217 currency"),
     min_bedrooms: int | None = Query(None, ge=0),
     max_bedrooms: int | None = Query(None, ge=0),
     min_area: float | None = Query(None, ge=0, description="Min total area m²"),
@@ -52,6 +54,7 @@ def search_properties(
     elif owner_id and is_admin:
         search_owner = owner_id
 
+    q_nid = extract_nid(q)
     items, total = repo.search(
         status=search_status,
         owner_id=search_owner,
@@ -64,12 +67,13 @@ def search_properties(
         on_home=on_home,
         min_price=min_price,
         max_price=max_price,
+        currency=currency,
         min_bedrooms=min_bedrooms,
         max_bedrooms=max_bedrooms,
         min_area=min_area,
         max_area=max_area,
-        text=q,
-        nid=nid,
+        text=None if q_nid is not None else q,
+        nid=nid if nid is not None else q_nid,
         page=page,
         page_size=page_size,
     )

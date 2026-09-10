@@ -3,12 +3,14 @@ import { Link, useParams } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { getProject } from '../api/projects'
 import Spinner from '../components/ui/Spinner'
-import { formatPrice } from '../components/property/PropertyCard'
+import { formatPrice } from '../lib/priceDisplay'
 import ImageCarousel from '../components/ui/ImageCarousel'
 import PropertyDescription from '../components/property/PropertyDescription'
-import { IconPin } from '../components/ui/icons'
+import { IconPin, IconShare } from '../components/ui/icons'
 import TourTab from '../components/tour/TourTab'
 import { getPublishedTour } from '../api/tours'
+import { prioritizeMainImage } from '../lib/imageOrder'
+import { shareContent } from '../lib/shareContent'
 
 const STAGE = { preventa: 'Preventa', construccion: 'En construcción', entrega_inmediata: 'Entrega inmediata' }
 
@@ -20,6 +22,7 @@ export default function ProjectDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
   const [tour, setTour] = useState(null)
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     setLoading(true)
@@ -40,15 +43,22 @@ export default function ProjectDetailPage() {
     )
   }
 
-  const images = project.images?.length
+  const images = prioritizeMainImage(project.images?.length
     ? project.images
     : project.cover_image_url
       ? [{ id: 'cover', cdn_url: project.cover_image_url }]
-      : []
+      : [])
   const from = formatPrice(project.price_from, project.currency)
   const to = formatPrice(project.price_to, project.currency)
   const phone = project.contact_phone || project.agency?.phone
   const wa = (project.contact_whatsapp || project.agency?.whatsapp || '').replace(/[^0-9]/g, '')
+  const handleShare = async () => {
+    const result = await shareContent({ title: project.title })
+    if (result === 'copied') {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2500)
+    }
+  }
 
   const specs = [
     ['Etapa', STAGE[project.stage] || 'Proyecto'],
@@ -60,7 +70,12 @@ export default function ProjectDetailPage() {
 
   return (
     <div className="page-wrap">
-      <Helmet><title>{`${project.title} | Proppia`}</title></Helmet>
+      <Helmet>
+        <title>{`${project.title} | Proppia`}</title>
+        <meta name="description" content={project.description?.slice(0, 155) || project.title} />
+        <meta property="og:title" content={project.title} />
+        {images[0] && <meta property="og:image" content={images[0].cdn_url} />}
+      </Helmet>
       <div className="crumbs">
         <Link to="/proyectos">Proyectos</Link>{project.location?.name ? ` · ${project.location.name}` : ''}
       </div>
@@ -103,6 +118,9 @@ export default function ProjectDetailPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 18 }}>
               {wa && <a className="btn btn-blue" style={{ justifyContent: 'center' }} href={`https://wa.me/${wa}`} target="_blank" rel="noreferrer">WhatsApp</a>}
               {phone && <a className="btn btn-outline" style={{ justifyContent: 'center' }} href={`tel:${phone}`}>Llamar</a>}
+              <button className="btn btn-outline" style={{ justifyContent: 'center' }} onClick={handleShare}>
+                <IconShare /> {copied ? 'Enlace copiado ✓' : 'Compartir proyecto'}
+              </button>
               {project.agency && <Link className="btn btn-outline" style={{ justifyContent: 'center' }} to={`/inmobiliarias/${project.agency.slug}`}>Ver inmobiliaria</Link>}
             </div>
           </div>

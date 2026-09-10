@@ -20,6 +20,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import AdminPageHeader from '../../components/admin/AdminPageHeader'
 import Spinner from '../../components/ui/Spinner'
 import { digitsOnly, groupThousands, majorToMinor, minorToMajor } from '../../lib/money'
+import { prioritizeMainImage } from '../../lib/imageOrder'
 
 const STATUS_LABEL = {
   draft: 'Borrador', pending: 'En revisión', published: 'Publicada', paused: 'Pausada',
@@ -141,13 +142,13 @@ export default function PropertyFormPage() {
       })
       setStatus(data.status)
       setRejectionReason(data.rejection_reason)
-      setImages(data.images || [])
+      setImages(prioritizeMainImage(data.images || []))
     }).catch(() => navigate('/agente'))
       .finally(() => setLoading(false))
   }
 
   const reloadImages = () =>
-    getProperty(id).then((d) => setImages(d.images || [])).catch(() => null)
+    getProperty(id).then((d) => setImages(prioritizeMainImage(d.images || []))).catch(() => null)
 
   useEffect(() => {
     if (!authLoading && !user) { navigate('/login'); return }

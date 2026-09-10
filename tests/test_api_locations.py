@@ -36,11 +36,11 @@ class TestCreateCountry:
         resp = _create(client, admin_token, name="Panamá", level="country", parent_id=parent["id"])
         assert resp.status_code == 422
 
-    def test_duplicate_country_is_reported(self, client, admin_user, admin_token):
-        _create(client, admin_token, name="Panamá", level="country")
+    def test_duplicate_country_selects_existing_node(self, client, admin_user, admin_token):
+        original = _create(client, admin_token, name="Panamá", level="country").json()
         resp = _create(client, admin_token, name="panama", level="country")
-        assert resp.status_code == 409
-        assert "Ya existe" in resp.json()["error"]["message"]
+        assert resp.status_code == 201
+        assert resp.json()["id"] == original["id"]
 
     def test_reactivates_a_disabled_country(self, client, db_session, admin_user, admin_token):
         created = _create(client, admin_token, name="Panamá", level="country").json()
@@ -92,6 +92,12 @@ class TestCreateCityBranch:
     def test_unknown_parent_is_404(self, client, admin_user, admin_token):
         resp = _create(client, admin_token, name="X", level="city", parent_id="does-not-exist")
         assert resp.status_code == 404
+
+    def test_state_rejects_a_city_parent(self, client, admin_user, admin_token):
+        country = self._panama(client, admin_token)
+        city = _create(client, admin_token, name="Colón", level="city", parent_id=country["id"]).json()
+        resp = _create(client, admin_token, name="Departamento inválido", level="state", parent_id=city["id"])
+        assert resp.status_code == 422
 
     def test_invalid_level_is_rejected(self, client, admin_user, admin_token):
         resp = _create(client, admin_token, name="X", level="planet")

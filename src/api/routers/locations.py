@@ -20,6 +20,12 @@ from src.storage.image_store import (
 router = APIRouter(prefix="/locations", tags=["locations"])
 
 _STATIC_MARKER = "/static/"
+_ALLOWED_PARENT_LEVELS = {
+    "state": {"country"},
+    "city": {"country", "state"},
+    "locality": {"city"},
+    "neighborhood": {"locality"},
+}
 
 
 def _remove_uploaded_cover(image_url: str | None) -> None:
@@ -59,9 +65,8 @@ def create_location(body: LocationCreateRequest, db: DB):
 
     Used by the admin panel and by the inline "agregar ciudad/país que falta"
     buttons of the property and project forms. The slug is derived from the name
-    when the caller omits it; an already-existing sibling is reported as a 409
-    (and reactivated if it had been disabled) instead of failing on the unique
-    slug constraint.
+    when the caller omits it; an already-existing sibling is returned and selected
+    (or reactivated) instead of failing on the unique slug constraint.
     """
     repo = LocationRepository(db)
 
@@ -79,17 +84,20 @@ def create_location(body: LocationCreateRequest, db: DB):
         parent = db.get(LocationORM, body.parent_id)
         if not parent:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "Parent location not found")
+        allowed = _ALLOWED_PARENT_LEVELS[body.level]
+        if parent.level not in allowed:
+            expected = " o ".join(sorted(allowed))
+            raise HTTPException(
+                status.HTTP_422_UNPROCESSABLE_ENTITY,
+                f"A {body.level!r} location must belong to {expected}; got {parent.level!r}",
+            )
 
     existing = repo.find_sibling(name=body.name, level=body.level, parent_id=body.parent_id)
     if existing is not None:
-        if existing.is_active:
-            where = f" en {parent.name}" if parent else ""
-            raise HTTPException(
-                status.HTTP_409_CONFLICT, f"Ya existe «{existing.name}»{where}. Selecciónala en la lista."
-            )
-        existing.is_active = True  # it was there but disabled — bring it back
-        db.commit()
-        db.refresh(existing)
+        if not existing.is_active:
+            existing.is_active = True
+            db.commit()
+            db.refresh(existing)
         return existing
 
     loc = LocationORM(
